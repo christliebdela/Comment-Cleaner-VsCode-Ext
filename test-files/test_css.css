@@ -1,0 +1,14 @@
+/* CSS comment at the top */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0; /* End of line comment */
+  padding: 0;
+}
+
+/* 
+  Multi-line comment
+  in CSS 
+*/
+h1 {
+  color: blue; // Another style of comment
+}

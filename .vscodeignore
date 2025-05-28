@@ -1,0 +1,12 @@
+# The following files and directories should be ignored when packaging the extension for distribution
+.vscode
+node_modules
+*.pyc
+*.pyo
+*.pyd
+__pycache__
+*.log
+*.tmp
+.DS_Store
+.vscode-test
+.vscodeignore

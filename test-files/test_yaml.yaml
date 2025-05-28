@@ -1,0 +1,12 @@
+# Single line comment in YAML
+
+name: Example YAML # End of line comment
+version: 1.0
+
+# Multi-line comment
+# using multiple # symbols
+# should all be removed
+
+settings:
+  timeout: 30 # Timeout in seconds
+  retry: true # Enable retry

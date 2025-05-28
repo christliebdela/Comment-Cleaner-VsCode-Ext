@@ -1,0 +1,97 @@
+{
+  "name": "comment-cleaner-pro",
+  "displayName": "Comment Cleaner Pro",
+  "description": "A Visual Studio Code extension for removing comments from source code files across multiple programming languages.",
+  "version": "0.1.0",
+  "publisher": "ChristliebDela",
+  "icon": "media/icon.png",
+  "engines": {
+    "vscode": "^1.50.0"
+  },
+  "activationEvents": [
+    "onCommand:ccp.cleanComments",
+    "onCommand:ccp.cleanMultipleFiles"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "ccp.cleanComments",
+        "title": "Comment Cleaner Pro: Clean Current File"
+      },
+      {
+        "command": "ccp.cleanMultipleFiles",
+        "title": "Comment Cleaner Pro: Clean Multiple Files"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "ccp.cleanComments",
+          "group": "modification"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "comment-cleaner-pro",
+          "title": "Comment Cleaner Pro",
+          "icon": "media/icon-small.png"
+        }
+      ]
+    },
+    "views": {
+      "comment-cleaner-pro": [
+        {
+          "id": "ccpFiles",
+          "name": "Clean Comments"
+        },
+        {
+          "id": "ccpHistory",
+          "name": "Cleaned Files"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./ && npm run copy-python",
+    "watch": "tsc -watch -p ./",
+    "copy-python": "if not exist out\\python mkdir out\\python && copy src\\python\\ccp.py out\\python\\"
+  },
+  "devDependencies": {
+    "@types/node": "^16.0.0",
+    "@types/vscode": "^1.50.0",
+    "@vscode/vsce": "^2.15.0",
+    "typescript": "^5.8.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/christliebdela/Comment-Cleaner-Pro"
+  },
+  "keywords": [
+    "comments",
+    "clean",
+    "remove",
+    "code",
+    "multiple languages"
+  ],
+  "author": {
+    "name": "Christlieb Dela"
+  },
+  "categories": [
+    "Formatters",
+    "Programming Languages",
+    "Other"
+  ],
+  "galleryBanner": {
+    "color": "#C80000",
+    "theme": "dark"
+  },
+  "bugs": {
+    "url": "https://github.com/christliebdela/Comment-Cleaner-Pro/issues"
+  },
+  "homepage": "https://github.com/christliebdela/Comment-Cleaner-Pro/blob/main/README.md",
+  "license": "MIT"
+}
