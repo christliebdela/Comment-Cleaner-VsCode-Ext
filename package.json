@@ -2,7 +2,7 @@
   "name": "comment-cleaner-pro",
   "displayName": "Comment Cleaner Pro",
   "description": "A Visual Studio Code extension for removing comments from source code files across multiple programming languages.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "ChristliebDela",
   "icon": "media/icon.png",
   "engines": {
@@ -22,6 +22,27 @@
       {
         "command": "ccp.cleanMultipleFiles",
         "title": "Comment Cleaner Pro: Clean Multiple Files"
+      },
+      {
+        "command": "ccp.compareWithBackup",
+        "title": "$(split-horizontal) Compare with Backup"
+      },
+      {
+        "command": "ccp.restoreFromBackup",
+        "title": "$(history) Restore from Backup"
+      },
+      {
+        "command": "ccp.removeFromHistory",
+        "title": "$(trash) Remove from History"
+      },
+      {
+        "command": "ccp.previewCleanComments",
+        "title": "Preview Comment Removal"
+      },
+      {
+        "command": "ccp.clearHistory",
+        "title": "Clear History",
+        "icon": "$(clear-all)"
       }
     ],
     "menus": {
@@ -29,6 +50,42 @@
         {
           "command": "ccp.cleanComments",
           "group": "modification"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "ccp.cleanComments",
+          "when": "resourceLangId && resourceLangId != 'markdown'",
+          "group": "7_modification"
+        },
+        {
+          "command": "ccp.cleanMultipleFiles",
+          "when": "explorerResourceIsFolder",
+          "group": "7_modification"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "ccp.compareWithBackup",
+          "when": "view == ccpHistory && viewItem == 'historyItem'",
+          "group": "inline"
+        },
+        {
+          "command": "ccp.restoreFromBackup",
+          "when": "view == ccpHistory && viewItem == 'historyItem'",
+          "group": "1_modification"
+        },
+        {
+          "command": "ccp.removeFromHistory",
+          "when": "view == ccpHistory && viewItem == 'historyItem'",
+          "group": "1_modification"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "ccp.clearHistory",
+          "when": "view == ccpHistory",
+          "group": "navigation"
         }
       ]
     },
@@ -52,6 +109,36 @@
           "name": "Cleaned Files"
         }
       ]
+    },
+    "configuration": {
+      "title": "Comment Cleaner Pro",
+      "properties": {
+        "commentCleanerPro.createBackupsByDefault": {
+          "type": "boolean",
+          "default": true,
+          "description": "Create backup files by default"
+        },
+        "commentCleanerPro.preserveLicenseHeaders": {
+          "type": "boolean",
+          "default": true,
+          "description": "Preserve license/copyright headers at the top of files"
+        },
+        "commentCleanerPro.customCommentPatterns": {
+          "type": "object",
+          "default": {},
+          "description": "Define custom comment patterns for additional languages"
+        },
+        "commentCleanerPro.preserveTodoFixme": {
+          "type": "boolean",
+          "default": false,
+          "description": "Preserve TODO and FIXME comments"
+        },
+        "commentCleanerPro.preservePatterns": {
+          "type": "array",
+          "default": [],
+          "description": "Preserve comments matching these regex patterns"
+        }
+      }
     }
   },
   "scripts": {
@@ -68,7 +155,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/christliebdela/Comment-Cleaner-Pro"
+    "url": "https://github.com/christliebdela/Comment-Cleaner-VsCode-Ext"
   },
   "keywords": [
     "comments",
@@ -90,8 +177,8 @@
     "theme": "dark"
   },
   "bugs": {
-    "url": "https://github.com/christliebdela/Comment-Cleaner-Pro/issues"
+    "url": "https://github.com/christliebdela/Comment-Cleaner-VsCode-Ext/issues"
   },
-  "homepage": "https://github.com/christliebdela/Comment-Cleaner-Pro/blob/main/README.md",
+  "homepage": "https://github.com/christliebdela/Comment-Cleaner-VsCode-Ext/blob/main/README.md",
   "license": "MIT"
 }

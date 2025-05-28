@@ -11,6 +11,7 @@ import sys
 import glob
 import shutil
 import argparse
+import concurrent.futures
 
 
 def identify_language(file_path):
@@ -49,22 +50,48 @@ def identify_language(file_path):
     return extension_map.get(ext, 'unknown')
 
 
-def remove_comments(content, language):
+def remove_comments(content, language, preserve_todo=False, preserve_patterns=None, keep_doc_comments=False):
     """
     Remove comments from code based on language syntax rules.
     
     Args:
         content (str): Source code content
         language (str): Programming language identifier
+        preserve_todo (bool): Whether to preserve TODO and FIXME comments
+        preserve_patterns (str): JSON array of regex patterns to preserve
+        keep_doc_comments (bool): Whether to preserve documentation comments
         
     Returns:
         str: Code with comments removed
     """
+    # Convert preserve_patterns from JSON string if provided
+    patterns = []
+    if preserve_patterns:
+        try:
+            import json
+            patterns = json.loads(preserve_patterns)
+        except:
+            pass
+            
+    # Add todo/fixme detection
+    todo_pattern = r'(TODO|FIXME).*'
+    
+    # Before removing a comment, check if it should be preserved
+    def should_preserve(comment_text):
+        if preserve_todo and re.search(todo_pattern, comment_text, re.IGNORECASE):
+            return True
+        if patterns:
+            for pattern in patterns:
+                if re.search(pattern, comment_text):
+                    return True
+        return False
+    
     # Python comment handling
     if language == 'python':
-        # Remove multi-line comments (triple quotes)
-        content = re.sub(r'"""[\s\S]*?"""', '', content)
-        content = re.sub(r"'''[\s\S]*?'''", '', content)
+        if not keep_doc_comments:
+            # Remove docstrings
+            content = re.sub(r'"""[\s\S]*?"""', '', content)
+            content = re.sub(r"'''[\s\S]*?'''", '', content)
         
         # Handle line comments
         result = []
@@ -81,6 +108,10 @@ def remove_comments(content, language):
     
     # C-style languages comment handling (C, C++, Java, JS, CSS)
     elif language in ['css', 'javascript', 'typescript', 'c', 'cpp', 'java']:
+        if not keep_doc_comments:
+            # Remove JSDoc comments
+            content = re.sub(r'/\*\*[\s\S]*?\*/', '', content)
+        
         # Remove /* */ block comments
         content = re.sub(r'/\*[\s\S]*?\*/', '', content)
         
@@ -315,6 +346,7 @@ def remove_comments(content, language):
     return cleaned
 
 
+# Modify process_file to track statistics
 def process_file(file_path, backup=True, force=False):
     """
     Process a file to remove comments while handling backups and errors.
@@ -343,19 +375,37 @@ def process_file(file_path, backup=True, force=False):
         print(f"  Backup created: {backup_path}")
 
     try:
+        # Add statistics tracking
+        original_size = os.path.getsize(file_path)
+        comment_count = 0
+        
         # Read file content
         with open(file_path, 'r', encoding='utf-8') as f:
             content = f.read()
-
+        
+        # Count comments (approximate)
+        for pattern in [r'//.*$', r'/\*[\s\S]*?\*/', r'#.*$', r'--.*$']:
+            comment_count += len(re.findall(pattern, content, re.MULTILINE))
+        
         # Process content to remove comments
         cleaned = remove_comments(content, language)
 
         # Write cleaned content back to file
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(cleaned)
-
-        print(f"  Removed comments successfully")
-        return True
+        
+        new_size = os.path.getsize(file_path)
+        size_reduction = original_size - new_size
+        percentage = (size_reduction / original_size) * 100 if original_size > 0 else 0
+        
+        print(f"  Removed approximately {comment_count} comments")
+        print(f"  File size reduced by {size_reduction} bytes ({percentage:.1f}%)")
+        
+        return True, {
+            'commentCount': comment_count,
+            'sizeReduction': size_reduction,
+            'sizePercentage': percentage
+        }
     except Exception as e:
         print(f"  Error processing {file_path}: {e}")
         # Restore from backup if available
@@ -373,6 +423,12 @@ def main():
     parser.add_argument('--no-backup', action='store_true', help='Skip creating backup files')
     parser.add_argument('--force', action='store_true', help='Process unknown file types')
     parser.add_argument('--recursive', action='store_true', help='Process files recursively')
+    parser.add_argument('--preserve-todo', action='store_true', help='Preserve TODO and FIXME comments')
+    parser.add_argument('--preserve-patterns', type=str, help='JSON array of regex patterns to preserve')
+    parser.add_argument('--keep-doc-comments', action='store_true', 
+                   help='Preserve documentation comments')
+    parser.add_argument('--threads', type=int, default=4, 
+                       help='Number of threads for parallel processing')
     
     args = parser.parse_args()
     
@@ -384,19 +440,56 @@ def main():
     
     # Find matching files
     files = glob.glob(file_pattern, recursive=args.recursive)
-
+    
     if not files:
         print(f"No files found matching pattern: {args.file_pattern}")
         return
-
-    print(f"Found {len(files)} files matching {args.file_pattern}")
-    success_count = 0
     
-    # Process each matching file
-    for file_path in files:
-        if process_file(file_path, backup=not args.no_backup, force=args.force):
-            success_count += 1
-
+    print(f"Found {len(files)} files matching {args.file_pattern}")
+    
+    # Process in parallel using ThreadPoolExecutor
+    success_count = 0
+    results = []
+    
+    with concurrent.futures.ThreadPoolExecutor(max_workers=args.threads) as executor:
+        # Submit all files for processing
+        future_to_file = {
+            executor.submit(
+                process_file, 
+                file_path, 
+                not args.no_backup, 
+                args.force
+            ): file_path for file_path in files
+        }
+        
+        # Process as they complete
+        total_files = len(files)
+        processed = 0
+        
+        for future in concurrent.futures.as_completed(future_to_file):
+            file_path = future_to_file[future]
+            processed += 1
+            
+            try:
+                success, stats = future.result()
+                if success:
+                    success_count += 1
+                    results.append(stats)
+                
+                # Show progress
+                print(f"Progress: {processed}/{total_files} files ({(processed/total_files)*100:.1f}%)")
+                
+            except Exception as e:
+                print(f"Error processing {file_path}: {e}")
+    
+    # Show summary statistics
+    if results:
+        total_comments = sum(r['commentCount'] for r in results)
+        total_reduction = sum(r['sizeReduction'] for r in results)
+        print(f"\nSummary:")
+        print(f"- Removed approximately {total_comments} comments")
+        print(f"- Reduced file sizes by {total_reduction} bytes")
+    
     print(f"Done! Successfully processed {success_count} of {len(files)} files.")
 
 

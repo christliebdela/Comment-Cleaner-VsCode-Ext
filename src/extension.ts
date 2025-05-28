@@ -2,6 +2,8 @@ import * as vscode from 'vscode';
 import { executeCcp } from './ccpRunner';
 import { selectAndProcessFiles } from './fileSelector';
 import { FilesViewProvider, HistoryViewProvider } from './ccpViewProvider';
+import * as path from 'path';
+import * as os from 'os';
 
 export function activate(context: vscode.ExtensionContext) {
     // Create view providers
@@ -24,17 +26,28 @@ export function activate(context: vscode.ExtensionContext) {
         await document.save();
         
         try {
-            const backup = await vscode.window.showQuickPick(['Yes', 'No'], {
-                placeHolder: 'Create backup file?'
-            });
+            const backup = await vscode.window.showQuickPick(
+                ['Yes, Create a Backup File', 'Don\'t Create a Backup File'], {
+                    placeHolder: 'Create a backup before cleaning?',
+                    ignoreFocusOut: true // Prevents dismissal when clicking outside
+                }
+            );
             
-            await executeCcp(document.fileName, backup === 'No', false);
+            // If the user dismissed the dialog (clicked outside, pressed Escape)
+            if (!backup) {
+                return; // Cancel the operation
+            }
+            
+            const noBackup = backup === 'Don\'t Create a Backup File';
+            
+            await executeCcp(document.fileName, noBackup, false);
             await vscode.commands.executeCommand('workbench.action.files.revert');
             
             // Add to history
             historyViewProvider.addToHistory(document.fileName);
             
             vscode.window.showInformationMessage('Comments removed successfully!');
+            updateStatusBar('Comments removed successfully!');
         } catch (error) {
             vscode.window.showErrorMessage(`Error: ${error}`);
         }
@@ -45,7 +58,92 @@ export function activate(context: vscode.ExtensionContext) {
         await selectAndProcessFiles(historyViewProvider);
     });
 
-    context.subscriptions.push(cleanCurrentFile, cleanMultipleFiles);
+    // Add new commands
+    let compareWithBackup = vscode.commands.registerCommand('ccp.compareWithBackup', async (filePath) => {
+        const backupPath = filePath + '.bak';
+        if (await fileExists(backupPath)) {
+            const uri1 = vscode.Uri.file(filePath);
+            const uri2 = vscode.Uri.file(backupPath);
+            vscode.commands.executeCommand('vscode.diff', uri2, uri1, 'Backup ↔ Current');
+        } else {
+            vscode.window.showWarningMessage('No backup file found.');
+        }
+    });
+
+    let restoreFromBackup = vscode.commands.registerCommand('ccp.restoreFromBackup', async (filePath) => {
+        const backupPath = filePath + '.bak';
+        if (await fileExists(backupPath)) {
+            await vscode.workspace.fs.copy(
+                vscode.Uri.file(backupPath),
+                vscode.Uri.file(filePath),
+                { overwrite: true }
+            );
+            vscode.window.showInformationMessage('File restored from backup.');
+        } else {
+            vscode.window.showWarningMessage('No backup file found.');
+        }
+    });
+
+    let removeFromHistory = vscode.commands.registerCommand('ccp.removeFromHistory', (filePath) => {
+        historyViewProvider.removeFromHistory(filePath);
+    });
+
+    let setLanguageFilter = vscode.commands.registerCommand('ccp.setLanguageFilter', async () => {
+        const languages = ['javascript', 'typescript', 'python', 'html', 'css', 'c', 'cpp', 'java', 'ruby', 'go', 
+                          'php', 'sql', 'swift', 'rust', 'kotlin', 'bash', 'powershell', 'lua', 'perl', 
+                          'yaml', 'haskell', 'dart', 'matlab', 'r', 'csharp', 'all'];
+        
+        const selected = await vscode.window.showQuickPick(languages, {
+            placeHolder: 'Select language to filter by (or "all" to show all)'
+        });
+        
+        if (selected) {
+            historyViewProvider.setLanguageFilter(selected === 'all' ? undefined : selected);
+        }
+    });
+
+    let clearHistory = vscode.commands.registerCommand('ccp.clearHistory', () => {
+        const response = vscode.window.showInformationMessage(
+            'Are you sure you want to clear the history?', 
+            'Yes', 'No'
+        );
+        
+        response.then(answer => {
+            if (answer === 'Yes') {
+                historyViewProvider.clearHistory();
+                vscode.window.showInformationMessage('History cleared');
+            }
+        });
+    });
+
+    // Status bar item
+    const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+    statusBarItem.command = 'ccp.cleanComments';
+    statusBarItem.text = "$(comment-discussion) Clean Comments";
+    statusBarItem.tooltip = "Clean comments from current file";
+    statusBarItem.show();
+
+    context.subscriptions.push(cleanCurrentFile, cleanMultipleFiles, compareWithBackup, 
+        restoreFromBackup, removeFromHistory, setLanguageFilter, clearHistory, statusBarItem);
+
+    // Update status bar after cleaning
+    function updateStatusBar(message: string, timeout: number = 5000) {
+        const originalText = statusBarItem.text;
+        statusBarItem.text = message;
+        setTimeout(() => {
+            statusBarItem.text = originalText;
+        }, timeout);
+    }
+}
+
+// Helper function to check if file exists
+async function fileExists(path: string): Promise<boolean> {
+    try {
+        await vscode.workspace.fs.stat(vscode.Uri.file(path));
+        return true;
+    } catch {
+        return false;
+    }
 }
 
 export function deactivate() {}
