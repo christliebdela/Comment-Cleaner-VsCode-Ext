@@ -13,7 +13,7 @@
   <a href="https://github.com/christliebdela/Comment-Cleaner-VsCode-Ext/pulls"><img src="https://img.shields.io/github/issues-pr/christliebdela/Comment-Cleaner-VsCode-Ext?style=flat-square&color=000000&labelColor=222222" alt="Pull Requests"></a>
 </p>
 
-## Overview
+## Version 0.1.2
 
 Comment Cleaner Pro is a powerful VS Code extension for removing comments from source code files. It helps you streamline your code by efficiently removing all types of comments (line, block, and documentation) across 20+ programming languages while preserving the core functionality of your code.
 
@@ -123,6 +123,31 @@ Comment Cleaner Pro:
 - Has minimal extension permissions
 
 ## Release Notes
+
+### 0.1.2 (2025-05-28)
+
+- Fixed extension icon not displaying correctly in VS Code Marketplace
+- Corrected package configurations for proper asset inclusion
+- Updated repository references
+
+### 0.1.1 (2025-05-28)
+
+- Added Filter by Language option for history filtering
+- Implemented context menu actions for history items:
+  - Compare with backup (diff view)
+  - Restore from backup
+  - Remove from history
+- Added Clear History functionality
+- Integrated status bar feedback for cleaning operations
+- Enhanced Python processor with:
+  - Smart comment detection for documentation vs regular comments
+  - Multi-threading for batch operations
+  - Progress indicators and statistics
+- Added configuration options:
+  - Preserve TODO and FIXME comments
+  - Custom pattern preservation
+  - Documentation comment preservation
+- Improved UI with intuitive icons
 
 ### 0.1.0 (2025-05-28)
 

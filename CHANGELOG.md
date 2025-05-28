@@ -2,6 +2,13 @@
 
 All notable changes to the "Comment Cleaner Pro" extension will be documented in this file.
 
+## [0.1.2] - 2025-05-28
+
+### Fixed
+- Fixed extension icon not displaying correctly in VS Code Marketplace
+- Corrected package configurations for proper asset inclusion
+- Updated repository references
+
 ## [0.1.1] - 2025-05-28
 
 ### Added
