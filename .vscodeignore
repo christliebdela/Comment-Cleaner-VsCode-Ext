@@ -10,7 +10,4 @@ __pycache__
 .DS_Store
 .vscode-test
 .vscodeignore
-out/
 *.vsix
-node_modules/
-.vscode-test/

@@ -1,16 +1,31 @@
-# The following files and directories should be ignored when packaging the extension for distribution
-.vscode
-node_modules
-*.pyc
-*.pyo
-*.pyd
-__pycache__
-*.log
-*.tmp
-.DS_Store
-.vscode-test
-.vscodeignore
+# Build output
 out/
-*.vsix
+dist/
+
+# Dependencies
 node_modules/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Logs
+*.log
+npm-debug.log*
+
+# Package files
+*.vsix
+
+# Environment
+.DS_Store
+.env
 .vscode-test/
+
+# Editor settings
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
+
+# Optional - typically committed, but can be excluded
+# package-lock.json
