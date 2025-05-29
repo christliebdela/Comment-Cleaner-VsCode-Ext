@@ -31,22 +31,26 @@ export class FilesViewProvider implements vscode.TreeDataProvider<FileItem> {
       }
 
       const cleanCurrentItem = new FileItem(
-        'Clean Current File',  // Remove the $(trash) prefix
+        'Clean Current File',
         vscode.TreeItemCollapsibleState.None,
         {
           command: 'ccp.cleanComments',
           title: 'Clean Current File'
-        }
+        },
+        undefined,
+        true // Mark as button
       );
       cleanCurrentItem.iconPath = new vscode.ThemeIcon('trash');
 
       const cleanMultipleItem = new FileItem(
-        'Clean Multiple Files',  // Remove the $(files) prefix
+        'Clean Multiple Files',
         vscode.TreeItemCollapsibleState.None,
         {
           command: 'ccp.cleanMultipleFiles',
           title: 'Clean Multiple Files'
-        }
+        },
+        undefined, 
+        true // Mark as button
       );
       cleanMultipleItem.iconPath = new vscode.ThemeIcon('files');
 
@@ -119,14 +123,22 @@ export class HistoryViewProvider implements vscode.TreeDataProvider<FileItem> {
       
       // Add filter option at top
       const filterItem = new FileItem(
-        'Filter by Language',  // Remove the $(filter) prefix
+        'Filter by Language',
         vscode.TreeItemCollapsibleState.None,
         {
           command: 'ccp.setLanguageFilter',
           title: 'Filter by Language'
-        }
+        },
+        undefined,
+        true // Mark as button
       );
+      // Add these lines to make the filter item correctly appear as a button
       filterItem.iconPath = new vscode.ThemeIcon('filter');
+      filterItem.contextValue = 'buttonItem';
+      // Add this line to apply CSS classes
+      filterItem.tooltip = 'Filter history by programming language';
+      // This is important to make VS Code apply custom styling
+      filterItem.description = '';
       items.push(filterItem);
 
       // Filter history items by language if filter is active
@@ -166,29 +178,44 @@ class FileItem extends vscode.TreeItem {
     public readonly label: string,
     public readonly collapsibleState: vscode.TreeItemCollapsibleState,
     public readonly command?: vscode.Command,
-    public readonly filePath?: string
+    public readonly filePath?: string,
+    public readonly isButton: boolean = false
   ) {
     super(label, collapsibleState);
     this.tooltip = filePath || label;
-    this.description = filePath ? path.dirname(filePath) : '';
     
-    // Add appropriate icons based on the action type
+    if (isButton) {
+      // Make items look like buttons
+      this.description = "";
+      this.tooltip = command?.title || label;
+    } else {
+      this.description = filePath ? path.dirname(filePath) : '';
+    }
+    
+    // Set appropriate icon based on action type
     if (label === 'Clean Current File') {
       this.iconPath = new vscode.ThemeIcon('trash');
+      this.contextValue = 'buttonItem';
     } else if (label === 'Clean Multiple Files') {
       this.iconPath = new vscode.ThemeIcon('files');
+      this.contextValue = 'buttonItem';
     } else if (label === 'Filter by Language') {
       this.iconPath = new vscode.ThemeIcon('filter');
-    } else if (label === 'Preview Comment Removal') {
-      this.iconPath = new vscode.ThemeIcon('eye');
-    } else if (label.startsWith('Compare with')) {
+      this.contextValue = 'buttonItem';
+    } else if (label === 'Compare with Backup') {
       this.iconPath = new vscode.ThemeIcon('split-horizontal');
-    } else if (label.startsWith('Restore from')) {
+      this.contextValue = 'buttonItem';
+    } else if (label === 'Restore from Backup') {
       this.iconPath = new vscode.ThemeIcon('history');
+      this.contextValue = 'buttonItem';
+    } else if (label === 'Remove from History') {
+      this.iconPath = new vscode.ThemeIcon('trash');
+      this.contextValue = 'buttonItem';
     } else {
       // For file entries in history
       if (filePath) {
         this.iconPath = vscode.ThemeIcon.File;
+        this.contextValue = 'historyItem';
       }
     }
   }

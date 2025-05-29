@@ -2,6 +2,13 @@
 
 All notable changes to the "Comment Cleaner Pro" extension will be documented in this file.
 
+## [0.1.3] - 2025-05-29
+- Added language-specific file extension mappings
+- Enhanced language filtering in the history view
+- Added proper icon support for different action items
+- Improved UI for buttons in the sidebar
+- Fixed display issues with history items
+
 ## [0.1.2] - 2025-05-28
 
 ### Fixed

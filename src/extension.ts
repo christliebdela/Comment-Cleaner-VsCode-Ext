@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { executeCcp } from './ccpRunner';
 import { selectAndProcessFiles } from './fileSelector';
 import { FilesViewProvider, HistoryViewProvider } from './ccpViewProvider';
+import { ButtonsViewProvider } from './ccpWebviewProvider';
 import * as path from 'path';
 import * as os from 'os';
 
@@ -9,10 +10,17 @@ export function activate(context: vscode.ExtensionContext) {
     // Create view providers
     const filesViewProvider = new FilesViewProvider();
     const historyViewProvider = new HistoryViewProvider();
+    const buttonsProvider = new ButtonsViewProvider(context.extensionUri);
     
     // Register tree data providers
     vscode.window.registerTreeDataProvider('ccpFiles', filesViewProvider);
     vscode.window.registerTreeDataProvider('ccpHistory', historyViewProvider);
+    context.subscriptions.push(
+        vscode.window.registerWebviewViewProvider(
+            ButtonsViewProvider.viewType, 
+            buttonsProvider
+        )
+    );
     
     // Register command for single file processing
     let cleanCurrentFile = vscode.commands.registerCommand('ccp.cleanComments', async () => {

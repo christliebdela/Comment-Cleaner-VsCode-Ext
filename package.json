@@ -2,7 +2,7 @@
   "name": "comment-cleaner-pro",
   "displayName": "Comment Cleaner Pro",
   "description": "A Visual Studio Code extension for removing comments from source code files across multiple programming languages.",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "publisher": "ChristliebDela",
   "icon": "media/icon.png",
   "engines": {
@@ -25,15 +25,15 @@
       },
       {
         "command": "ccp.compareWithBackup",
-        "title": "$(split-horizontal) Compare with Backup"
+        "title": "Compare with Backup"
       },
       {
         "command": "ccp.restoreFromBackup",
-        "title": "$(history) Restore from Backup"
+        "title": "Restore from Backup"
       },
       {
         "command": "ccp.removeFromHistory",
-        "title": "$(trash) Remove from History"
+        "title": "Remove from History"
       },
       {
         "command": "ccp.previewCleanComments",
@@ -85,7 +85,11 @@
         {
           "command": "ccp.clearHistory",
           "when": "view == ccpHistory",
-          "group": "navigation"
+          "group": "navigation",
+          "icon": {
+            "light": "media/light/clear.svg",
+            "dark": "media/dark/clear.svg"
+          }
         }
       ]
     },
@@ -101,8 +105,9 @@
     "views": {
       "comment-cleaner-pro": [
         {
-          "id": "ccpFiles",
-          "name": "Clean Comments"
+          "id": "ccpButtons",
+          "name": "Actions",
+          "type": "webview"
         },
         {
           "id": "ccpHistory",
@@ -139,7 +144,22 @@
           "description": "Preserve comments matching these regex patterns"
         }
       }
-    }
+    },
+    "customEditors": [
+      {
+        "viewType": "ccpFiles",
+        "displayName": "Comment Cleaner Pro",
+        "selector": [
+          {
+            "filenamePattern": "*"
+          }
+        ],
+        "priority": "default"
+      }
+    ],
+    "css": [
+      "./media/ccpStyles.css"
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

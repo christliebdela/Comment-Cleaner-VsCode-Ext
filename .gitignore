@@ -29,3 +29,6 @@ npm-debug.log*
 
 # Optional - typically committed, but can be excluded
 # package-lock.json
+
+# Video files
+videos/
