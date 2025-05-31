@@ -14,8 +14,10 @@ import logging
 import argparse
 import concurrent.futures
 import json
+import tokenize
 from abc import ABC, abstractmethod
 from typing import Dict, List, Tuple, Optional, Any, Set, Pattern
+from io import BytesIO
 
 # Configure logging
 logging.basicConfig(
@@ -28,77 +30,98 @@ logger = logging.getLogger(__name__)
 class CommentHandler(ABC):
     """Base abstract class for language-specific comment handlers."""
     
+    def __init__(self, language_key: str):
+        self.language_key = language_key
+        self.patterns = COMMENT_PATTERNS.get(language_key, {})
+    
     @abstractmethod
     def remove_comments(self, content: str, keep_doc_comments: bool = False) -> str:
         """Remove comments from the content."""
         pass
 
+    def get_patterns(self, include_doc_comments: bool = True) -> List[CommentPattern]:
+        """Get applicable patterns based on settings."""
+        if include_doc_comments:
+            return list(self.patterns.values())
+        else:
+            return [p for p in self.patterns.values() if not p.is_doc]
+
 
 class PythonCommentHandler(CommentHandler):
-    """Handler for Python comments."""
+    """Handler for Python comments using the tokenize module."""
+    
+    def __init__(self):
+        super().__init__('python')
     
     def remove_comments(self, content: str, keep_doc_comments: bool = False) -> str:
-        # Handle docstrings if not keeping doc comments
+        # Handle docstrings first if needed
         if not keep_doc_comments:
-            # First handle triple quotes - being careful not to remove them in strings
-            content = re.sub(r'^"""[\s\S]*?"""', '', content, flags=re.MULTILINE)
-            content = re.sub(r'^\'\'\'[\s\S]*?\'\'\'', '', content, flags=re.MULTILINE)
+            # Use regex for docstrings as tokenize doesn't separate docstrings from strings
+            for pattern_name in ['docstring_double', 'docstring_single']:
+                if pattern_name in self.patterns:
+                    pattern = self.patterns[pattern_name].pattern
+                    content = re.sub(pattern, '', content)
+        
+        # Use tokenize for line comments - much more reliable
+        result = []
+        try:
+            # tokenize requires bytes input
+            source_bytes = content.encode('utf-8')
             
-            # Handle inline docstrings with caution
-            content = re.sub(r'(?<!\")"""[\s\S]*?"""(?!")', '', content)
-            content = re.sub(r"(?<!')'''[\s\S]*?'''(?!')", '', content)
-        
-        # Handle line comments - avoid comments in strings
-        lines = []
-        string_active = False
-        string_delimiter = None
-        escape_active = False
-        
-        for line in content.split('\n'):
-            result = []
-            i = 0
-            while i < len(line):
-                char = line[i]
+            # Create tokens from the source
+            tokens = list(tokenize.tokenize(BytesIO(source_bytes).readline))
+            
+            # Reconstruct content without comments
+            last_token_end = (1, 0)  # Start at line 1, column 0
+            
+            for token in tokens:
+                token_type = token.type
+                token_string = token.string
+                token_start = token.start
+                token_end = token.end
                 
-                # Handle string delimiters
-                if char in ['"', "'"] and (i == 0 or line[i-1] != '\\' or escape_active):
-                    if not string_active:
-                        string_active = True
-                        string_delimiter = char
-                    elif string_delimiter == char:
-                        string_active = False
-                        string_delimiter = None
-                
-                # Track escape sequences
-                if char == '\\' and not escape_active:
-                    escape_active = True
-                else:
-                    escape_active = False
+                # Keep all non-comment tokens
+                if token_type != tokenize.COMMENT:
+                    # Add whitespace/newlines between tokens
+                    if token_start[0] > last_token_end[0]:
+                        # Add newlines if needed
+                        result.append('\n' * (token_start[0] - last_token_end[0]))
+                        last_token_end = (token_start[0], 0)
+                    elif token_start[1] > last_token_end[1]:
+                        # Add spaces if needed
+                        result.append(' ' * (token_start[1] - last_token_end[1]))
                     
-                # Handle comments
-                if char == '#' and not string_active:
-                    break
-                
-                result.append(char)
-                i += 1
-                
-            lines.append(''.join(result))
+                    # Add the token itself
+                    result.append(token_string)
+                    last_token_end = token_end
             
-        return '\n'.join(lines)
+            return ''.join(result)
+        except Exception as e:
+            logger.warning(f"Tokenizer failed: {e}. Falling back to regex-based parsing.")
+            # Fall back to regex-based approach
+            return super().remove_comments(content, keep_doc_comments)
 
 
 class HtmlCommentHandler(CommentHandler):
     """Handler for HTML comments."""
     
     def remove_comments(self, content: str, keep_doc_comments: bool = False) -> str:
+        # Find all comments first for debugging
+        comments = re.findall(r'<!--[\s\S]*?-->', content)
+        logger.info(f"Found {len(comments)} HTML comments")
+        if comments:
+            logger.info(f"First comment: {comments[0][:50]}...")
+            
         # Remove <!-- --> style comments
-        return re.sub(r'<!--[\s\S]*?-->', '', content)
+        result = re.sub(r'<!--[\s\S]*?-->', '', content)
+        return result
 
 
 class CStyleCommentHandler(CommentHandler):
     """Handler for C-style comments (C, C++, JavaScript, Java, etc.)."""
     
-    def __init__(self, has_line_comments: bool = True):
+    def __init__(self, language_key: str, has_line_comments: bool = True):
+        super().__init__(language_key)
         self.has_line_comments = has_line_comments
     
     def remove_comments(self, content: str, keep_doc_comments: bool = False) -> str:
@@ -190,7 +213,8 @@ class SqlCommentHandler(CommentHandler):
 class HashCommentHandler(CommentHandler):
     """Handler for languages that use # for line comments."""
     
-    def __init__(self, preserve_shebang: bool = False):
+    def __init__(self, language_key: str, preserve_shebang: bool = False):
+        super().__init__(language_key)
         self.preserve_shebang = preserve_shebang
     
     def remove_comments(self, content: str, keep_doc_comments: bool = False) -> str:
@@ -364,6 +388,39 @@ class CSharpCommentHandler(CommentHandler):
         return '\n'.join(result)
 
 
+class CommentPattern:
+    """Represents a comment pattern for a specific language."""
+    
+    def __init__(self, pattern: str, is_block: bool = False, is_doc: bool = False,
+                 needs_string_protection: bool = False, description: str = ""):
+        self.pattern = pattern
+        self.is_block = is_block  # Block vs line comment
+        self.is_doc = is_doc  # Documentation comment
+        self.needs_string_protection = needs_string_protection  # Whether this pattern needs protection from string contexts
+        self.description = description
+
+# Centralized pattern registry
+COMMENT_PATTERNS = {
+    'python': {
+        'line': CommentPattern(r'#.*$', description="Python line comment"),
+        'docstring_double': CommentPattern(r'"""[\s\S]*?"""', is_block=True, is_doc=True, needs_string_protection=True, 
+                                         description="Python triple double-quote docstring"),
+        'docstring_single': CommentPattern(r"'''[\s\S]*?'''", is_block=True, is_doc=True, needs_string_protection=True,
+                                         description="Python triple single-quote docstring"),
+    },
+    'javascript': {
+        'line': CommentPattern(r'//.*$', description="JavaScript line comment"),
+        'block': CommentPattern(r'/\*[\s\S]*?\*/', is_block=True, description="JavaScript block comment"),
+        'doc': CommentPattern(r'/\*\*[\s\S]*?\*/', is_block=True, is_doc=True, description="JavaScript doc comment"),
+    },
+    'html': {
+        'block': CommentPattern(r'<!--[\s\S]*?-->', is_block=True, description="HTML comment"),
+        'block_dotall': CommentPattern(r'(?s)<!--.*?-->', is_block=True, description="HTML comment with dotall flag"),
+    },
+    # Add patterns for other languages...
+}
+
+
 class CommentRemover:
     """Main class to orchestrate comment removal across different languages."""
     
@@ -444,14 +501,24 @@ class CommentRemover:
             r'%.*$',                 # MATLAB comments
             r'"""[\s\S]*?"""',       # Python docstrings (double quotes)
             r"'''[\s\S]*?'''",       # Python docstrings (single quotes)
-            r'<!--[\s\S]*?-->',      # HTML/XML comments
+            r'<!--[\s\S]*?-->',      # HTML/XML comments - standard pattern
+            r'(?s)<!--.*?-->',       # HTML comments with dotall flag for multi-line
             r'<#[\s\S]*?#>',         # PowerShell comments
             r'\{-[\s\S]*?-\}',       # Haskell comments
             r'=begin[\s\S]*?=end',   # Ruby block comments
             r'=begin[\s\S]*?=cut'    # Perl block comments
         ]
+        
+        # Run each pattern and see if it matches
         for pattern in patterns:
-            count += len(re.findall(pattern, content, re.MULTILINE))
+            matches = re.findall(pattern, content, re.MULTILINE)
+            count += len(matches)
+            if matches and len(matches) > 0:
+                logger.info(f"Found {len(matches)} comments with pattern '{pattern}'")
+                if len(matches) > 0:
+                    # Log the first match to help debugging
+                    logger.info(f"  First match: {matches[0][:50]}...")
+                
         return count
     
     def remove_comments(self, content: str, language: str, 
@@ -670,7 +737,7 @@ def parse_args():
     parser.add_argument('--threads', type=int, default=4, 
                       help='Number of threads for parallel processing')
     parser.add_argument('--quiet', action='store_true', help='Reduce output verbosity')
-    parser.add_argument('--dry-run', action='store_true', help='Analyze files without modifying them')
+    # Removed --dry-run option
     
     return parser.parse_args()
 

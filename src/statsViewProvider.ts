@@ -18,6 +18,15 @@ export class StatisticsViewProvider implements vscode.WebviewViewProvider {
             localResourceRoots: [this.extensionUri]
         };
         
+        // Add this message handler
+        webviewView.webview.onDidReceiveMessage(message => {
+            if (message.command === 'resetStats') {
+                this.statsManager.resetStats();
+                this.updateView();
+                vscode.window.showInformationMessage('Statistics have been reset');
+            }
+        });
+        
         this.updateView();
     }
     

@@ -140,18 +140,18 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
-    let clearHistory = vscode.commands.registerCommand('ccp.clearHistory', () => {
-        const response = vscode.window.showInformationMessage(
+    let clearHistory = vscode.commands.registerCommand('ccp.clearHistory', async () => {
+        const answer = await vscode.window.showInformationMessage(
             'Are you sure you want to clear the history?', 
+            { modal: true },  // Make it a modal dialog for better UX
             'Yes', 'No'
         );
         
-        response.then(answer => {
-            if (answer === 'Yes') {
-                historyViewProvider.clearHistory();
-                vscode.window.showInformationMessage('History cleared');
-            }
-        });
+        if (answer === 'Yes') {
+            // Make sure this method exists and is being called properly
+            historyViewProvider.clearHistory();
+            vscode.window.showInformationMessage('History cleared');
+        }
     });
 
     // Register command for dry run on single file

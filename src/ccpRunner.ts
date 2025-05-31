@@ -35,13 +35,13 @@ export function runCcpScript(filePath: string, noBackup: boolean, force: boolean
 export async function executeCcp(filePath: string, noBackup: boolean, force: boolean, dryRun: boolean = false): Promise<any> {
     try {
         const output = await runCcpScript(filePath, noBackup, force, dryRun);
-        // Log the output to the console
-        console.log(output);
+        console.log("Python script output:", output);
         
-        // If this was a dry run, parse the results
-        if (dryRun) {
-            return parseDryRunResults(output, filePath);
-        }
+        // Parse results for both dry runs and regular cleaning operations
+        const results = dryRun ? parseDryRunResults(output, filePath) : parseCleanResults(output, filePath);
+        
+        // Return the results for both operations
+        return results;
     } catch (error) {
         vscode.window.showErrorMessage(`Failed to run CCP: ${error}`);
         throw error;
@@ -56,12 +56,42 @@ function parseDryRunResults(output: string, filePath: string): any {
         commentCount: 0,
         linesRemoved: 0,
         sizeReduction: 0,
-        sizePercentage: 0
+        sizePercentage: 0,
+        dryRun: true  // Important: Mark as dry run
     };
     
-    // Regular expressions to extract statistics
-    const commentMatch = output.match(/\[DRY RUN\] Would have Removed approximately (\d+) comments \((\d+) lines\)/);
-    const sizeMatch = output.match(/\[DRY RUN\] Would have File size reduced by (\d+) bytes \(([0-9.]+)%\)/);
+    // Updated patterns to match actual Python output
+    const commentMatch = output.match(/\[DRY\s+RUN\]\s+Would\s+have\s+Removed\s+(\d+)\s+comments\s+\((\d+)\s+lines\)/i);
+    const sizeMatch = output.match(/\[DRY\s+RUN\]\s+Would\s+have\s+File\s+size\s+reduced\s+by\s+(\d+)\s+bytes\s+\(([0-9.]+)%\)/i);
+    
+    if (commentMatch) {
+        results.commentCount = parseInt(commentMatch[1]);
+        results.linesRemoved = parseInt(commentMatch[2]);
+    }
+    
+    if (sizeMatch) {
+        results.sizeReduction = parseInt(sizeMatch[1]);
+        results.sizePercentage = parseFloat(sizeMatch[2]);
+    }
+    
+    return results;
+}
+
+// Make sure this function exists and works correctly
+function parseCleanResults(output: string, filePath: string): any {
+    const results: any = {
+        fileName: path.basename(filePath),
+        filePath: filePath,
+        commentCount: 0,
+        linesRemoved: 0,
+        sizeReduction: 0,
+        sizePercentage: 0,
+        dryRun: false
+    };
+    
+    // Match patterns with more flexible spacing
+    const commentMatch = output.match(/Removed\s+approximately\s+(\d+)\s+comments\s+\((\d+)\s+lines\)/i);
+    const sizeMatch = output.match(/File\s+size\s+reduced\s+by\s+(\d+)\s+bytes\s+\(([0-9.]+)%\)/i);
     
     if (commentMatch) {
         results.commentCount = parseInt(commentMatch[1]);

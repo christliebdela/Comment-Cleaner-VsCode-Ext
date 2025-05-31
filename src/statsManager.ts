@@ -49,15 +49,22 @@ export class StatisticsManager {
     
     public updateStats(fileResults: any[]): void {
         if (!fileResults || fileResults.length === 0) {
+            console.log("No file results to update stats with");
             return;
         }
         
-        const totalComments = fileResults.reduce((sum, file) => sum + file.commentCount, 0);
-        const totalLines = fileResults.reduce((sum, file) => sum + file.linesRemoved, 0);
-        const totalSize = fileResults.reduce((sum, file) => sum + file.sizeReduction, 0);
+        // Log incoming results for debugging
+        console.log("Updating stats with:", fileResults);
+        
+        const totalComments = fileResults.reduce((sum, file) => sum + (file.commentCount || 0), 0);
+        const totalLines = fileResults.reduce((sum, file) => sum + (file.linesRemoved || 0), 0);
+        const totalSize = fileResults.reduce((sum, file) => sum + (file.sizeReduction || 0), 0);
+        
+        console.log(`Stats summary: ${totalComments} comments, ${totalLines} lines, ${totalSize} bytes`);
         
         // Don't update stats for dry runs
         if (fileResults[0].dryRun) {
+            console.log("Skipping stats update for dry run");
             return;
         }
         
@@ -67,14 +74,20 @@ export class StatisticsManager {
         this.stats.totalSizeReduction += totalSize;
         
         // Calculate weighted average reduction percentage
-        const totalOriginalSize = fileResults.reduce((sum, file) => 
-            sum + (file.sizeReduction / (file.sizePercentage / 100)), 0);
+        if (totalSize > 0) {
+            const weightedPercentage = fileResults.reduce((sum, file) => {
+                if (file.sizePercentage > 0) {
+                    return sum + (file.sizeReduction * file.sizePercentage);
+                }
+                return sum;
+            }, 0) / totalSize;
             
-        if (totalOriginalSize > 0) {
             this.stats.averageReductionPercent = 
                 ((this.stats.averageReductionPercent * (this.stats.filesProcessed - fileResults.length)) + 
-                (totalSize / totalOriginalSize * 100)) / this.stats.filesProcessed;
+                weightedPercentage) / this.stats.filesProcessed;
         }
+        
+        console.log("Updated stats:", this.stats);
         
         this.stats.lastUpdated = new Date();
         this.saveStats();
