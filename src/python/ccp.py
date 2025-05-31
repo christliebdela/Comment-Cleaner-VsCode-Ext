@@ -27,6 +27,96 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+class CommentPattern:
+    """Represents a comment pattern for a specific language."""
+    
+    def __init__(self, pattern: str, is_block: bool = False, is_doc: bool = False,
+                 needs_string_protection: bool = False, description: str = ""):
+        self.pattern = pattern
+        self.is_block = is_block  # Block vs line comment
+        self.is_doc = is_doc  # Documentation comment
+        self.needs_string_protection = needs_string_protection  # Whether this pattern needs protection from string contexts
+        self.description = description
+
+
+# Centralized pattern registry
+COMMENT_PATTERNS = {
+    'python': {
+        'line': CommentPattern(r'#.*$', description="Python line comment"),
+        'docstring_double': CommentPattern(r'"""[\s\S]*?"""', is_block=True, is_doc=True, 
+                                         needs_string_protection=True, 
+                                         description="Python triple double-quote docstring"),
+        'docstring_single': CommentPattern(r"'''[\s\S]*?'''", is_block=True, is_doc=True, 
+                                         needs_string_protection=True,
+                                         description="Python triple single-quote docstring"),
+    },
+    'javascript': {
+        'line': CommentPattern(r'//.*$', description="JavaScript line comment"),
+        'block': CommentPattern(r'/\*[\s\S]*?\*/', is_block=True, description="JavaScript block comment"),
+        'doc': CommentPattern(r'/\*\*[\s\S]*?\*/', is_block=True, is_doc=True, 
+                            description="JavaScript doc comment"),
+    },
+    'typescript': {
+        'line': CommentPattern(r'//.*$', description="TypeScript line comment"),
+        'block': CommentPattern(r'/\*[\s\S]*?\*/', is_block=True, description="TypeScript block comment"),
+        'doc': CommentPattern(r'/\*\*[\s\S]*?\*/', is_block=True, is_doc=True, 
+                            description="TypeScript doc comment"),
+    },
+    'html': {
+        'block': CommentPattern(r'<!--[\s\S]*?-->', is_block=True, description="HTML comment"),
+        'block_dotall': CommentPattern(r'(?s)<!--.*?-->', is_block=True, 
+                                     description="HTML comment with dotall flag"),
+    },
+    'c': {
+        'line': CommentPattern(r'//.*$', description="C line comment"),
+        'block': CommentPattern(r'/\*[\s\S]*?\*/', is_block=True, description="C block comment"),
+    },
+    'cpp': {
+        'line': CommentPattern(r'//.*$', description="C++ line comment"),
+        'block': CommentPattern(r'/\*[\s\S]*?\*/', is_block=True, description="C++ block comment"),
+    },
+    'css': {
+        'block': CommentPattern(r'/\*[\s\S]*?\*/', is_block=True, description="CSS comment"),
+    },
+    'sql': {
+        'line': CommentPattern(r'--.*$', description="SQL line comment"),
+        'block': CommentPattern(r'/\*[\s\S]*?\*/', is_block=True, description="SQL block comment"),
+    },
+    'bash': {
+        'line': CommentPattern(r'#.*$', description="Bash line comment"),
+    },
+    'powershell': {
+        'line': CommentPattern(r'#.*$', description="PowerShell line comment"),
+        'block': CommentPattern(r'<#[\s\S]*?#>', is_block=True, description="PowerShell block comment"),
+    },
+    'lua': {
+        'line': CommentPattern(r'--.*$', description="Lua line comment"),
+        'block': CommentPattern(r'--\[\[[\s\S]*?]]', is_block=True, description="Lua block comment"),
+    },
+    'haskell': {
+        'line': CommentPattern(r'--.*$', description="Haskell line comment"),
+        'block': CommentPattern(r'\{-[\s\S]*?-\}', is_block=True, description="Haskell block comment"),
+    },
+    'ruby': {
+        'line': CommentPattern(r'#.*$', description="Ruby line comment"),
+        'block': CommentPattern(r'=begin[\s\S]*?=end', is_block=True, description="Ruby block comment"),
+    },
+    'perl': {
+        'line': CommentPattern(r'#.*$', description="Perl line comment"),
+        'block': CommentPattern(r'=begin[\s\S]*?=cut', is_block=True, description="Perl block comment"),
+    },
+    'matlab': {
+        'line': CommentPattern(r'%.*$', description="MATLAB line comment"),
+        'block': CommentPattern(r'%\{[\s\S]*?%\}', is_block=True, description="MATLAB block comment"),
+    },
+    'csharp': {
+        'line': CommentPattern(r'//.*$', description="C# line comment"),
+        'block': CommentPattern(r'/\*[\s\S]*?\*/', is_block=True, description="C# block comment"),
+        'doc': CommentPattern(r'///.*$', is_doc=True, description="C# XML documentation comment"),
+    }
+}
+
+
 class CommentHandler(ABC):
     """Base abstract class for language-specific comment handlers."""
     
@@ -99,30 +189,30 @@ class PythonCommentHandler(CommentHandler):
         except Exception as e:
             logger.warning(f"Tokenizer failed: {e}. Falling back to regex-based parsing.")
             # Fall back to regex-based approach
-            return super().remove_comments(content, keep_doc_comments)
+            content = re.sub(r'#.*$', '', content, flags=re.MULTILINE)
+            return content
 
 
 class HtmlCommentHandler(CommentHandler):
     """Handler for HTML comments."""
     
+    def __init__(self):
+        super().__init__('html')
+    
     def remove_comments(self, content: str, keep_doc_comments: bool = False) -> str:
-        # Find all comments first for debugging
-        comments = re.findall(r'<!--[\s\S]*?-->', content)
-        logger.info(f"Found {len(comments)} HTML comments")
-        if comments:
-            logger.info(f"First comment: {comments[0][:50]}...")
-            
-        # Remove <!-- --> style comments
-        result = re.sub(r'<!--[\s\S]*?-->', '', content)
-        return result
+        for pattern_name in ['block', 'block_dotall']:
+            if pattern_name in self.patterns:
+                pattern = self.patterns[pattern_name].pattern
+                content = re.sub(pattern, '', content)
+        
+        return content
 
 
 class CStyleCommentHandler(CommentHandler):
     """Handler for C-style comments (C, C++, JavaScript, Java, etc.)."""
     
-    def __init__(self, language_key: str, has_line_comments: bool = True):
+    def __init__(self, language_key: str = 'javascript'):
         super().__init__(language_key)
-        self.has_line_comments = has_line_comments
     
     def remove_comments(self, content: str, keep_doc_comments: bool = False) -> str:
         # Handle string literals to prevent removing comments inside strings
@@ -135,7 +225,8 @@ class CStyleCommentHandler(CommentHandler):
         string_placeholders = []
         
         while i < len(content):
-            if content[i:i+2] == '//' and not in_string and self.has_line_comments:
+            # Check for line comments
+            if content[i:i+2] == '//' and not in_string and 'line' in self.patterns:
                 # Found line comment
                 line_end = content.find('\n', i)
                 if line_end == -1:
@@ -143,9 +234,10 @@ class CStyleCommentHandler(CommentHandler):
                 else:
                     i = line_end  # Move to next line
                     
+            # Check for block comments
             elif content[i:i+2] == '/*' and not in_string:
                 # Found block comment
-                if content[i:i+3] == '/**' and keep_doc_comments:
+                if content[i:i+3] == '/**' and keep_doc_comments and 'doc' in self.patterns:
                     # Preserve doc comment
                     chunks.append(content[i:i+3])
                     i += 3
@@ -156,7 +248,8 @@ class CStyleCommentHandler(CommentHandler):
                         i = len(content)  # Unterminated comment
                     else:
                         i = end + 2  # Skip comment and closing tag
-                        
+            
+            # String handling
             elif content[i] in ['"', "'"] and (i == 0 or content[i-1] != '\\'):
                 # String handling
                 if not in_string:
@@ -196,14 +289,18 @@ class CStyleCommentHandler(CommentHandler):
 class SqlCommentHandler(CommentHandler):
     """Handler for SQL comments."""
     
+    def __init__(self):
+        super().__init__('sql')
+    
     def remove_comments(self, content: str, keep_doc_comments: bool = False) -> str:
-        # Remove /* */ block comments
-        content = re.sub(r'/\*[\s\S]*?\*/', '', content)
+        # Remove block comments
+        if 'block' in self.patterns:
+            content = re.sub(self.patterns['block'].pattern, '', content)
         
-        # Handle -- line comments
+        # Handle line comments
         result = []
         for line in content.split('\n'):
-            if '--' in line:
+            if '--' in line and 'line' in self.patterns:
                 line = line.split('--')[0]
             result.append(line)
             
@@ -213,7 +310,7 @@ class SqlCommentHandler(CommentHandler):
 class HashCommentHandler(CommentHandler):
     """Handler for languages that use # for line comments."""
     
-    def __init__(self, language_key: str, preserve_shebang: bool = False):
+    def __init__(self, language_key: str = 'bash', preserve_shebang: bool = False):
         super().__init__(language_key)
         self.preserve_shebang = preserve_shebang
     
@@ -237,14 +334,18 @@ class HashCommentHandler(CommentHandler):
 class LuaCommentHandler(CommentHandler):
     """Handler for Lua comments."""
     
+    def __init__(self):
+        super().__init__('lua')
+    
     def remove_comments(self, content: str, keep_doc_comments: bool = False) -> str:
-        # Remove --[[ ]] block comments
-        content = re.sub(r'--\[\[[\s\S]*?]]', '', content)
+        # Remove block comments
+        if 'block' in self.patterns:
+            content = re.sub(self.patterns['block'].pattern, '', content)
         
-        # Handle -- line comments
+        # Handle line comments
         result = []
         for line in content.split('\n'):
-            if '--' in line:
+            if '--' in line and 'line' in self.patterns:
                 line = line.split('--')[0]
             result.append(line)
             
@@ -254,14 +355,18 @@ class LuaCommentHandler(CommentHandler):
 class HaskellCommentHandler(CommentHandler):
     """Handler for Haskell comments."""
     
+    def __init__(self):
+        super().__init__('haskell')
+    
     def remove_comments(self, content: str, keep_doc_comments: bool = False) -> str:
-        # Remove {- -} block comments
-        content = re.sub(r'\{-[\s\S]*?-\}', '', content)
+        # Remove block comments
+        if 'block' in self.patterns:
+            content = re.sub(self.patterns['block'].pattern, '', content)
         
-        # Handle -- line comments
+        # Handle line comments
         result = []
         for line in content.split('\n'):
-            if '--' in line:
+            if '--' in line and 'line' in self.patterns:
                 line = line.split('--')[0]
             result.append(line)
             
@@ -271,14 +376,18 @@ class HaskellCommentHandler(CommentHandler):
 class MatlabCommentHandler(CommentHandler):
     """Handler for MATLAB comments."""
     
+    def __init__(self):
+        super().__init__('matlab')
+    
     def remove_comments(self, content: str, keep_doc_comments: bool = False) -> str:
-        # Remove %{ %} block comments
-        content = re.sub(r'%\{[\s\S]*?%\}', '', content)
+        # Remove block comments
+        if 'block' in self.patterns:
+            content = re.sub(self.patterns['block'].pattern, '', content)
         
-        # Handle % line comments
+        # Handle line comments
         result = []
         for line in content.split('\n'):
-            if '%' in line:
+            if '%' in line and 'line' in self.patterns:
                 line = line.split('%')[0]
             result.append(line)
             
@@ -288,14 +397,18 @@ class MatlabCommentHandler(CommentHandler):
 class PowerShellCommentHandler(CommentHandler):
     """Handler for PowerShell comments."""
     
+    def __init__(self):
+        super().__init__('powershell')
+    
     def remove_comments(self, content: str, keep_doc_comments: bool = False) -> str:
-        # Remove <# #> block comments
-        content = re.sub(r'<#[\s\S]*?#>', '', content)
+        # Remove block comments
+        if 'block' in self.patterns:
+            content = re.sub(self.patterns['block'].pattern, '', content)
         
-        # Handle # line comments
+        # Handle line comments
         result = []
         for line in content.split('\n'):
-            if '#' in line:
+            if '#' in line and 'line' in self.patterns:
                 line = line.split('#')[0]
             result.append(line)
             
@@ -305,14 +418,18 @@ class PowerShellCommentHandler(CommentHandler):
 class RubyCommentHandler(CommentHandler):
     """Handler for Ruby comments."""
     
+    def __init__(self):
+        super().__init__('ruby')
+    
     def remove_comments(self, content: str, keep_doc_comments: bool = False) -> str:
-        # Remove =begin ... =end block comments
-        content = re.sub(r'=begin[\s\S]*?=end', '', content)
+        # Remove block comments
+        if 'block' in self.patterns:
+            content = re.sub(self.patterns['block'].pattern, '', content)
         
-        # Handle # line comments (preserve shebang)
+        # Handle line comments (preserve shebang)
         result = []
         for line in content.split('\n'):
-            if '#' in line:
+            if '#' in line and 'line' in self.patterns:
                 # Preserve shebang lines (both #! and # ! formats)
                 stripped = line.strip()
                 if not (stripped.startswith('#!') or stripped.startswith('# !')):
@@ -326,14 +443,18 @@ class RubyCommentHandler(CommentHandler):
 class PerlCommentHandler(CommentHandler):
     """Handler for Perl comments."""
     
+    def __init__(self):
+        super().__init__('perl')
+    
     def remove_comments(self, content: str, keep_doc_comments: bool = False) -> str:
-        # Remove =begin ... =cut block comments
-        content = re.sub(r'=begin[\s\S]*?=cut', '', content)
+        # Remove block comments
+        if 'block' in self.patterns:
+            content = re.sub(self.patterns['block'].pattern, '', content)
         
-        # Handle # line comments (preserving shebangs)
+        # Handle line comments (preserving shebangs)
         result = []
         for line in content.split('\n'):
-            if '#' in line:
+            if '#' in line and 'line' in self.patterns:
                 if line.strip().startswith('#!'):
                     result.append(line)
                 else:
@@ -348,8 +469,11 @@ class PerlCommentHandler(CommentHandler):
 class PhpCommentHandler(CommentHandler):
     """Handler for PHP comments."""
     
+    def __init__(self):
+        super().__init__('php')
+    
     def remove_comments(self, content: str, keep_doc_comments: bool = False) -> str:
-        # Remove /* */ block comments
+        # Remove block comments
         content = re.sub(r'/\*[\s\S]*?\*/', '', content)
         
         result = []
@@ -370,55 +494,26 @@ class PhpCommentHandler(CommentHandler):
 class CSharpCommentHandler(CommentHandler):
     """Handler for C# comments."""
     
+    def __init__(self):
+        super().__init__('csharp')
+    
     def remove_comments(self, content: str, keep_doc_comments: bool = False) -> str:
-        # Remove /* */ block comments
-        content = re.sub(r'/\*[\s\S]*?\*/', '', content)
+        # Remove block comments
+        if 'block' in self.patterns:
+            content = re.sub(self.patterns['block'].pattern, '', content)
         
         # Remove XML documentation comments (///)
-        if not keep_doc_comments:
-            content = re.sub(r'///.*$', '', content, flags=re.MULTILINE)
+        if not keep_doc_comments and 'doc' in self.patterns:
+            content = re.sub(self.patterns['doc'].pattern, '', content, flags=re.MULTILINE)
         
-        # Handle // line comments
+        # Handle line comments
         result = []
         for line in content.split('\n'):
-            if '//' in line:
+            if '//' in line and 'line' in self.patterns:
                 line = line.split('//')[0]
             result.append(line)
             
         return '\n'.join(result)
-
-
-class CommentPattern:
-    """Represents a comment pattern for a specific language."""
-    
-    def __init__(self, pattern: str, is_block: bool = False, is_doc: bool = False,
-                 needs_string_protection: bool = False, description: str = ""):
-        self.pattern = pattern
-        self.is_block = is_block  # Block vs line comment
-        self.is_doc = is_doc  # Documentation comment
-        self.needs_string_protection = needs_string_protection  # Whether this pattern needs protection from string contexts
-        self.description = description
-
-# Centralized pattern registry
-COMMENT_PATTERNS = {
-    'python': {
-        'line': CommentPattern(r'#.*$', description="Python line comment"),
-        'docstring_double': CommentPattern(r'"""[\s\S]*?"""', is_block=True, is_doc=True, needs_string_protection=True, 
-                                         description="Python triple double-quote docstring"),
-        'docstring_single': CommentPattern(r"'''[\s\S]*?'''", is_block=True, is_doc=True, needs_string_protection=True,
-                                         description="Python triple single-quote docstring"),
-    },
-    'javascript': {
-        'line': CommentPattern(r'//.*$', description="JavaScript line comment"),
-        'block': CommentPattern(r'/\*[\s\S]*?\*/', is_block=True, description="JavaScript block comment"),
-        'doc': CommentPattern(r'/\*\*[\s\S]*?\*/', is_block=True, is_doc=True, description="JavaScript doc comment"),
-    },
-    'html': {
-        'block': CommentPattern(r'<!--[\s\S]*?-->', is_block=True, description="HTML comment"),
-        'block_dotall': CommentPattern(r'(?s)<!--.*?-->', is_block=True, description="HTML comment with dotall flag"),
-    },
-    # Add patterns for other languages...
-}
 
 
 class CommentRemover:
@@ -429,20 +524,20 @@ class CommentRemover:
         self._handlers = {
             'python': PythonCommentHandler(),
             'html': HtmlCommentHandler(),
-            'javascript': CStyleCommentHandler(),
-            'typescript': CStyleCommentHandler(),
-            'c': CStyleCommentHandler(),
-            'cpp': CStyleCommentHandler(),
-            'java': CStyleCommentHandler(),
-            'css': CStyleCommentHandler(),
-            'go': CStyleCommentHandler(),
-            'swift': CStyleCommentHandler(),
-            'rust': CStyleCommentHandler(),
-            'kotlin': CStyleCommentHandler(),
-            'dart': CStyleCommentHandler(),
-            'bash': HashCommentHandler(preserve_shebang=True),
-            'yaml': HashCommentHandler(),
-            'r': HashCommentHandler(),
+            'javascript': CStyleCommentHandler('javascript'),
+            'typescript': CStyleCommentHandler('typescript'),
+            'c': CStyleCommentHandler('c'),
+            'cpp': CStyleCommentHandler('cpp'),
+            'java': CStyleCommentHandler('java'),
+            'css': CStyleCommentHandler('css'),
+            'go': CStyleCommentHandler('go'),
+            'swift': CStyleCommentHandler('swift'),
+            'rust': CStyleCommentHandler('rust'),
+            'kotlin': CStyleCommentHandler('kotlin'),
+            'dart': CStyleCommentHandler('dart'),
+            'bash': HashCommentHandler('bash', preserve_shebang=True),
+            'yaml': HashCommentHandler('yaml'),
+            'r': HashCommentHandler('r'),
             'powershell': PowerShellCommentHandler(),
             'lua': LuaCommentHandler(),
             'perl': PerlCommentHandler(),
@@ -515,9 +610,10 @@ class CommentRemover:
             count += len(matches)
             if matches and len(matches) > 0:
                 logger.info(f"Found {len(matches)} comments with pattern '{pattern}'")
-                if len(matches) > 0:
-                    # Log the first match to help debugging
-                    logger.info(f"  First match: {matches[0][:50]}...")
+                if len(matches) > 0 and logger.level <= logging.INFO:
+                    # Log the first match to help debugging (truncated for readability)
+                    first_match = matches[0][:50] + "..." if len(matches[0]) > 50 else matches[0]
+                    logger.info(f"  Example: {first_match}")
                 
         return count
     
@@ -544,7 +640,7 @@ class CommentRemover:
     def process_file(self, file_path: str, backup: bool = True, 
                     force: bool = False, preserve_todo: bool = False,
                     preserve_patterns: Optional[List[str]] = None,
-                    keep_doc_comments: bool = False, dry_run: bool = False) -> Tuple[bool, Optional[Dict[str, Any]]]:
+                    keep_doc_comments: bool = False) -> Tuple[bool, Optional[Dict[str, Any]]]:
         """
         Process a file to remove comments while handling backups and errors.
         
@@ -555,7 +651,6 @@ class CommentRemover:
             preserve_todo: Whether to preserve TODO and FIXME comments
             preserve_patterns: List of regex patterns for comments to preserve
             keep_doc_comments: Whether to preserve documentation comments
-            dry_run: If True, analyze but don't modify files
             
         Returns:
             Tuple of (success, stats_dict)
@@ -567,11 +662,11 @@ class CommentRemover:
             logger.info(f"Skipping {file_path}: Unknown file type. Use --force to process anyway.")
             return (False, None)
         
-        logger.info(f"{'Analyzing' if dry_run else 'Processing'}: {file_path} (detected as {language})")
+        logger.info(f"Processing: {file_path} (detected as {language})")
 
-        # Create backup if requested and not in dry run mode
+        # Create backup if requested
         backup_path = None
-        if backup and not dry_run:
+        if backup:
             backup_path = file_path + '.bak'
             shutil.copy2(file_path, backup_path)
             logger.info(f"  Backup created: {backup_path}")
@@ -599,27 +694,23 @@ class CommentRemover:
             cleaned_lines = cleaned.count('\n') + 1
             lines_removed = original_lines - cleaned_lines
             
-            if not dry_run:
-                # Write cleaned content back to file
-                with open(file_path, 'w', encoding='utf-8') as f:
-                    f.write(cleaned)
+            # Write cleaned content back to file
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(cleaned)
             
             # Calculate statistics
-            # For dry run, calculate the theoretical new size
-            new_size = len(cleaned.encode('utf-8')) if dry_run else os.path.getsize(file_path)
+            new_size = os.path.getsize(file_path)
             size_reduction = original_size - new_size
             percentage = (size_reduction / original_size) * 100 if original_size > 0 else 0
             
-            mode_prefix = "[DRY RUN] Would have " if dry_run else ""
-            logger.info(f"  {mode_prefix}Removed approximately {comment_count} comments ({lines_removed} lines)")
-            logger.info(f"  {mode_prefix}File size reduced by {size_reduction} bytes ({percentage:.1f}%)")
+            logger.info(f"  Removed approximately {comment_count} comments ({lines_removed} lines)")
+            logger.info(f"  File size reduced by {size_reduction} bytes ({percentage:.1f}%)")
             
             return True, {
                 'commentCount': comment_count,
                 'linesRemoved': lines_removed,
                 'sizeReduction': size_reduction,
-                'sizePercentage': percentage,
-                'dryRun': dry_run
+                'sizePercentage': percentage
             }
         except UnicodeDecodeError as e:
             logger.error(f"  Error: Unable to decode {file_path}. File may use unsupported encoding: {e}")
@@ -628,9 +719,9 @@ class CommentRemover:
             logger.error(f"  Error: Permission denied for {file_path}. Check file permissions.")
             return (False, None)
         except Exception as e:
-            logger.error(f"  Error {'analyzing' if dry_run else 'processing'} {file_path}: {e}")
-            # Restore from backup if available and not in dry run
-            if backup and backup_path and not dry_run:
+            logger.error(f"  Error processing {file_path}: {e}")
+            # Restore from backup if available
+            if backup and backup_path:
                 try:
                     shutil.copy2(backup_path, file_path)
                     logger.info(f"  Restored from backup due to error")
@@ -647,8 +738,8 @@ class BatchProcessor:
         self.max_workers = max_workers
     
     def process_files(self, files: List[str], backup: bool = True, force: bool = False,
-                     preserve_todo: bool = False, preserve_patterns: Optional[List[str]] = None,
-                     keep_doc_comments: bool = False, dry_run: bool = False) -> Tuple[int, List[Dict[str, Any]]]:
+                    preserve_todo: bool = False, preserve_patterns: Optional[List[str]] = None,
+                    keep_doc_comments: bool = False) -> Tuple[int, List[Dict[str, Any]]]:
         """
         Process multiple files in parallel.
         
@@ -659,7 +750,6 @@ class BatchProcessor:
             preserve_todo: Whether to preserve TODO and FIXME comments
             preserve_patterns: List of regex patterns for comments to preserve
             keep_doc_comments: Whether to preserve documentation comments
-            dry_run: If True, analyze but don't modify files
             
         Returns:
             Tuple of (success_count, results_list)
@@ -671,7 +761,7 @@ class BatchProcessor:
         results = []
         
         total_files = len(files)
-        logger.info(f"{'Analyzing' if dry_run else 'Processing'} {total_files} files with {self.max_workers} threads")
+        logger.info(f"Processing {total_files} files with {self.max_workers} threads")
         
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             # Submit all files for processing
@@ -683,8 +773,7 @@ class BatchProcessor:
                     force,
                     preserve_todo,
                     preserve_patterns,
-                    keep_doc_comments,
-                    dry_run
+                    keep_doc_comments
                 ): file_path for file_path in files
             }
             
@@ -705,20 +794,19 @@ class BatchProcessor:
                     logger.info(f"Progress: {processed}/{total_files} files ({(processed/total_files)*100:.1f}%)")
                     
                 except Exception as e:
-                    logger.error(f"Error {'analyzing' if dry_run else 'processing'} {file_path}: {e}")
+                    logger.error(f"Error processing {file_path}: {e}")
         
         # Show summary statistics
         if results:
             total_comments = sum(r['commentCount'] for r in results)
             total_lines = sum(r['linesRemoved'] for r in results)
             total_reduction = sum(r['sizeReduction'] for r in results)
-            mode_prefix = "[DRY RUN] Would have " if dry_run else ""
             logger.info(f"\nSummary:")
-            logger.info(f"- {mode_prefix}Removed approximately {total_comments} comments")
-            logger.info(f"- {mode_prefix}Removed {total_lines} lines of comments")
-            logger.info(f"- {mode_prefix}Reduced file sizes by {total_reduction} bytes")
+            logger.info(f"- Removed approximately {total_comments} comments")
+            logger.info(f"- Removed {total_lines} lines of comments")
+            logger.info(f"- Reduced file sizes by {total_reduction} bytes")
         
-        logger.info(f"Done! Successfully {'analyzed' if dry_run else 'processed'} {success_count} of {len(files)} files.")
+        logger.info(f"Done! Successfully processed {success_count} of {len(files)} files.")
         
         return (success_count, results)
 
@@ -737,7 +825,6 @@ def parse_args():
     parser.add_argument('--threads', type=int, default=4, 
                       help='Number of threads for parallel processing')
     parser.add_argument('--quiet', action='store_true', help='Reduce output verbosity')
-    # Removed --dry-run option
     
     return parser.parse_args()
 
@@ -785,8 +872,7 @@ def main():
         force=args.force,
         preserve_todo=args.preserve_todo,
         preserve_patterns=preserve_patterns,
-        keep_doc_comments=args.keep_doc_comments,
-        dry_run=args.dry_run
+        keep_doc_comments=args.keep_doc_comments
     )
 
 

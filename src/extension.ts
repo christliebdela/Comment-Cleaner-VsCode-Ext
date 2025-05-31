@@ -3,7 +3,6 @@ import { executeCcp } from './ccpRunner';
 import { selectAndProcessFiles } from './fileSelector';
 import { FilesViewProvider, HistoryViewProvider } from './ccpViewProvider';
 import { ButtonsViewProvider } from './ccpWebviewProvider';
-import { ResultsViewProvider } from './resultsViewProvider';
 import { StatisticsManager } from './statsManager';
 import { StatisticsViewProvider } from './statsViewProvider';
 import * as path from 'path';
@@ -17,7 +16,6 @@ export function activate(context: vscode.ExtensionContext) {
     const filesViewProvider = new FilesViewProvider();
     const historyViewProvider = new HistoryViewProvider();
     const buttonsProvider = new ButtonsViewProvider(context.extensionUri);
-    const resultsProvider = new ResultsViewProvider(context.extensionUri);
     const statsViewProvider = new StatisticsViewProvider(context.extensionUri, statsManager);
     
     // Register tree data providers
@@ -27,12 +25,6 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.registerWebviewViewProvider(
             ButtonsViewProvider.viewType, 
             buttonsProvider
-        )
-    );
-    context.subscriptions.push(
-        vscode.window.registerWebviewViewProvider(
-            ResultsViewProvider.viewType, 
-            resultsProvider
         )
     );
     context.subscriptions.push(
@@ -154,37 +146,6 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
-    // Register command for dry run on single file
-    let dryRunCurrentFile = vscode.commands.registerCommand('ccp.dryRun', async () => {
-        const editor = vscode.window.activeTextEditor;
-        if (!editor) {
-            vscode.window.showErrorMessage('No active editor found.');
-            return;
-        }
-
-        const document = editor.document;
-        await document.save();
-        
-        try {
-            const results = await executeCcp(document.fileName, true, false, true);
-            
-            // Show results in the sidebar
-            vscode.commands.executeCommand('setContext', 'ccpHasResults', true);
-            resultsProvider.showResults([results]);
-            
-            vscode.window.showInformationMessage('Dry run completed! Analysis results are displayed in the sidebar.');
-            updateStatusBar('Dry run completed successfully!');
-        } catch (error) {
-            vscode.window.showErrorMessage(`Error during dry run: ${error}`);
-        }
-    });
-
-    // Register command for dry run on multiple files
-    let dryRunMultipleFiles = vscode.commands.registerCommand('ccp.dryRunMultiple', async () => {
-        // Use the selectAndProcessFiles function with a dryRun parameter
-        await selectAndProcessFiles(historyViewProvider, true); // true for dryRun
-    });
-
     // Status bar item
     const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
     statusBarItem.command = 'ccp.cleanComments';
@@ -194,7 +155,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(cleanCurrentFile, cleanMultipleFiles, compareWithBackup, 
         restoreFromBackup, removeFromHistory, setLanguageFilter, clearHistory, 
-        dryRunCurrentFile, dryRunMultipleFiles, statusBarItem);
+        statusBarItem);
 
     // Update status bar after cleaning
     function updateStatusBar(message: string, timeout: number = 5000) {

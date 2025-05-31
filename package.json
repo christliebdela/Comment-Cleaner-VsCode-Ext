@@ -43,24 +43,12 @@
         "command": "ccp.clearHistory",
         "title": "Clear History",
         "icon": "$(clear-all)"
-      },
-      {
-        "command": "ccp.dryRun",
-        "title": "Comment Cleaner Pro: Dry Run (Analyze Only)"
-      },
-      {
-        "command": "ccp.dryRunMultiple",
-        "title": "Comment Cleaner Pro: Dry Run Multiple Files"
       }
     ],
     "menus": {
       "editor/context": [
         {
           "command": "ccp.cleanComments",
-          "group": "modification"
-        },
-        {
-          "command": "ccp.dryRun",
           "group": "modification"
         }
       ],
@@ -72,16 +60,6 @@
         },
         {
           "command": "ccp.cleanMultipleFiles",
-          "when": "explorerResourceIsFolder",
-          "group": "7_modification"
-        },
-        {
-          "command": "ccp.dryRun",
-          "when": "resourceLangId && resourceLangId != 'markdown'",
-          "group": "7_modification"
-        },
-        {
-          "command": "ccp.dryRunMultiple",
           "when": "explorerResourceIsFolder",
           "group": "7_modification"
         }
@@ -130,12 +108,6 @@
           "id": "ccpButtons",
           "name": "Actions",
           "type": "webview"
-        },
-        {
-          "id": "ccpResults",
-          "name": "Analysis Results",
-          "type": "webview",
-          "when": "ccpHasResults"
         },
         {
           "id": "ccpHistory",
