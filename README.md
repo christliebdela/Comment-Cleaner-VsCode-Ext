@@ -1,5 +1,7 @@
 # Comment Cleaner Pro
 
+<h1 align="center">Comment Cleaner Pro</h1>
+
 <p align="center">
   <img src="media/icon.png" width="128" height="128" alt="Comment Cleaner Pro Logo">
 </p>
@@ -13,7 +15,7 @@
   <a href="https://github.com/christliebdela/Comment-Cleaner-VsCode-Ext/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/christliebdela/Comment-Cleaner-VsCode-Ext/ci.yml?branch=main&style=flat-square&color=000000&labelColor=222222" alt="CI"></a>
 </p>
 
-## Version 0.1.4
+## Current Release
 
 ## Overview
 
@@ -161,8 +163,10 @@ Contributions are welcome! See CONTRIBUTING.md for guidelines.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Author
 
-Created and maintained by Christlieb Dela.
+<p align="center">
+  Created and maintained by <a href="https://github.com/christliebdela">Christlieb Dela</a>.
+</p>

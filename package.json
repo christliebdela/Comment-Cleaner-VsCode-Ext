@@ -159,7 +159,7 @@
     "compile": "tsc -p ./ && npm run copy-python",
     "watch": "tsc -watch -p ./",
     "copy-python": "if not exist out\\python mkdir out\\python && copy src\\python\\ccp.py out\\python\\",
-    "lint": "eslint src --ext ts"
+    "lint": "eslint --use-flat-config=false src --ext ts"
   },
   "devDependencies": {
     "@types/glob": "^8.1.0",
