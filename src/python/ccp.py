@@ -17,7 +17,6 @@ import json
 from abc import ABC, abstractmethod
 from typing import Dict, List, Tuple, Optional, Any, Set, Pattern
 
-
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -33,19 +32,6 @@ class CommentHandler(ABC):
     def remove_comments(self, content: str, keep_doc_comments: bool = False) -> str:
         """Remove comments from the content."""
         pass
-    
-    def should_preserve(self, comment_text: str, preserve_todo: bool = False, 
-                       preserve_patterns: Optional[List[str]] = None) -> bool:
-        """Check if a comment should be preserved based on patterns."""
-        if preserve_todo and re.search(r'(TODO|FIXME)', comment_text, re.IGNORECASE):
-            return True
-            
-        if preserve_patterns:
-            for pattern in preserve_patterns:
-                if re.search(pattern, comment_text):
-                    return True
-                    
-        return False
 
 
 class PythonCommentHandler(CommentHandler):
@@ -54,17 +40,51 @@ class PythonCommentHandler(CommentHandler):
     def remove_comments(self, content: str, keep_doc_comments: bool = False) -> str:
         # Handle docstrings if not keeping doc comments
         if not keep_doc_comments:
-            content = re.sub(r'"""[\s\S]*?"""', '', content)
-            content = re.sub(r"'''[\s\S]*?'''", '', content)
-        
-        # Handle line comments
-        result = []
-        for line in content.split('\n'):
-            if '#' in line:
-                line = line.split('#')[0]
-            result.append(line)
+            # First handle triple quotes - being careful not to remove them in strings
+            content = re.sub(r'^"""[\s\S]*?"""', '', content, flags=re.MULTILINE)
+            content = re.sub(r'^\'\'\'[\s\S]*?\'\'\'', '', content, flags=re.MULTILINE)
             
-        return '\n'.join(result)
+            # Handle inline docstrings with caution
+            content = re.sub(r'(?<!\")"""[\s\S]*?"""(?!")', '', content)
+            content = re.sub(r"(?<!')'''[\s\S]*?'''(?!')", '', content)
+        
+        # Handle line comments - avoid comments in strings
+        lines = []
+        string_active = False
+        string_delimiter = None
+        escape_active = False
+        
+        for line in content.split('\n'):
+            result = []
+            i = 0
+            while i < len(line):
+                char = line[i]
+                
+                # Handle string delimiters
+                if char in ['"', "'"] and (i == 0 or line[i-1] != '\\' or escape_active):
+                    if not string_active:
+                        string_active = True
+                        string_delimiter = char
+                    elif string_delimiter == char:
+                        string_active = False
+                        string_delimiter = None
+                
+                # Track escape sequences
+                if char == '\\' and not escape_active:
+                    escape_active = True
+                else:
+                    escape_active = False
+                    
+                # Handle comments
+                if char == '#' and not string_active:
+                    break
+                
+                result.append(char)
+                i += 1
+                
+            lines.append(''.join(result))
+            
+        return '\n'.join(lines)
 
 
 class HtmlCommentHandler(CommentHandler):
@@ -72,8 +92,7 @@ class HtmlCommentHandler(CommentHandler):
     
     def remove_comments(self, content: str, keep_doc_comments: bool = False) -> str:
         # Remove <!-- --> style comments
-        content = re.sub(r'<!--[\s\S]*?-->', '', content)
-        return content
+        return re.sub(r'<!--[\s\S]*?-->', '', content)
 
 
 class CStyleCommentHandler(CommentHandler):
@@ -83,23 +102,72 @@ class CStyleCommentHandler(CommentHandler):
         self.has_line_comments = has_line_comments
     
     def remove_comments(self, content: str, keep_doc_comments: bool = False) -> str:
-        # Remove doc comments if not keeping them
-        if not keep_doc_comments:
-            content = re.sub(r'/\*\*[\s\S]*?\*/', '', content)
+        # Handle string literals to prevent removing comments inside strings
+        chunks = []
+        in_string = False
+        string_char = None
+        i = 0
         
-        # Remove /* */ block comments
-        content = re.sub(r'/\*[\s\S]*?\*/', '', content)
+        # Temporary placeholders for strings
+        string_placeholders = []
         
-        # Handle line comments if supported
-        if self.has_line_comments:
-            result = []
-            for line in content.split('\n'):
-                if '//' in line:
-                    line = line.split('//')[0]
-                result.append(line)
-            return '\n'.join(result)
+        while i < len(content):
+            if content[i:i+2] == '//' and not in_string and self.has_line_comments:
+                # Found line comment
+                line_end = content.find('\n', i)
+                if line_end == -1:
+                    i = len(content)  # End of content
+                else:
+                    i = line_end  # Move to next line
+                    
+            elif content[i:i+2] == '/*' and not in_string:
+                # Found block comment
+                if content[i:i+3] == '/**' and keep_doc_comments:
+                    # Preserve doc comment
+                    chunks.append(content[i:i+3])
+                    i += 3
+                else:
+                    # Skip block comment
+                    end = content.find('*/', i + 2)
+                    if end == -1:
+                        i = len(content)  # Unterminated comment
+                    else:
+                        i = end + 2  # Skip comment and closing tag
+                        
+            elif content[i] in ['"', "'"] and (i == 0 or content[i-1] != '\\'):
+                # String handling
+                if not in_string:
+                    # Start of string
+                    in_string = True
+                    string_char = content[i]
+                    start = i
+                    i += 1
+                elif content[i] == string_char:
+                    # End of string
+                    in_string = False
+                    string_content = content[start:i+1]
+                    placeholder = f"__STRING_PLACEHOLDER_{len(string_placeholders)}__"
+                    string_placeholders.append(string_content)
+                    chunks.append(placeholder)
+                    i += 1
+                else:
+                    # Different quote in a string
+                    chunks.append(content[i])
+                    i += 1
+            else:
+                # Regular code
+                if not in_string:
+                    chunks.append(content[i])
+                i += 1
         
-        return content
+        # Process line comments in the combined content
+        result = ''.join(chunks)
+        
+        # Restore string literals
+        for idx, string in enumerate(string_placeholders):
+            result = result.replace(f"__STRING_PLACEHOLDER_{idx}__", string)
+            
+        return result
 
 
 class SqlCommentHandler(CommentHandler):
@@ -225,9 +293,7 @@ class RubyCommentHandler(CommentHandler):
                 stripped = line.strip()
                 if not (stripped.startswith('#!') or stripped.startswith('# !')):
                     line = line.split('#')[0]
-                else:
-                    # Keep shebang line
-                    pass
+                # else keep the line with the shebang
             result.append(line)
             
         return '\n'.join(result)
@@ -337,7 +403,9 @@ class CommentRemover:
             '.html': 'html', '.htm': 'html',
             '.css': 'css',
             '.js': 'javascript',
+            '.jsx': 'javascript',
             '.ts': 'typescript',
+            '.tsx': 'typescript',
             '.c': 'c', '.h': 'c',
             '.cpp': 'cpp', '.hpp': 'cpp', '.cc': 'cpp', '.cxx': 'cpp',
             '.java': 'java',
@@ -393,95 +461,101 @@ class CommentRemover:
         return cleaned
     
     def process_file(self, file_path: str, backup: bool = True, 
-                force: bool = False, preserve_todo: bool = False,
-                preserve_patterns: Optional[List[str]] = None,
-                keep_doc_comments: bool = False, dry_run: bool = False) -> Tuple[bool, Optional[Dict[str, Any]]]:
-    """
-    Process a file to remove comments while handling backups and errors.
-    
-    Args:
-        file_path: Path to file to process
-        backup: Whether to create backup files
-        force: Whether to process unknown file types
-        preserve_todo: Whether to preserve TODO and FIXME comments
-        preserve_patterns: List of regex patterns for comments to preserve
-        keep_doc_comments: Whether to preserve documentation comments
-        dry_run: If True, analyze but don't modify files
+                    force: bool = False, preserve_todo: bool = False,
+                    preserve_patterns: Optional[List[str]] = None,
+                    keep_doc_comments: bool = False, dry_run: bool = False) -> Tuple[bool, Optional[Dict[str, Any]]]:
+        """
+        Process a file to remove comments while handling backups and errors.
         
-    Returns:
-        Tuple of (success, stats_dict)
-    """
-    language = self.identify_language(file_path)
-    
-    # Skip unknown file types unless forced
-    if language == 'unknown' and not force:
-        logger.info(f"Skipping {file_path}: Unknown file type. Use --force to process anyway.")
-        return (False, None)
-    
-    logger.info(f"{'Analyzing' if dry_run else 'Processing'}: {file_path} (detected as {language})")
+        Args:
+            file_path: Path to file to process
+            backup: Whether to create backup files
+            force: Whether to process unknown file types
+            preserve_todo: Whether to preserve TODO and FIXME comments
+            preserve_patterns: List of regex patterns for comments to preserve
+            keep_doc_comments: Whether to preserve documentation comments
+            dry_run: If True, analyze but don't modify files
+            
+        Returns:
+            Tuple of (success, stats_dict)
+        """
+        language = self.identify_language(file_path)
+        
+        # Skip unknown file types unless forced
+        if language == 'unknown' and not force:
+            logger.info(f"Skipping {file_path}: Unknown file type. Use --force to process anyway.")
+            return (False, None)
+        
+        logger.info(f"{'Analyzing' if dry_run else 'Processing'}: {file_path} (detected as {language})")
 
-    # Create backup if requested and not in dry run mode
-    backup_path = None
-    if backup and not dry_run:
-        backup_path = file_path + '.bak'
-        shutil.copy2(file_path, backup_path)
-        logger.info(f"  Backup created: {backup_path}")
+        # Create backup if requested and not in dry run mode
+        backup_path = None
+        if backup and not dry_run:
+            backup_path = file_path + '.bak'
+            shutil.copy2(file_path, backup_path)
+            logger.info(f"  Backup created: {backup_path}")
 
-    try:
-        # Statistics tracking
-        original_size = os.path.getsize(file_path)
-        
-        # Read file content
-        with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
-            content = f.read()
-        
-        # Count original lines
-        original_lines = content.count('\n') + 1
-        
-        # Count comments (approximate)
-        comment_count = self.count_comments(content)
-        
-        # Process content to remove comments
-        cleaned = self.remove_comments(
-            content, language, preserve_todo, preserve_patterns, keep_doc_comments
-        )
-        
-        # Count cleaned lines
-        cleaned_lines = cleaned.count('\n') + 1
-        lines_removed = original_lines - cleaned_lines
-        
-        if not dry_run:
-            # Write cleaned content back to file
-            with open(file_path, 'w', encoding='utf-8') as f:
-                f.write(cleaned)
-        
-        # Calculate statistics
-        # For dry run, calculate the theoretical new size
-        new_size = len(cleaned.encode('utf-8')) if dry_run else os.path.getsize(file_path)
-        size_reduction = original_size - new_size
-        percentage = (size_reduction / original_size) * 100 if original_size > 0 else 0
-        
-        mode_prefix = "[DRY RUN] Would have " if dry_run else ""
-        logger.info(f"  {mode_prefix}Removed approximately {comment_count} comments ({lines_removed} lines)")
-        logger.info(f"  {mode_prefix}File size reduced by {size_reduction} bytes ({percentage:.1f}%)")
-        
-        return True, {
-            'commentCount': comment_count,
-            'linesRemoved': lines_removed,
-            'sizeReduction': size_reduction,
-            'sizePercentage': percentage,
-            'dryRun': dry_run
-        }
-    except Exception as e:
-        logger.error(f"  Error {'analyzing' if dry_run else 'processing'} {file_path}: {e}")
-        # Restore from backup if available and not in dry run
-        if backup and backup_path and not dry_run:
-            try:
-                shutil.copy2(backup_path, file_path)
-                logger.info(f"  Restored from backup due to error")
-            except Exception as restore_error:
-                logger.error(f"  Failed to restore from backup: {restore_error}")
-        return (False, None)
+        try:
+            # Statistics tracking
+            original_size = os.path.getsize(file_path)
+            
+            # Read file content
+            with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+                content = f.read()
+            
+            # Count original lines
+            original_lines = content.count('\n') + 1
+            
+            # Count comments (approximate)
+            comment_count = self.count_comments(content)
+            
+            # Process content to remove comments
+            cleaned = self.remove_comments(
+                content, language, preserve_todo, preserve_patterns, keep_doc_comments
+            )
+            
+            # Count cleaned lines
+            cleaned_lines = cleaned.count('\n') + 1
+            lines_removed = original_lines - cleaned_lines
+            
+            if not dry_run:
+                # Write cleaned content back to file
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(cleaned)
+            
+            # Calculate statistics
+            # For dry run, calculate the theoretical new size
+            new_size = len(cleaned.encode('utf-8')) if dry_run else os.path.getsize(file_path)
+            size_reduction = original_size - new_size
+            percentage = (size_reduction / original_size) * 100 if original_size > 0 else 0
+            
+            mode_prefix = "[DRY RUN] Would have " if dry_run else ""
+            logger.info(f"  {mode_prefix}Removed approximately {comment_count} comments ({lines_removed} lines)")
+            logger.info(f"  {mode_prefix}File size reduced by {size_reduction} bytes ({percentage:.1f}%)")
+            
+            return True, {
+                'commentCount': comment_count,
+                'linesRemoved': lines_removed,
+                'sizeReduction': size_reduction,
+                'sizePercentage': percentage,
+                'dryRun': dry_run
+            }
+        except UnicodeDecodeError as e:
+            logger.error(f"  Error: Unable to decode {file_path}. File may use unsupported encoding: {e}")
+            return (False, None)
+        except PermissionError:
+            logger.error(f"  Error: Permission denied for {file_path}. Check file permissions.")
+            return (False, None)
+        except Exception as e:
+            logger.error(f"  Error {'analyzing' if dry_run else 'processing'} {file_path}: {e}")
+            # Restore from backup if available and not in dry run
+            if backup and backup_path and not dry_run:
+                try:
+                    shutil.copy2(backup_path, file_path)
+                    logger.info(f"  Restored from backup due to error")
+                except Exception as restore_error:
+                    logger.error(f"  Failed to restore from backup: {restore_error}")
+            return (False, None)
 
 
 class BatchProcessor:
@@ -492,80 +566,80 @@ class BatchProcessor:
         self.max_workers = max_workers
     
     def process_files(self, files: List[str], backup: bool = True, force: bool = False,
-             preserve_todo: bool = False, preserve_patterns: Optional[List[str]] = None,
-             keep_doc_comments: bool = False, dry_run: bool = False) -> Tuple[int, List[Dict[str, Any]]]:
-    """
-    Process multiple files in parallel.
-    
-    Args:
-        files: List of file paths to process
-        backup: Whether to create backup files
-        force: Whether to process unknown file types
-        preserve_todo: Whether to preserve TODO and FIXME comments
-        preserve_patterns: List of regex patterns for comments to preserve
-        keep_doc_comments: Whether to preserve documentation comments
-        dry_run: If True, analyze but don't modify files
+                     preserve_todo: bool = False, preserve_patterns: Optional[List[str]] = None,
+                     keep_doc_comments: bool = False, dry_run: bool = False) -> Tuple[int, List[Dict[str, Any]]]:
+        """
+        Process multiple files in parallel.
         
-    Returns:
-        Tuple of (success_count, results_list)
-    """
-    if not files:
-        return (0, [])
-        
-    success_count = 0
-    results = []
-    
-    total_files = len(files)
-    logger.info(f"{'Analyzing' if dry_run else 'Processing'} {total_files} files with {self.max_workers} threads")
-    
-    with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-        # Submit all files for processing
-        future_to_file = {
-            executor.submit(
-                self.remover.process_file, 
-                file_path, 
-                backup, 
-                force,
-                preserve_todo,
-                preserve_patterns,
-                keep_doc_comments,
-                dry_run
-            ): file_path for file_path in files
-        }
-        
-        # Process as they complete
-        processed = 0
-        
-        for future in concurrent.futures.as_completed(future_to_file):
-            file_path = future_to_file[future]
-            processed += 1
+        Args:
+            files: List of file paths to process
+            backup: Whether to create backup files
+            force: Whether to process unknown file types
+            preserve_todo: Whether to preserve TODO and FIXME comments
+            preserve_patterns: List of regex patterns for comments to preserve
+            keep_doc_comments: Whether to preserve documentation comments
+            dry_run: If True, analyze but don't modify files
             
-            try:
-                success, stats = future.result()
-                if success:
-                    success_count += 1
-                    results.append(stats)
+        Returns:
+            Tuple of (success_count, results_list)
+        """
+        if not files:
+            return (0, [])
+            
+        success_count = 0
+        results = []
+        
+        total_files = len(files)
+        logger.info(f"{'Analyzing' if dry_run else 'Processing'} {total_files} files with {self.max_workers} threads")
+        
+        with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+            # Submit all files for processing
+            future_to_file = {
+                executor.submit(
+                    self.remover.process_file, 
+                    file_path, 
+                    backup, 
+                    force,
+                    preserve_todo,
+                    preserve_patterns,
+                    keep_doc_comments,
+                    dry_run
+                ): file_path for file_path in files
+            }
+            
+            # Process as they complete
+            processed = 0
+            
+            for future in concurrent.futures.as_completed(future_to_file):
+                file_path = future_to_file[future]
+                processed += 1
                 
-                # Show progress
-                logger.info(f"Progress: {processed}/{total_files} files ({(processed/total_files)*100:.1f}%)")
-                
-            except Exception as e:
-                logger.error(f"Error {'analyzing' if dry_run else 'processing'} {file_path}: {e}")
-    
-    # Show summary statistics
-    if results:
-        total_comments = sum(r['commentCount'] for r in results)
-        total_lines = sum(r['linesRemoved'] for r in results)
-        total_reduction = sum(r['sizeReduction'] for r in results)
-        mode_prefix = "[DRY RUN] Would have " if dry_run else ""
-        logger.info(f"\nSummary:")
-        logger.info(f"- {mode_prefix}Removed approximately {total_comments} comments")
-        logger.info(f"- {mode_prefix}Removed {total_lines} lines of comments")
-        logger.info(f"- {mode_prefix}Reduced file sizes by {total_reduction} bytes")
-    
-    logger.info(f"Done! Successfully {'analyzed' if dry_run else 'processed'} {success_count} of {len(files)} files.")
-    
-    return (success_count, results)
+                try:
+                    success, stats = future.result()
+                    if success:
+                        success_count += 1
+                        results.append(stats)
+                    
+                    # Show progress
+                    logger.info(f"Progress: {processed}/{total_files} files ({(processed/total_files)*100:.1f}%)")
+                    
+                except Exception as e:
+                    logger.error(f"Error {'analyzing' if dry_run else 'processing'} {file_path}: {e}")
+        
+        # Show summary statistics
+        if results:
+            total_comments = sum(r['commentCount'] for r in results)
+            total_lines = sum(r['linesRemoved'] for r in results)
+            total_reduction = sum(r['sizeReduction'] for r in results)
+            mode_prefix = "[DRY RUN] Would have " if dry_run else ""
+            logger.info(f"\nSummary:")
+            logger.info(f"- {mode_prefix}Removed approximately {total_comments} comments")
+            logger.info(f"- {mode_prefix}Removed {total_lines} lines of comments")
+            logger.info(f"- {mode_prefix}Reduced file sizes by {total_reduction} bytes")
+        
+        logger.info(f"Done! Successfully {'analyzed' if dry_run else 'processed'} {success_count} of {len(files)} files.")
+        
+        return (success_count, results)
 
 
 def parse_args():
@@ -633,6 +707,7 @@ def main():
         keep_doc_comments=args.keep_doc_comments,
         dry_run=args.dry_run
     )
+
 
 if __name__ == "__main__":
     main()
