@@ -145,18 +145,6 @@
         }
       }
     },
-    "customEditors": [
-      {
-        "viewType": "ccpFiles",
-        "displayName": "Comment Cleaner Pro",
-        "selector": [
-          {
-            "filenamePattern": "*"
-          }
-        ],
-        "priority": "default"
-      }
-    ],
     "css": [
       "./media/ccpStyles.css"
     ]
