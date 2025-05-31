@@ -41,3 +41,6 @@ media/temp/
 *.tmp
 *.temp
 .cache/
+
+# Development and planning files
+suggestions.md

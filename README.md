@@ -13,6 +13,8 @@
   <a href="https://github.com/christliebdela/Comment-Cleaner-VsCode-Ext/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/christliebdela/Comment-Cleaner-VsCode-Ext/ci.yml?branch=main&style=flat-square&color=000000&labelColor=222222" alt="CI"></a>
 </p>
 
+## Version 0.1.4
+
 ## Overview
 
 Comment Cleaner Pro is a powerful VS Code extension for removing comments from source code files. It helps you streamline your code by efficiently removing all types of comments (line, block, and documentation) across 20+ programming languages while preserving the core functionality of your code.
@@ -149,40 +151,9 @@ Comment Cleaner Pro:
 - Requires no authentication or online services
 - Has minimal extension permissions
 
-## Release Notes
+## Release History
 
-### 0.1.4 (2025-05-31)
-- Added Undo/Redo buttons to easily revert or restore changes
-- Enhanced line removal tracking and statistics reporting
-- Complete object-oriented refactoring of the core engine
-- Added support for JSX and TSX files
-- Fixed critical issue where // comments weren't properly removed in JS/TS/C++
-- Fixed "No view is registered with id: ccpFiles" error
-- Improved string handling to prevent false comment detection
-- Added detailed comment statistics including line count reductions
-
-### 0.1.3 (2025-05-29)
-- Added language-specific file extension mappings
-- Enhanced language filtering in the history view
-- Added proper icon support for different action items
-- Improved UI for buttons in the sidebar
-- Fixed display issues with history items
-
-### 0.1.2 (2025-05-28)
-- Fixed extension icon not displaying correctly in VS Code Marketplace
-- Corrected package configurations for proper asset inclusion
-- Updated repository references
-
-### 0.1.1 (2025-05-28)
-- Added Filter by Language option for history filtering
-- Implemented context menu actions for history items
-- Added status bar integration
-- Enhanced Python processor
-- Added configuration options
-
-### 0.1.0 (2025-05-28)
-- Initial release with support for 20+ languages
-- Single file and batch processing capabilities
+See the [CHANGELOG](https://github.com/christliebdela/Comment-Cleaner-VsCode-Ext/blob/main/CHANGELOG.md) for details about each release.
 
 ## Contributing
 
