@@ -32,13 +32,46 @@ export function runCcpScript(filePath: string, noBackup: boolean, force: boolean
     });
 }
 
-export async function executeCcp(filePath: string, noBackup: boolean, force: boolean, dryRun: boolean = false): Promise<void> {
+export async function executeCcp(filePath: string, noBackup: boolean, force: boolean, dryRun: boolean = false): Promise<any> {
     try {
         const output = await runCcpScript(filePath, noBackup, force, dryRun);
         // Log the output to the console
         console.log(output);
+        
+        // If this was a dry run, parse the results
+        if (dryRun) {
+            return parseDryRunResults(output, filePath);
+        }
     } catch (error) {
         vscode.window.showErrorMessage(`Failed to run CCP: ${error}`);
         throw error;
     }
+}
+
+// Parse the output from the Python script to extract statistics
+function parseDryRunResults(output: string, filePath: string): any {
+    const results: any = {
+        fileName: path.basename(filePath),
+        filePath: filePath,
+        commentCount: 0,
+        linesRemoved: 0,
+        sizeReduction: 0,
+        sizePercentage: 0
+    };
+    
+    // Regular expressions to extract statistics
+    const commentMatch = output.match(/\[DRY RUN\] Would have Removed approximately (\d+) comments \((\d+) lines\)/);
+    const sizeMatch = output.match(/\[DRY RUN\] Would have File size reduced by (\d+) bytes \(([0-9.]+)%\)/);
+    
+    if (commentMatch) {
+        results.commentCount = parseInt(commentMatch[1]);
+        results.linesRemoved = parseInt(commentMatch[2]);
+    }
+    
+    if (sizeMatch) {
+        results.sizeReduction = parseInt(sizeMatch[1]);
+        results.sizePercentage = parseFloat(sizeMatch[2]);
+    }
+    
+    return results;
 }

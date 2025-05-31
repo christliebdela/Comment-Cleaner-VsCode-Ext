@@ -132,6 +132,12 @@
           "type": "webview"
         },
         {
+          "id": "ccpResults",
+          "name": "Analysis Results",
+          "type": "webview",
+          "when": "ccpHasResults"
+        },
+        {
           "id": "ccpHistory",
           "name": "Cleaned Files"
         }

@@ -95,6 +95,33 @@ To analyze files without modifying them:
 3. View detailed statistics about what would be removed
 4. Make informed decisions before actual comment removal
 
+## Command-Line Usage
+
+The extension includes a standalone Python script that can be used directly:
+
+```bash
+# Basic usage
+python path/to/ccp.py "*.js"
+
+# Analyze without modifying (dry run)
+python path/to/ccp.py "*.js" --dry-run
+
+# Process files recursively
+python path/to/ccp.py "src/**/*.py" --recursive
+
+# Preserve documentation comments
+python path/to/ccp.py "*.java" --keep-doc-comments
+
+# Preserve TODO comments
+python path/to/ccp.py "*.cpp" --preserve-todo
+
+# Don't create backups
+python path/to/ccp.py "*.html" --no-backup
+
+# Force processing of unknown file types
+python path/to/ccp.py "*.custom" --force
+```
+
 ## Technical Details
 
 Comment Cleaner Pro uses a sophisticated object-oriented architecture with dedicated language handlers to identify and remove comments while preserving code structure. The extension:

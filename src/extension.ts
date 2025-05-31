@@ -3,6 +3,7 @@ import { executeCcp } from './ccpRunner';
 import { selectAndProcessFiles } from './fileSelector';
 import { FilesViewProvider, HistoryViewProvider } from './ccpViewProvider';
 import { ButtonsViewProvider } from './ccpWebviewProvider';
+import { ResultsViewProvider } from './resultsViewProvider';
 import * as path from 'path';
 import * as os from 'os';
 
@@ -11,6 +12,7 @@ export function activate(context: vscode.ExtensionContext) {
     const filesViewProvider = new FilesViewProvider();
     const historyViewProvider = new HistoryViewProvider();
     const buttonsProvider = new ButtonsViewProvider(context.extensionUri);
+    const resultsProvider = new ResultsViewProvider(context.extensionUri);
     
     // Register tree data providers
     vscode.window.registerTreeDataProvider('ccpFiles', filesViewProvider);
@@ -21,6 +23,15 @@ export function activate(context: vscode.ExtensionContext) {
             buttonsProvider
         )
     );
+    context.subscriptions.push(
+        vscode.window.registerWebviewViewProvider(
+            ResultsViewProvider.viewType, 
+            resultsProvider
+        )
+    );
+    
+    // Set context to hide results view initially
+    vscode.commands.executeCommand('setContext', 'ccpHasResults', false);
     
     // Register command for single file processing
     let cleanCurrentFile = vscode.commands.registerCommand('ccp.cleanComments', async () => {
@@ -136,9 +147,13 @@ export function activate(context: vscode.ExtensionContext) {
         await document.save();
         
         try {
-            await executeCcp(document.fileName, true, false, true); // true for dryRun
+            const results = await executeCcp(document.fileName, true, false, true);
             
-            vscode.window.showInformationMessage('Dry run completed! No changes made to files.');
+            // Show results in the sidebar
+            vscode.commands.executeCommand('setContext', 'ccpHasResults', true);
+            resultsProvider.showResults([results]);
+            
+            vscode.window.showInformationMessage('Dry run completed! Analysis results are displayed in the sidebar.');
             updateStatusBar('Dry run completed successfully!');
         } catch (error) {
             vscode.window.showErrorMessage(`Error during dry run: ${error}`);
