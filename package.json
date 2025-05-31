@@ -2,7 +2,7 @@
   "name": "comment-cleaner-pro",
   "displayName": "Comment Cleaner Pro",
   "description": "A Visual Studio Code extension for removing comments from source code files across multiple programming languages.",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "publisher": "ChristliebDela",
   "icon": "media/icon.png",
   "engines": {
@@ -182,7 +182,9 @@
     "clean",
     "remove",
     "code",
-    "multiple languages"
+    "multiple languages",
+    "code cleanup",
+    "optimization"
   ],
   "author": {
     "name": "Christlieb Dela"

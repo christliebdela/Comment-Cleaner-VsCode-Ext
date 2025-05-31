@@ -7,26 +7,63 @@ export function runCcpScript(filePath: string, noBackup: boolean, force: boolean
         // Get path to the Python script, relative to extension directory
         const pythonScriptPath = path.join(__dirname, 'python', 'ccp.py');
         
-        // Build command with proper arguments
-        const args = [
+        // Check if Python script exists
+        const fs = require('fs');
+        if (!fs.existsSync(pythonScriptPath)) {
+            reject(`Python script not found: ${pythonScriptPath}`);
+            return;
+        }
+        
+        // Build command with proper arguments - use an array for better argument handling
+        const pythonArgs = [
             pythonScriptPath,
             filePath,
-            noBackup ? '--no-backup' : '',
-            force ? '--force' : '',
-        ].filter(Boolean).map(arg => `"${arg}"`).join(' ');
+        ];
         
-        // Use Python to run the script
-        const command = `python ${args}`;
+        if (noBackup) {
+            pythonArgs.push('--no-backup');
+        }
         
-        vscode.window.showInformationMessage(`Running: ${command}`);
+        if (force) {
+            pythonArgs.push('--force');
+        }
         
-        // Execute the command
-        cp.exec(command, (error, stdout, stderr) => {
-            if (error) {
-                reject(`Error: ${stderr || error.message}`);
+        // Log the full command for debugging
+        console.log(`Executing: python ${pythonArgs.join(' ')}`);
+        vscode.window.showInformationMessage(`Running: python with ${pythonScriptPath}`);
+        
+        // Use spawn instead of exec for better output handling
+        const pythonProcess = cp.spawn('python', pythonArgs);
+        
+        let stdout = '';
+        let stderr = '';
+        
+        pythonProcess.stdout.on('data', (data) => {
+            stdout += data.toString();
+            console.log(`Python stdout: ${data}`);
+        });
+        
+        pythonProcess.stderr.on('data', (data) => {
+            stderr += data.toString();
+            console.log(`Python stderr: ${data}`);
+        });
+        
+        pythonProcess.on('close', (code) => {
+            console.log(`Python process exited with code ${code}`);
+            
+            if (code !== 0) {
+                reject(`Python script failed with code ${code}: ${stderr}`);
             } else {
-                resolve(stdout);
+                if (!stdout.trim() && !stderr.trim()) {
+                    console.log("Warning: Python script produced no output");
+                }
+                // Pass both stdout and stderr to resolve
+                resolve(stdout + '\n' + stderr);
             }
+        });
+        
+        pythonProcess.on('error', (err) => {
+            reject(`Failed to execute Python: ${err.message}`);
         });
     });
 }

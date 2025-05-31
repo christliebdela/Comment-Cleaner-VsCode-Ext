@@ -18,6 +18,14 @@
 
 Comment Cleaner Pro is a powerful VS Code extension for removing comments from source code files. It helps you streamline your code by efficiently removing all types of comments (line, block, and documentation) across 20+ programming languages while preserving the core functionality of your code.
 
+## The Ironic Truth
+
+> "Yes, this comment remover has comments in its source code. It's like a barber with fabulous hair." 
+
+We believe in documenting our code to help contributors, even while building a tool that removes comments. Our extension removes comments from _production code_, not development code. We're like dentists who eat candy but still brush their teeth! 😉
+
+You could say our source code lives by the motto: _"Do as I say, not as I'm coded."_
+
 ## Key Features
 
 ### Comprehensive Language Support
@@ -36,6 +44,7 @@ Comment Cleaner Pro is a powerful VS Code extension for removing comments from s
 - **Comment Count** - Track the number of comments removed per file
 - **Line Reduction** - See exactly how many lines were removed
 - **File Size Impact** - Measure the size reduction achieved
+- **Accurate Tracking** - Now with improved accuracy in statistics tracking
 
 ![Comment Cleaner Pro in action](media/demo.gif)
 
@@ -156,7 +165,7 @@ See the [CHANGELOG](https://github.com/christliebdela/Comment-Cleaner-VsCode-Ext
 
 ## Contributing
 
-Contributions are welcome! See CONTRIBUTING.md for guidelines.
+Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## License
 
@@ -166,3 +175,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 
 Created and maintained by <a href="https://github.com/christliebdela">Christlieb Dela</a>.
+
+<!-- Yes, this is a comment in a comment remover's README. The irony isn't lost on us! -->

@@ -2,6 +2,17 @@
 
 All notable changes to the "Comment Cleaner Pro" extension are documented in this file.
 
+## [0.1.5] - 2025-06-01
+### Fixed
+- Critical statistics tracking issue where only file count was updating
+- Improved Python output parsing for reliable statistics collection
+- Fixed stderr/stdout handling to properly capture all cleaning data
+
+### Changed
+- Removed CI/CD workflow references
+- Updated documentation with humorous acknowledegment of the comment paradox
+- Enhanced output handling resilience for different Python implementations
+
 ## [0.1.4] - 2025-05-31
 ### Added
 - Undo/Redo buttons to the Actions panel for easy reverting and restoring changes
