@@ -10,7 +10,6 @@
   <a href="https://github.com/christliebdela/Comment-Cleaner-VsCode-Ext/issues"><img src="https://img.shields.io/github/issues/christliebdela/Comment-Cleaner-VsCode-Ext?style=flat-square&color=000000&labelColor=222222" alt="Issues"></a>
   <a href="https://github.com/christliebdela/Comment-Cleaner-VsCode-Ext/pulls"><img src="https://img.shields.io/github/issues-pr/christliebdela/Comment-Cleaner-VsCode-Ext?style=flat-square&color=000000&labelColor=222222" alt="Pull Requests"></a>
   <a href="https://github.com/christliebdela/Comment-Cleaner-VsCode-Ext/blob/main/LICENSE"><img src="https://img.shields.io/github/license/christliebdela/Comment-Cleaner-VsCode-Ext?style=flat-square&color=000000&labelColor=222222" alt="License"></a>
-  <a href="https://github.com/christliebdela/Comment-Cleaner-VsCode-Ext/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/christliebdela/Comment-Cleaner-VsCode-Ext/ci.yml?branch=main&style=flat-square&color=000000&labelColor=222222" alt="CI"></a>
 </p>
 
 ## Current Release

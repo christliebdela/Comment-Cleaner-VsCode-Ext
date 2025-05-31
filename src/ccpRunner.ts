@@ -54,21 +54,32 @@ function parseCleanResults(output: string, filePath: string): any {
         linesRemoved: 0,
         sizeReduction: 0,
         sizePercentage: 0
-        // 'dryRun' field removed
     };
     
-    // Match patterns with more flexible spacing
-    const commentMatch = output.match(/Removed\s+approximately\s+(\d+)\s+comments\s+\((\d+)\s+lines\)/i);
-    const sizeMatch = output.match(/File\s+size\s+reduced\s+by\s+(\d+)\s+bytes\s+\(([0-9.]+)%\)/i);
+    // Log the output for debugging
+    console.log("Raw Python output to parse:", output);
+    
+    // Updated regex patterns with more flexible whitespace matching
+    const commentMatch = output.match(/Removed\s+approximately\s+(\d+)\s+comments?\s*\((\d+)\s+lines?\)/i) || 
+                       output.match(/Removed.*?(\d+).*?comment.*?\((\d+).*?line/i);
+    
+    const sizeMatch = output.match(/File\s+size\s+reduced\s+by\s+(\d+)\s+bytes\s+\(([0-9.]+)%\)/i) ||
+                    output.match(/reduced.*?by\s+(\d+)\s+bytes.*?\(([0-9.]+)%\)/i);
     
     if (commentMatch) {
         results.commentCount = parseInt(commentMatch[1]);
         results.linesRemoved = parseInt(commentMatch[2]);
+        console.log("Matched comments:", results.commentCount, "lines:", results.linesRemoved);
+    } else {
+        console.log("Failed to match comment pattern in output");
     }
     
     if (sizeMatch) {
         results.sizeReduction = parseInt(sizeMatch[1]);
         results.sizePercentage = parseFloat(sizeMatch[2]);
+        console.log("Matched size:", results.sizeReduction, "percentage:", results.sizePercentage);
+    } else {
+        console.log("Failed to match size pattern in output");
     }
     
     return results;

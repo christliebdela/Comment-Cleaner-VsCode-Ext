@@ -53,20 +53,21 @@ export class StatisticsManager {
             return;
         }
         
-        // Log incoming results for debugging
-        console.log("Updating stats with:", fileResults);
+        // Enhanced debugging
+        console.log("Updating stats with:", JSON.stringify(fileResults, null, 2));
+        
+        // Check for missing properties
+        fileResults.forEach((file, index) => {
+            if (file.commentCount === undefined) console.log(`Warning: file[${index}].commentCount is undefined`);
+            if (file.linesRemoved === undefined) console.log(`Warning: file[${index}].linesRemoved is undefined`);
+            if (file.sizeReduction === undefined) console.log(`Warning: file[${index}].sizeReduction is undefined`);
+        });
         
         const totalComments = fileResults.reduce((sum, file) => sum + (file.commentCount || 0), 0);
         const totalLines = fileResults.reduce((sum, file) => sum + (file.linesRemoved || 0), 0);
         const totalSize = fileResults.reduce((sum, file) => sum + (file.sizeReduction || 0), 0);
         
         console.log(`Stats summary: ${totalComments} comments, ${totalLines} lines, ${totalSize} bytes`);
-        
-        // Don't update stats for dry runs
-        if (fileResults[0].dryRun) {
-            console.log("Skipping stats update for dry run");
-            return;
-        }
         
         this.stats.filesProcessed += fileResults.length;
         this.stats.totalComments += totalComments;
