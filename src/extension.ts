@@ -124,6 +124,33 @@ export function activate(context: vscode.ExtensionContext) {
         });
     });
 
+    // Register command for dry run on single file
+    let dryRunCurrentFile = vscode.commands.registerCommand('ccp.dryRun', async () => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showErrorMessage('No active editor found.');
+            return;
+        }
+
+        const document = editor.document;
+        await document.save();
+        
+        try {
+            await executeCcp(document.fileName, true, false, true); // true for dryRun
+            
+            vscode.window.showInformationMessage('Dry run completed! No changes made to files.');
+            updateStatusBar('Dry run completed successfully!');
+        } catch (error) {
+            vscode.window.showErrorMessage(`Error during dry run: ${error}`);
+        }
+    });
+
+    // Register command for dry run on multiple files
+    let dryRunMultipleFiles = vscode.commands.registerCommand('ccp.dryRunMultiple', async () => {
+        // Use the selectAndProcessFiles function with a dryRun parameter
+        await selectAndProcessFiles(historyViewProvider, true); // true for dryRun
+    });
+
     // Status bar item
     const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
     statusBarItem.command = 'ccp.cleanComments';
@@ -132,7 +159,8 @@ export function activate(context: vscode.ExtensionContext) {
     statusBarItem.show();
 
     context.subscriptions.push(cleanCurrentFile, cleanMultipleFiles, compareWithBackup, 
-        restoreFromBackup, removeFromHistory, setLanguageFilter, clearHistory, statusBarItem);
+        restoreFromBackup, removeFromHistory, setLanguageFilter, clearHistory, 
+        dryRunCurrentFile, dryRunMultipleFiles, statusBarItem);
 
     // Update status bar after cleaning
     function updateStatusBar(message: string, timeout: number = 5000) {

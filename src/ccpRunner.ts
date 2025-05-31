@@ -2,7 +2,7 @@ import * as cp from 'child_process';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
-export function runCcpScript(filePath: string, noBackup: boolean, force: boolean): Promise<string> {
+export function runCcpScript(filePath: string, noBackup: boolean, force: boolean, dryRun: boolean = false): Promise<string> {
     return new Promise((resolve, reject) => {
         // Get path to the Python script, relative to extension directory
         const pythonScriptPath = path.join(__dirname, 'python', 'ccp.py');
@@ -13,12 +13,13 @@ export function runCcpScript(filePath: string, noBackup: boolean, force: boolean
             filePath,
             noBackup ? '--no-backup' : '',
             force ? '--force' : '',
+            dryRun ? '--dry-run' : '',
         ].filter(Boolean).map(arg => `"${arg}"`).join(' ');
         
         // Use Python to run the script
         const command = `python ${args}`;
         
-        vscode.window.showInformationMessage(`Running: ${command}`);
+        vscode.window.showInformationMessage(`${dryRun ? 'Analyzing' : 'Running'}: ${command}`);
         
         // Execute the command
         cp.exec(command, (error, stdout, stderr) => {
@@ -31,9 +32,9 @@ export function runCcpScript(filePath: string, noBackup: boolean, force: boolean
     });
 }
 
-export async function executeCcp(filePath: string, noBackup: boolean, force: boolean): Promise<void> {
+export async function executeCcp(filePath: string, noBackup: boolean, force: boolean, dryRun: boolean = false): Promise<void> {
     try {
-        const output = await runCcpScript(filePath, noBackup, force);
+        const output = await runCcpScript(filePath, noBackup, force, dryRun);
         // Log the output to the console
         console.log(output);
     } catch (error) {

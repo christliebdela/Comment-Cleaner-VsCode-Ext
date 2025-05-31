@@ -25,6 +25,9 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
         case 'cleanMultipleFiles':
           vscode.commands.executeCommand('ccp.cleanMultipleFiles');
           break;
+        case 'dryRun':
+          vscode.commands.executeCommand('ccp.dryRun');
+          break;
         case 'filterByLanguage':
           vscode.commands.executeCommand('ccp.setLanguageFilter');
           break;
@@ -82,6 +85,11 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
             /* Fixed icon for multiple files */
             background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg' fill='white'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M13.71 4.29l-3-3L10 1H4L3 2v12l1 1h9l1-1V5l-.29-.71zM13 14H4V2h5v3h4v9zm-7-7h5v1H6V7zm0 2h5v1H6V9zm0 2h5v1H6v-1zm0 2h3v1H6v-1z'/%3E%3C/svg%3E") no-repeat;
           }
+          
+          .analysis-icon {
+            /* Icon for analysis/dry run */
+            background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg' fill='white'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M2 2h12l1 1v10l-1 1H2l-1-1V3l1-1zm0 11h12V3H2v10zm3-8h1v6H5V5zm3 2h1v4H8V7zm3-1h1v5h-1V6z'/%3E%3C/svg%3E") no-repeat;
+          }
         </style>
       </head>
       <body>
@@ -95,6 +103,11 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
           Clean Multiple Files
         </button>
         
+        <button class="action-button" id="dryRun">
+          <span class="button-icon analysis-icon"></span>
+          Dry Run (Analyze Only)
+        </button>
+        
         <script>
           const vscode = acquireVsCodeApi();
           
@@ -104,6 +117,10 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
           
           document.getElementById('cleanMultipleFiles').addEventListener('click', () => {
             vscode.postMessage({ command: 'cleanMultipleFiles' });
+          });
+          
+          document.getElementById('dryRun').addEventListener('click', () => {
+            vscode.postMessage({ command: 'dryRun' });
           });
         </script>
       </body>

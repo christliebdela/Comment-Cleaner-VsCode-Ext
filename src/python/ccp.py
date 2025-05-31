@@ -393,82 +393,95 @@ class CommentRemover:
         return cleaned
     
     def process_file(self, file_path: str, backup: bool = True, 
-                    force: bool = False, preserve_todo: bool = False,
-                    preserve_patterns: Optional[List[str]] = None,
-                    keep_doc_comments: bool = False) -> Tuple[bool, Optional[Dict[str, Any]]]:
-        """
-        Process a file to remove comments while handling backups and errors.
-        
-        Args:
-            file_path: Path to file to process
-            backup: Whether to create backup files
-            force: Whether to process unknown file types
-            preserve_todo: Whether to preserve TODO and FIXME comments
-            preserve_patterns: List of regex patterns for comments to preserve
-            keep_doc_comments: Whether to preserve documentation comments
-            
-        Returns:
-            Tuple of (success, stats_dict)
-        """
-        language = self.identify_language(file_path)
-        
-        # Skip unknown file types unless forced
-        if language == 'unknown' and not force:
-            logger.info(f"Skipping {file_path}: Unknown file type. Use --force to process anyway.")
-            return (False, None)
-        
-        logger.info(f"Processing: {file_path} (detected as {language})")
+                force: bool = False, preserve_todo: bool = False,
+                preserve_patterns: Optional[List[str]] = None,
+                keep_doc_comments: bool = False, dry_run: bool = False) -> Tuple[bool, Optional[Dict[str, Any]]]:
+    """
+    Process a file to remove comments while handling backups and errors.
     
-        # Create backup if requested
-        backup_path = None
-        if backup:
-            backup_path = file_path + '.bak'
-            shutil.copy2(file_path, backup_path)
-            logger.info(f"  Backup created: {backup_path}")
+    Args:
+        file_path: Path to file to process
+        backup: Whether to create backup files
+        force: Whether to process unknown file types
+        preserve_todo: Whether to preserve TODO and FIXME comments
+        preserve_patterns: List of regex patterns for comments to preserve
+        keep_doc_comments: Whether to preserve documentation comments
+        dry_run: If True, analyze but don't modify files
+        
+    Returns:
+        Tuple of (success, stats_dict)
+    """
+    language = self.identify_language(file_path)
     
-        try:
-            # Statistics tracking
-            original_size = os.path.getsize(file_path)
-            
-            # Read file content
-            with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
-                content = f.read()
-            
-            # Count comments (approximate)
-            comment_count = self.count_comments(content)
-            
-            # Process content to remove comments
-            cleaned = self.remove_comments(
-                content, language, preserve_todo, preserve_patterns, keep_doc_comments
-            )
+    # Skip unknown file types unless forced
+    if language == 'unknown' and not force:
+        logger.info(f"Skipping {file_path}: Unknown file type. Use --force to process anyway.")
+        return (False, None)
     
+    logger.info(f"{'Analyzing' if dry_run else 'Processing'}: {file_path} (detected as {language})")
+
+    # Create backup if requested and not in dry run mode
+    backup_path = None
+    if backup and not dry_run:
+        backup_path = file_path + '.bak'
+        shutil.copy2(file_path, backup_path)
+        logger.info(f"  Backup created: {backup_path}")
+
+    try:
+        # Statistics tracking
+        original_size = os.path.getsize(file_path)
+        
+        # Read file content
+        with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+            content = f.read()
+        
+        # Count original lines
+        original_lines = content.count('\n') + 1
+        
+        # Count comments (approximate)
+        comment_count = self.count_comments(content)
+        
+        # Process content to remove comments
+        cleaned = self.remove_comments(
+            content, language, preserve_todo, preserve_patterns, keep_doc_comments
+        )
+        
+        # Count cleaned lines
+        cleaned_lines = cleaned.count('\n') + 1
+        lines_removed = original_lines - cleaned_lines
+        
+        if not dry_run:
             # Write cleaned content back to file
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(cleaned)
-            
-            # Calculate statistics
-            new_size = os.path.getsize(file_path)
-            size_reduction = original_size - new_size
-            percentage = (size_reduction / original_size) * 100 if original_size > 0 else 0
-            
-            logger.info(f"  Removed approximately {comment_count} comments")
-            logger.info(f"  File size reduced by {size_reduction} bytes ({percentage:.1f}%)")
-            
-            return True, {
-                'commentCount': comment_count,
-                'sizeReduction': size_reduction,
-                'sizePercentage': percentage
-            }
-        except Exception as e:
-            logger.error(f"  Error processing {file_path}: {e}")
-            # Restore from backup if available
-            if backup and backup_path:
-                try:
-                    shutil.copy2(backup_path, file_path)
-                    logger.info(f"  Restored from backup due to error")
-                except Exception as restore_error:
-                    logger.error(f"  Failed to restore from backup: {restore_error}")
-            return (False, None)
+        
+        # Calculate statistics
+        # For dry run, calculate the theoretical new size
+        new_size = len(cleaned.encode('utf-8')) if dry_run else os.path.getsize(file_path)
+        size_reduction = original_size - new_size
+        percentage = (size_reduction / original_size) * 100 if original_size > 0 else 0
+        
+        mode_prefix = "[DRY RUN] Would have " if dry_run else ""
+        logger.info(f"  {mode_prefix}Removed approximately {comment_count} comments ({lines_removed} lines)")
+        logger.info(f"  {mode_prefix}File size reduced by {size_reduction} bytes ({percentage:.1f}%)")
+        
+        return True, {
+            'commentCount': comment_count,
+            'linesRemoved': lines_removed,
+            'sizeReduction': size_reduction,
+            'sizePercentage': percentage,
+            'dryRun': dry_run
+        }
+    except Exception as e:
+        logger.error(f"  Error {'analyzing' if dry_run else 'processing'} {file_path}: {e}")
+        # Restore from backup if available and not in dry run
+        if backup and backup_path and not dry_run:
+            try:
+                shutil.copy2(backup_path, file_path)
+                logger.info(f"  Restored from backup due to error")
+            except Exception as restore_error:
+                logger.error(f"  Failed to restore from backup: {restore_error}")
+        return (False, None)
 
 
 class BatchProcessor:
@@ -479,75 +492,80 @@ class BatchProcessor:
         self.max_workers = max_workers
     
     def process_files(self, files: List[str], backup: bool = True, force: bool = False,
-                     preserve_todo: bool = False, preserve_patterns: Optional[List[str]] = None,
-                     keep_doc_comments: bool = False) -> Tuple[int, List[Dict[str, Any]]]:
-        """
-        Process multiple files in parallel.
+             preserve_todo: bool = False, preserve_patterns: Optional[List[str]] = None,
+             keep_doc_comments: bool = False, dry_run: bool = False) -> Tuple[int, List[Dict[str, Any]]]:
+    """
+    Process multiple files in parallel.
+    
+    Args:
+        files: List of file paths to process
+        backup: Whether to create backup files
+        force: Whether to process unknown file types
+        preserve_todo: Whether to preserve TODO and FIXME comments
+        preserve_patterns: List of regex patterns for comments to preserve
+        keep_doc_comments: Whether to preserve documentation comments
+        dry_run: If True, analyze but don't modify files
         
-        Args:
-            files: List of file paths to process
-            backup: Whether to create backup files
-            force: Whether to process unknown file types
-            preserve_todo: Whether to preserve TODO and FIXME comments
-            preserve_patterns: List of regex patterns for comments to preserve
-            keep_doc_comments: Whether to preserve documentation comments
-            
-        Returns:
-            Tuple of (success_count, results_list)
-        """
-        if not files:
-            return (0, [])
-            
-        success_count = 0
-        results = []
+    Returns:
+        Tuple of (success_count, results_list)
+    """
+    if not files:
+        return (0, [])
         
-        total_files = len(files)
-        logger.info(f"Processing {total_files} files with {self.max_workers} threads")
+    success_count = 0
+    results = []
+    
+    total_files = len(files)
+    logger.info(f"{'Analyzing' if dry_run else 'Processing'} {total_files} files with {self.max_workers} threads")
+    
+    with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+        # Submit all files for processing
+        future_to_file = {
+            executor.submit(
+                self.remover.process_file, 
+                file_path, 
+                backup, 
+                force,
+                preserve_todo,
+                preserve_patterns,
+                keep_doc_comments,
+                dry_run
+            ): file_path for file_path in files
+        }
         
-        with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-            # Submit all files for processing
-            future_to_file = {
-                executor.submit(
-                    self.remover.process_file, 
-                    file_path, 
-                    backup, 
-                    force,
-                    preserve_todo,
-                    preserve_patterns,
-                    keep_doc_comments
-                ): file_path for file_path in files
-            }
+        # Process as they complete
+        processed = 0
+        
+        for future in concurrent.futures.as_completed(future_to_file):
+            file_path = future_to_file[future]
+            processed += 1
             
-            # Process as they complete
-            processed = 0
-            
-            for future in concurrent.futures.as_completed(future_to_file):
-                file_path = future_to_file[future]
-                processed += 1
+            try:
+                success, stats = future.result()
+                if success:
+                    success_count += 1
+                    results.append(stats)
                 
-                try:
-                    success, stats = future.result()
-                    if success:
-                        success_count += 1
-                        results.append(stats)
-                    
-                    # Show progress
-                    logger.info(f"Progress: {processed}/{total_files} files ({(processed/total_files)*100:.1f}%)")
-                    
-                except Exception as e:
-                    logger.error(f"Error processing {file_path}: {e}")
-        
-        # Show summary statistics
-        if results:
-            total_comments = sum(r['commentCount'] for r in results)
-            total_reduction = sum(r['sizeReduction'] for r in results)
-            logger.info(f"\nSummary:")
-            logger.info(f"- Removed approximately {total_comments} comments")
-            logger.info(f"- Reduced file sizes by {total_reduction} bytes")
-        
-        logger.info(f"Done! Successfully processed {success_count} of {len(files)} files.")
-        
-        return (success_count, results)
+                # Show progress
+                logger.info(f"Progress: {processed}/{total_files} files ({(processed/total_files)*100:.1f}%)")
+                
+            except Exception as e:
+                logger.error(f"Error {'analyzing' if dry_run else 'processing'} {file_path}: {e}")
+    
+    # Show summary statistics
+    if results:
+        total_comments = sum(r['commentCount'] for r in results)
+        total_lines = sum(r['linesRemoved'] for r in results)
+        total_reduction = sum(r['sizeReduction'] for r in results)
+        mode_prefix = "[DRY RUN] Would have " if dry_run else ""
+        logger.info(f"\nSummary:")
+        logger.info(f"- {mode_prefix}Removed approximately {total_comments} comments")
+        logger.info(f"- {mode_prefix}Removed {total_lines} lines of comments")
+        logger.info(f"- {mode_prefix}Reduced file sizes by {total_reduction} bytes")
+    
+    logger.info(f"Done! Successfully {'analyzed' if dry_run else 'processed'} {success_count} of {len(files)} files.")
+    
+    return (success_count, results)
 
 
 def parse_args():
@@ -564,6 +582,7 @@ def parse_args():
     parser.add_argument('--threads', type=int, default=4, 
                       help='Number of threads for parallel processing')
     parser.add_argument('--quiet', action='store_true', help='Reduce output verbosity')
+    parser.add_argument('--dry-run', action='store_true', help='Analyze files without modifying them')
     
     return parser.parse_args()
 
@@ -611,9 +630,9 @@ def main():
         force=args.force,
         preserve_todo=args.preserve_todo,
         preserve_patterns=preserve_patterns,
-        keep_doc_comments=args.keep_doc_comments
+        keep_doc_comments=args.keep_doc_comments,
+        dry_run=args.dry_run
     )
-
 
 if __name__ == "__main__":
     main()

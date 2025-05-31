@@ -1,11 +1,11 @@
 import * as vscode from 'vscode';
 import { executeCcp } from './ccpRunner';
 
-export async function selectAndProcessFiles(historyProvider?: any): Promise<void> {
+export async function selectAndProcessFiles(historyProvider?: any, dryRun: boolean = false): Promise<void> {
     // Get pattern from user
     const pattern = await vscode.window.showInputBox({
         placeHolder: 'File pattern (e.g., *.js, src/**/*.py)',
-        prompt: 'Enter a glob pattern to match files'
+        prompt: `Enter a glob pattern to match files for ${dryRun ? 'analysis' : 'processing'}`
     });
     
     if (!pattern) {
@@ -20,12 +20,14 @@ export async function selectAndProcessFiles(historyProvider?: any): Promise<void
         return;
     }
     
-    // Ask about backup creation
-    const backup = await vscode.window.showQuickPick(['Yes', 'No'], {
-        placeHolder: 'Create backup files?'
-    });
-    
-    const noBackup = backup === 'No';
+    // Ask about backup creation if not dry run
+    let noBackup = false;
+    if (!dryRun) {
+        const backup = await vscode.window.showQuickPick(['Yes', 'No'], {
+            placeHolder: 'Create backup files?'
+        });
+        noBackup = backup === 'No';
+    }
     
     // Ask about force processing for unknown file types
     const force = await vscode.window.showQuickPick(['Yes', 'No'], {
@@ -37,7 +39,7 @@ export async function selectAndProcessFiles(historyProvider?: any): Promise<void
     // Process each file
     const progress = await vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
-        title: `Removing comments from ${files.length} files`,
+        title: `${dryRun ? 'Analyzing' : 'Removing comments from'} ${files.length} files`,
         cancellable: true
     }, async (progress, token) => {
         let processed = 0;
@@ -48,23 +50,26 @@ export async function selectAndProcessFiles(historyProvider?: any): Promise<void
             }
             
             try {
-                await executeCcp(file.fsPath, noBackup, forceProcess);
-                // Add to history if provider exists
-                if (historyProvider) {
+                await executeCcp(file.fsPath, noBackup, forceProcess, dryRun);
+                // Add to history if provider exists and not in dry run mode
+                if (historyProvider && !dryRun) {
                     historyProvider.addToHistory(file.fsPath);
                 }
                 processed++;
                 progress.report({ 
                     increment: 100 / files.length,
-                    message: `${processed}/${files.length} files processed`
+                    message: `${processed}/${files.length} files ${dryRun ? 'analyzed' : 'processed'}`
                 });
             } catch (error) {
-                console.error(`Error processing ${file.fsPath}:`, error);
+                console.error(`Error ${dryRun ? 'analyzing' : 'processing'} ${file.fsPath}:`, error);
             }
         }
         
         return processed;
     });
     
-    vscode.window.showInformationMessage(`Successfully processed ${progress} of ${files.length} files`);
+    vscode.window.showInformationMessage(
+        `Successfully ${dryRun ? 'analyzed' : 'processed'} ${progress} of ${files.length} files` +
+        (dryRun ? ' (no files were modified)' : '')
+    );
 }
