@@ -436,7 +436,21 @@ class CommentRemover:
     def count_comments(self, content: str) -> int:
         """Count comments (approximate) in the content."""
         count = 0
-        for pattern in [r'//.*$', r'/\*[\s\S]*?\*/', r'#.*$', r'--.*$', r'%.*$', r'"""[\s\S]*?"""', r"'''[\s\S]*?'''"]:
+        patterns = [
+            r'//.*$',                # JavaScript/C/C++/Java line comments 
+            r'/\*[\s\S]*?\*/',       # Block comments
+            r'#.*$',                 # Python/Perl/Ruby/Shell comments
+            r'--.*$',                # SQL/Lua comments
+            r'%.*$',                 # MATLAB comments
+            r'"""[\s\S]*?"""',       # Python docstrings (double quotes)
+            r"'''[\s\S]*?'''",       # Python docstrings (single quotes)
+            r'<!--[\s\S]*?-->',      # HTML/XML comments
+            r'<#[\s\S]*?#>',         # PowerShell comments
+            r'\{-[\s\S]*?-\}',       # Haskell comments
+            r'=begin[\s\S]*?=end',   # Ruby block comments
+            r'=begin[\s\S]*?=cut'    # Perl block comments
+        ]
+        for pattern in patterns:
             count += len(re.findall(pattern, content, re.MULTILINE))
         return count
     

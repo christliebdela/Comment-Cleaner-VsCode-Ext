@@ -4,15 +4,21 @@ import { selectAndProcessFiles } from './fileSelector';
 import { FilesViewProvider, HistoryViewProvider } from './ccpViewProvider';
 import { ButtonsViewProvider } from './ccpWebviewProvider';
 import { ResultsViewProvider } from './resultsViewProvider';
+import { StatisticsManager } from './statsManager';
+import { StatisticsViewProvider } from './statsViewProvider';
 import * as path from 'path';
 import * as os from 'os';
 
 export function activate(context: vscode.ExtensionContext) {
+    // Create the statistics manager
+    const statsManager = StatisticsManager.getInstance(context);
+    
     // Create view providers
     const filesViewProvider = new FilesViewProvider();
     const historyViewProvider = new HistoryViewProvider();
     const buttonsProvider = new ButtonsViewProvider(context.extensionUri);
     const resultsProvider = new ResultsViewProvider(context.extensionUri);
+    const statsViewProvider = new StatisticsViewProvider(context.extensionUri, statsManager);
     
     // Register tree data providers
     vscode.window.registerTreeDataProvider('ccpFiles', filesViewProvider);
@@ -27,6 +33,12 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.registerWebviewViewProvider(
             ResultsViewProvider.viewType, 
             resultsProvider
+        )
+    );
+    context.subscriptions.push(
+        vscode.window.registerWebviewViewProvider(
+            StatisticsViewProvider.viewType, 
+            statsViewProvider
         )
     );
     
@@ -59,7 +71,14 @@ export function activate(context: vscode.ExtensionContext) {
             
             const noBackup = backup === 'Don\'t Create a Backup File';
             
-            await executeCcp(document.fileName, noBackup, false);
+            const result = await executeCcp(document.fileName, noBackup, false);
+            
+            // Update statistics if results were returned
+            if (result) {
+                statsManager.updateStats([result]);
+                statsViewProvider.updateView();
+            }
+            
             await vscode.commands.executeCommand('workbench.action.files.revert');
             
             // Add to history
