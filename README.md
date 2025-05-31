@@ -13,28 +13,28 @@
   <a href="https://github.com/christliebdela/Comment-Cleaner-VsCode-Ext/pulls"><img src="https://img.shields.io/github/issues-pr/christliebdela/Comment-Cleaner-VsCode-Ext?style=flat-square&color=000000&labelColor=222222" alt="Pull Requests"></a>
 </p>
 
-## Version 0.1.3
+## Version 0.1.4
 
 Comment Cleaner Pro is a powerful VS Code extension for removing comments from source code files. It helps you streamline your code by efficiently removing all types of comments (line, block, and documentation) across 20+ programming languages while preserving the core functionality of your code.
 
 ## Key Features
 
 ### Comprehensive Language Support
-- **20+ Programming Languages** - Supports all major languages including Python, JavaScript, TypeScript, HTML, CSS, C/C++, Java, Ruby, Go, PHP, SQL, Swift, Rust, Kotlin, and more
+- **20+ Programming Languages** - Supports all major languages including Python, JavaScript (including JSX), TypeScript (including TSX), HTML, CSS, C/C++, Java, Ruby, Go, PHP, SQL, Swift, Rust, Kotlin, and more
 - **Intelligent Comment Detection** - Accurately identifies and removes all comment types specific to each language
 - **Preservation of Code Structure** - Maintains code indentation and formatting while removing comments
 
 ### Flexible Processing Options
 - **Single File Processing** - Clean comments from the current file with a single click
 - **Batch Processing** - Process multiple files simultaneously using glob patterns
+- **Dry Run Analysis** - Preview removals without modifying files (NEW in v0.1.4)
 - **Automatic Backups** - Create safety backups before removing comments
 - **Customizable Rules** - Configure how unknown file types and special comments are handled
 
-### Seamless Integration
-- **Context Menu Integration** - Right-click access in the editor
-- **Command Palette Support** - Quick access through VS Code's command palette
-- **Status Bar Feedback** - Real-time processing status indicators
-- **History Tracking** - Keep track of recently processed files
+### Detailed Statistics
+- **Comment Count** - Track the number of comments removed per file
+- **Line Reduction** - See exactly how many lines were removed (NEW in v0.1.4)
+- **File Size Impact** - Measure the size reduction achieved
 
 ![Comment Cleaner Pro in action](media/demo.gif)
 
@@ -42,7 +42,7 @@ Comment Cleaner Pro is a powerful VS Code extension for removing comments from s
 
 | Language Group | Supported Languages |
 |---------------|---------------------|
-| **Web Development** | JavaScript, TypeScript, HTML, CSS, PHP |
+| **Web Development** | JavaScript (including JSX), TypeScript (including TSX), HTML, CSS, PHP |
 | **Systems Programming** | C, C++, Rust, Go |
 | **Enterprise** | Java, C#, Kotlin |
 | **Scripting** | Python, Ruby, Perl, Bash, PowerShell, Lua |
@@ -73,12 +73,12 @@ Comment Cleaner Pro is a powerful VS Code extension for removing comments from s
 ### Method 2: Command Palette
 1. Press `Ctrl+Shift+P` (Windows/Linux) or `Cmd+Shift+P` (Mac)
 2. Type "Comment Cleaner Pro" 
-3. Select "Comment Cleaner Pro: Clean Current File" or "Comment Cleaner Pro: Clean Multiple Files"
+3. Select "Comment Cleaner Pro: Clean Current File", "Comment Cleaner Pro: Clean Multiple Files", or "Comment Cleaner Pro: Dry Run"
 4. Follow the prompts to configure options
 
 ### Method 3: Activity Bar Integration
 1. Click the Comment Cleaner Pro icon in the Activity Bar
-2. Choose "Clean Current File" or "Clean Multiple Files"
+2. Choose "Clean Current File", "Clean Multiple Files", or "Dry Run (Analyze Only)"
 3. View your recently cleaned files in the "Cleaned Files" section
 
 ### Batch Processing Options
@@ -88,31 +88,43 @@ When cleaning multiple files:
 3. Decide if unknown file types should be processed
 4. Monitor progress in the notification area
 
+### NEW: Dry Run Mode
+To analyze files without modifying them:
+1. Choose "Dry Run" from the sidebar or command palette
+2. Select a file or glob pattern
+3. View detailed statistics about what would be removed
+4. Make informed decisions before actual comment removal
+
 ## Technical Details
 
-Comment Cleaner Pro uses a sophisticated regex-based parsing system to identify and remove comments while preserving code structure. The extension:
+Comment Cleaner Pro uses a sophisticated object-oriented architecture with dedicated language handlers to identify and remove comments while preserving code structure. The extension:
 
 - Handles nested comment structures
 - Preserves important comments like license headers when configured
 - Detects and properly processes character escapes in strings
 - Maintains code indentation and whitespace
+- Provides accurate line count reduction statistics
 
 ## Performance Considerations
 
 - **Large Files**: Processing is optimized but may take longer with extremely large files
 - **Memory Usage**: Minimal memory footprint even when processing multiple files
 - **Workspace Impact**: Non-destructive operation with backup options
+- **Multi-threading**: Efficiently processes multiple files in parallel
 
 ## FAQ
 
 **Q: Does Comment Cleaner Pro modify my original files?**  
-A: Yes, but you can enable backups which create `.bak` files before processing.
+A: Yes, but you can enable backups which create `.bak` files before processing, or use the new Dry Run mode to preview changes without modifying files.
 
 **Q: Can I undo the comment removal?**  
 A: If you've enabled backups, you can restore from the `.bak` files. Standard undo operations work for single file processing if you haven't saved yet.
 
 **Q: Does it work with all programming languages?**  
 A: It supports 20+ major languages. For unlisted languages, you can try the "force" option, but results may vary.
+
+**Q: How do I see what would be removed without actually removing comments?**  
+A: Use the new Dry Run feature, which analyzes files and shows detailed statistics without modifying them.
 
 ## Privacy & Security
 
@@ -124,38 +136,38 @@ Comment Cleaner Pro:
 
 ## Release Notes
 
-### 0.1.2 (2025-05-28)
+### 0.1.4 (2025-05-31)
+- Added new Dry Run mode to analyze files without modifying them
+- Enhanced line removal tracking and statistics reporting
+- Complete object-oriented refactoring of the core engine
+- Added support for JSX and TSX files
+- Fixed critical issue where // comments weren't properly removed in JS/TS/C++
+- Fixed "No view is registered with id: ccpFiles" error
+- Improved string handling to prevent false comment detection
+- Added detailed comment statistics including line count reductions
 
+### 0.1.3 (2025-05-29)
+- Added language-specific file extension mappings
+- Enhanced language filtering in the history view
+- Added proper icon support for different action items
+- Improved UI for buttons in the sidebar
+- Fixed display issues with history items
+
+### 0.1.2 (2025-05-28)
 - Fixed extension icon not displaying correctly in VS Code Marketplace
 - Corrected package configurations for proper asset inclusion
 - Updated repository references
 
 ### 0.1.1 (2025-05-28)
-
 - Added Filter by Language option for history filtering
-- Implemented context menu actions for history items:
-  - Compare with backup (diff view)
-  - Restore from backup
-  - Remove from history
-- Added Clear History functionality
-- Integrated status bar feedback for cleaning operations
-- Enhanced Python processor with:
-  - Smart comment detection for documentation vs regular comments
-  - Multi-threading for batch operations
-  - Progress indicators and statistics
-- Added configuration options:
-  - Preserve TODO and FIXME comments
-  - Custom pattern preservation
-  - Documentation comment preservation
-- Improved UI with intuitive icons
+- Implemented context menu actions for history items
+- Added status bar integration
+- Enhanced Python processor
+- Added configuration options
 
 ### 0.1.0 (2025-05-28)
-
 - Initial release with support for 20+ languages
 - Single file and batch processing capabilities
-- Context menu and command palette integration
-- Backup creation options
-- Activity bar integration with file history
 
 ## Contributing
 

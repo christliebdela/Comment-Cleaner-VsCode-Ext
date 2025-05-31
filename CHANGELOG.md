@@ -2,6 +2,19 @@
 
 All notable changes to the "Comment Cleaner Pro" extension will be documented in this file.
 
+## [0.1.4] - 2025-05-31
+- Added new Dry Run mode to analyze files without modifying them
+- Enhanced line removal tracking and statistics reporting
+- Complete object-oriented refactoring of the core engine with dedicated language handlers
+- Added support for JSX and TSX files
+- Fixed critical issue where // comments weren't properly removed in JavaScript, TypeScript and C++
+- Fixed "No view is registered with id: ccpFiles" error that prevented files from loading
+- Improved string handling to prevent false comment detection in quoted strings
+- Enhanced error handling with specific messages for encoding and permission issues
+- Added button in sidebar UI for dry run operations
+- Added command palette and context menu integration for dry run mode
+- Added detailed comment statistics including line count reductions
+
 ## [0.1.3] - 2025-05-29
 - Added language-specific file extension mappings
 - Enhanced language filtering in the history view
