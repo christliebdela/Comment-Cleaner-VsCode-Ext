@@ -13,13 +13,11 @@ export function activate(context: vscode.ExtensionContext) {
     const statsManager = StatisticsManager.getInstance(context);
     
     // Create view providers
-    const filesViewProvider = new FilesViewProvider();
     const historyViewProvider = new HistoryViewProvider();
     const buttonsProvider = new ButtonsViewProvider(context.extensionUri);
     const statsViewProvider = new StatisticsViewProvider(context.extensionUri, statsManager);
     
     // Register tree data providers
-    vscode.window.registerTreeDataProvider('ccpFiles', filesViewProvider);
     vscode.window.registerTreeDataProvider('ccpHistory', historyViewProvider);
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider(
