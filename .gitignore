@@ -1,36 +1,43 @@
-# Build output
+# Build and Distribution
 out/
 dist/
+*.vsix
+releases/
 
 # Dependencies
 node_modules/
 
-# Python cache files
+# Python-specific
 __pycache__/
 *.py[cod]
 *$py.class
 
-# Logs
+# Logs and debugging
 *.log
 npm-debug.log*
 
-# Package files
-*.vsix
-
-# Environment
+# Environment and OS files
 .DS_Store
 .env
 .vscode-test/
+Thumbs.db
 
 # Editor settings
 .vscode/*
 !.vscode/launch.json
 !.vscode/tasks.json
+!.vscode/extensions.json
 
-# Optional - typically committed, but can be excluded
+# Optional npm files
 # package-lock.json
+npm-debug.log
+yarn-error.log
 
-# Video files
+# Media and large files
 videos/
+media/temp/
 
-releases
+# Temporary files
+*.tmp
+*.temp
+.cache/

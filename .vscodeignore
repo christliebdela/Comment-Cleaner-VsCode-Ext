@@ -1,14 +1,43 @@
 # The following files and directories should be ignored when packaging the extension for distribution
-.vscode
-node_modules
-*.pyc
+
+# Source Control and Development Files
+.git/
+.github/
+.gitignore
+.vscodeignore
+tsconfig.json
+tslint.json
+.eslintrc.json
+.travis.yml
+.editorconfig
+
+# Development Environment
+.vscode/**
+!.vscode/launch.json
+!.vscode/tasks.json
+.vscode-test/
+node_modules/
+
+# Build and Distribution
+*.vsix
+releases/
+out/**/*.map
+dist/**/*.map
+
+# Python-specific Files
+__pycache__/
+*.py[cod]
 *.pyo
 *.pyd
-__pycache__
+
+# Logs and Temporary Files
 *.log
 *.tmp
 .DS_Store
-.vscode-test
-.vscodeignore
-*.vsix
-releases
+
+# Documentation and Tests
+test/
+docs/
+README.md
+CHANGELOG.md
+LICENSE

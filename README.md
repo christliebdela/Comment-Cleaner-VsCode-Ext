@@ -7,13 +7,13 @@
 <p align="Left">
   <a href="https://marketplace.visualstudio.com/items?itemName=ChristliebDela.comment-cleaner-pro"><img src="https://img.shields.io/visual-studio-marketplace/v/ChristliebDela.comment-cleaner-pro?style=flat-square&color=000000&labelColor=222222" alt="Version"></a>
   <a href="https://marketplace.visualstudio.com/items?itemName=ChristliebDela.comment-cleaner-pro"><img src="https://img.shields.io/visual-studio-marketplace/d/ChristliebDela.comment-cleaner-pro?style=flat-square&color=000000&labelColor=222222" alt="Downloads"></a>
-  <a href="https://github.com/christliebdela/Comment-Cleaner-VsCode-Ext/blob/main/LICENSE"><img src="https://img.shields.io/github/license/christliebdela/Comment-Cleaner-VsCode-Ext?style=flat-square&color=000000&labelColor=222222" alt="License"></a>
-  <a href="https://github.com/christliebdela/Comment-Cleaner-VsCode-Ext/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/christliebdela/Comment-Cleaner-VsCode-Ext/ci.yml?branch=main&style=flat-square&color=000000&labelColor=222222" alt="CI"></a>
   <a href="https://github.com/christliebdela/Comment-Cleaner-VsCode-Ext/issues"><img src="https://img.shields.io/github/issues/christliebdela/Comment-Cleaner-VsCode-Ext?style=flat-square&color=000000&labelColor=222222" alt="Issues"></a>
   <a href="https://github.com/christliebdela/Comment-Cleaner-VsCode-Ext/pulls"><img src="https://img.shields.io/github/issues-pr/christliebdela/Comment-Cleaner-VsCode-Ext?style=flat-square&color=000000&labelColor=222222" alt="Pull Requests"></a>
+  <a href="https://github.com/christliebdela/Comment-Cleaner-VsCode-Ext/blob/main/LICENSE"><img src="https://img.shields.io/github/license/christliebdela/Comment-Cleaner-VsCode-Ext?style=flat-square&color=000000&labelColor=222222" alt="License"></a>
+  <a href="https://github.com/christliebdela/Comment-Cleaner-VsCode-Ext/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/christliebdela/Comment-Cleaner-VsCode-Ext/ci.yml?branch=main&style=flat-square&color=000000&labelColor=222222" alt="CI"></a>
 </p>
 
-## Version 0.1.4
+## Overview
 
 Comment Cleaner Pro is a powerful VS Code extension for removing comments from source code files. It helps you streamline your code by efficiently removing all types of comments (line, block, and documentation) across 20+ programming languages while preserving the core functionality of your code.
 
@@ -27,13 +27,13 @@ Comment Cleaner Pro is a powerful VS Code extension for removing comments from s
 ### Flexible Processing Options
 - **Single File Processing** - Clean comments from the current file with a single click
 - **Batch Processing** - Process multiple files simultaneously using glob patterns
-- **Dry Run Analysis** - Preview removals without modifying files (NEW in v0.1.4)
 - **Automatic Backups** - Create safety backups before removing comments
 - **Customizable Rules** - Configure how unknown file types and special comments are handled
+- **Undo/Redo Support** - Easily revert or reapply changes with dedicated undo/redo buttons
 
 ### Detailed Statistics
 - **Comment Count** - Track the number of comments removed per file
-- **Line Reduction** - See exactly how many lines were removed (NEW in v0.1.4)
+- **Line Reduction** - See exactly how many lines were removed
 - **File Size Impact** - Measure the size reduction achieved
 
 ![Comment Cleaner Pro in action](media/demo.gif)
@@ -73,13 +73,14 @@ Comment Cleaner Pro is a powerful VS Code extension for removing comments from s
 ### Method 2: Command Palette
 1. Press `Ctrl+Shift+P` (Windows/Linux) or `Cmd+Shift+P` (Mac)
 2. Type "Comment Cleaner Pro" 
-3. Select "Comment Cleaner Pro: Clean Current File", "Comment Cleaner Pro: Clean Multiple Files", or "Comment Cleaner Pro: Dry Run"
+3. Select "Comment Cleaner Pro: Clean Current File" or "Comment Cleaner Pro: Clean Multiple Files"
 4. Follow the prompts to configure options
 
 ### Method 3: Activity Bar Integration
 1. Click the Comment Cleaner Pro icon in the Activity Bar
-2. Choose "Clean Current File", "Clean Multiple Files", or "Dry Run (Analyze Only)"
+2. Choose "Clean Current File" or "Clean Multiple Files"
 3. View your recently cleaned files in the "Cleaned Files" section
+4. Use Undo/Redo buttons to revert or restore changes as needed
 
 ### Batch Processing Options
 When cleaning multiple files:
@@ -88,13 +89,6 @@ When cleaning multiple files:
 3. Decide if unknown file types should be processed
 4. Monitor progress in the notification area
 
-### NEW: Dry Run Mode
-To analyze files without modifying them:
-1. Choose "Dry Run" from the sidebar or command palette
-2. Select a file or glob pattern
-3. View detailed statistics about what would be removed
-4. Make informed decisions before actual comment removal
-
 ## Command-Line Usage
 
 The extension includes a standalone Python script that can be used directly:
@@ -102,9 +96,6 @@ The extension includes a standalone Python script that can be used directly:
 ```bash
 # Basic usage
 python path/to/ccp.py "*.js"
-
-# Analyze without modifying (dry run)
-python path/to/ccp.py "*.js" --dry-run
 
 # Process files recursively
 python path/to/ccp.py "src/**/*.py" --recursive
@@ -134,28 +125,25 @@ Comment Cleaner Pro uses a sophisticated object-oriented architecture with dedic
 
 ## Performance Considerations
 
-- **Large Files**: Processing is optimized but may take longer with extremely large files
-- **Memory Usage**: Minimal memory footprint even when processing multiple files
-- **Workspace Impact**: Non-destructive operation with backup options
-- **Multi-threading**: Efficiently processes multiple files in parallel
+- For very large files (10MB+), expect processing to take a few seconds
+- Batch processing uses multi-threading for better performance
+- Uses memory-efficient processing techniques for large files
 
 ## FAQ
 
-**Q: Does Comment Cleaner Pro modify my original files?**  
-A: Yes, but you can enable backups which create `.bak` files before processing, or use the new Dry Run mode to preview changes without modifying files.
+### Does Comment Cleaner Pro modify my original files?
+Yes, but you can enable backups which create .bak files before processing.
 
-**Q: Can I undo the comment removal?**  
-A: If you've enabled backups, you can restore from the `.bak` files. Standard undo operations work for single file processing if you haven't saved yet.
+### Can I undo the comment removal?
+Yes, you can use the dedicated Undo button in the sidebar, use standard VS Code undo operations, or restore from the .bak backup files if you enabled backups.
 
-**Q: Does it work with all programming languages?**  
-A: It supports 20+ major languages. For unlisted languages, you can try the "force" option, but results may vary.
-
-**Q: How do I see what would be removed without actually removing comments?**  
-A: Use the new Dry Run feature, which analyzes files and shows detailed statistics without modifying them.
+### Does it work with all programming languages?
+It supports 20+ major languages. For unlisted languages, you can try the "force" option, but results may vary.
 
 ## Privacy & Security
 
 Comment Cleaner Pro:
+
 - Processes all files locally on your machine
 - Does not send any code or data externally
 - Requires no authentication or online services
@@ -164,7 +152,7 @@ Comment Cleaner Pro:
 ## Release Notes
 
 ### 0.1.4 (2025-05-31)
-- Added new Dry Run mode to analyze files without modifying them
+- Added Undo/Redo buttons to easily revert or restore changes
 - Enhanced line removal tracking and statistics reporting
 - Complete object-oriented refactoring of the core engine
 - Added support for JSX and TSX files
@@ -198,16 +186,12 @@ Comment Cleaner Pro:
 
 ## Contributing
 
-Contributions are welcome! See [CONTRIBUTING.md](https://github.com/christliebdela/Comment-Cleaner-Pro/blob/main/CONTRIBUTING.md) for guidelines.
+Contributions are welcome! See CONTRIBUTING.md for guidelines.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Author
 
-Created and maintained by [Christlieb Dela](https://github.com/christliebdela).
-
----
-
-<p align="center"><em>Clean code is readable code.</em></p>
+Created and maintained by Christlieb Dela.

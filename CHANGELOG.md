@@ -1,36 +1,42 @@
 # Change Log
 
-All notable changes to the "Comment Cleaner Pro" extension will be documented in this file.
+All notable changes to the "Comment Cleaner Pro" extension are documented in this file.
 
 ## [0.1.4] - 2025-05-31
-- Added new Dry Run mode to analyze files without modifying them
-- Enhanced line removal tracking and statistics reporting
+### Added
+- Undo/Redo buttons to the Actions panel for easy reverting and restoring changes
+- Enhanced statistics tracking with line count reduction metrics
+- Support for JSX and TSX file formats
+
+### Changed
 - Complete object-oriented refactoring of the core engine with dedicated language handlers
-- Added support for JSX and TSX files
-- Fixed critical issue where // comments weren't properly removed in JavaScript, TypeScript and C++
-- Fixed "No view is registered with id: ccpFiles" error that prevented files from loading
-- Improved string handling to prevent false comment detection in quoted strings
-- Enhanced error handling with specific messages for encoding and permission issues
-- Added button in sidebar UI for dry run operations
-- Added command palette and context menu integration for dry run mode
-- Added detailed comment statistics including line count reductions
-
-## [0.1.3] - 2025-05-29
-- Added language-specific file extension mappings
-- Enhanced language filtering in the history view
-- Added proper icon support for different action items
-- Improved UI for buttons in the sidebar
-- Fixed display issues with history items
-
-## [0.1.2] - 2025-05-28
+- Improved UI with standard undo/redo icons matching VS Code's visual language
 
 ### Fixed
-- Fixed extension icon not displaying correctly in VS Code Marketplace
-- Corrected package configurations for proper asset inclusion
+- Critical issue where // comments weren't properly removed in JavaScript, TypeScript, and C++ files
+- "No view is registered with id: ccpFiles" error that prevented files from loading
+- Improved string handling to prevent false comment detection in quoted strings
+- Enhanced error handling with specific messages for encoding and permission issues
+
+## [0.1.3] - 2025-05-29
+### Added
+- Language-specific file extension mappings
+- Enhanced language filtering in the history view
+- Proper icon support for different action items
+
+### Changed
+- Improved UI for buttons in the sidebar
+
+### Fixed
+- Display issues with history items
+
+## [0.1.2] - 2025-05-28
+### Fixed
+- Extension icon not displaying correctly in VS Code Marketplace
+- Package configurations for proper asset inclusion
 - Updated repository references
 
 ## [0.1.1] - 2025-05-28
-
 ### Added
 - Filter by Language option to filter history items
 - Context menu actions for history items:
@@ -47,6 +53,8 @@ All notable changes to the "Comment Cleaner Pro" extension will be documented in
   - Preserve TODO and FIXME comments
   - Custom pattern preservation
   - Doc comment preservation
+
+### Changed
 - UI improvements with icons for better usability
 
 ### Fixed
@@ -55,7 +63,6 @@ All notable changes to the "Comment Cleaner Pro" extension will be documented in
 - Enhanced language detection for history filtering
 
 ## [0.1.0] - 2025-05-28
-
 ### Added
 - Initial release of Comment Cleaner Pro
 - Support for 20+ programming languages including:
