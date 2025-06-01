@@ -1,7 +1,9 @@
 import * as vscode from 'vscode';
 import { executeCcp } from './ccpRunner';
 
-// Add this interface definition at the top of the file
+/**
+ * Configuration options for comment cleaning operations
+ */
 interface CCPOptions {
     createBackup: boolean;
     preserveTodo: boolean;
@@ -9,6 +11,12 @@ interface CCPOptions {
     forceProcess: boolean;
 }
 
+/**
+ * Prompts for configuration options and processes files matching a glob pattern
+ * @param historyProvider - History provider to add processed files to
+ * @param context - Extension context for state management
+ * @returns Promise resolving when processing completes
+ */
 export async function selectAndProcessFiles(historyProvider?: any, context?: vscode.ExtensionContext): Promise<void> {
     // Get pattern from user
     const pattern = await vscode.window.showInputBox({
@@ -28,7 +36,7 @@ export async function selectAndProcessFiles(historyProvider?: any, context?: vsc
         return;
     }
     
-    // ALWAYS show the configuration dialog
+    // Configuration options
     let noBackup = false;
     let forceProcess = false;
     let preserveTodo = false;
@@ -71,7 +79,16 @@ export async function selectAndProcessFiles(historyProvider?: any, context?: vsc
     );
 }
 
-// Extract processing logic to reuse with saved settings
+/**
+ * Processes multiple files with specified configuration settings
+ * @param files - Array of file URIs to process
+ * @param historyProvider - History provider to add processed files to
+ * @param noBackup - Whether to skip backup creation
+ * @param forceProcess - Whether to force processing for unsupported file types
+ * @param preserveTodo - Whether to keep TODO and FIXME comments
+ * @param keepDocComments - Whether to keep documentation comments
+ * @returns Promise resolving when processing completes
+ */
 async function processFilesWithSettings(
     files: vscode.Uri[], 
     historyProvider: any,
@@ -84,7 +101,7 @@ async function processFilesWithSettings(
     const config = vscode.workspace.getConfiguration('commentCleanerPro');
     const preservePatterns = config.get('preservePatterns', []);
     
-    // Process each file
+    // Process each file with progress notification
     const progress = await vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
         title: `Removing comments from ${files.length} files`,
@@ -106,10 +123,11 @@ async function processFilesWithSettings(
                     preservePatterns, 
                     keepDocComments
                 );
-                // Add to history if provider exists
+                
                 if (historyProvider) {
                     historyProvider.addToHistory(file.fsPath);
                 }
+                
                 processed++;
                 progress.report({ 
                     increment: 100 / files.length,

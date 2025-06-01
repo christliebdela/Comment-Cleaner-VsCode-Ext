@@ -1,15 +1,28 @@
 import * as vscode from 'vscode';
 import { StatisticsManager, CCPStatistics } from './statsManager';
 
+/**
+ * Provider for statistics webview display in the sidebar
+ */
 export class StatisticsViewProvider implements vscode.WebviewViewProvider {
+    /** Identifier for the statistics webview */
     public static readonly viewType = 'ccpStatistics';
     private _view?: vscode.WebviewView;
     
+    /**
+     * Creates a new statistics view provider
+     * @param extensionUri - URI of the extension directory
+     * @param statsManager - Statistics manager instance
+     */
     constructor(
         private readonly extensionUri: vscode.Uri,
         private readonly statsManager: StatisticsManager
     ) {}
     
+    /**
+     * Resolves the webview view when requested by VS Code
+     * @param webviewView - The webview view to populate
+     */
     resolveWebviewView(webviewView: vscode.WebviewView): void {
         this._view = webviewView;
         
@@ -18,7 +31,6 @@ export class StatisticsViewProvider implements vscode.WebviewViewProvider {
             localResourceRoots: [this.extensionUri]
         };
         
-        // Add this message handler
         webviewView.webview.onDidReceiveMessage(message => {
             if (message.command === 'resetStats') {
                 this.statsManager.resetStats();
@@ -30,6 +42,9 @@ export class StatisticsViewProvider implements vscode.WebviewViewProvider {
         this.updateView();
     }
     
+    /**
+     * Updates the webview content with current statistics
+     */
     public updateView(): void {
         if (!this._view) {
             return;
@@ -39,16 +54,19 @@ export class StatisticsViewProvider implements vscode.WebviewViewProvider {
         this._view.webview.html = this._getHtmlContent(stats);
     }
     
+    /**
+     * Generates HTML content for the statistics webview
+     * @param stats - Current statistics to display
+     * @returns HTML content string
+     */
     private _getHtmlContent(stats: CCPStatistics): string {
         const stylesUri = this._view!.webview.asWebviewUri(
             vscode.Uri.joinPath(this.extensionUri, 'media', 'ccpStyles.css')
         );
         
-        // Format date
         const lastUpdated = stats.lastUpdated ? 
             new Date(stats.lastUpdated).toLocaleString() : 'Never';
         
-        // Format size reduction
         const formattedSize = this.formatBytes(stats.totalSizeReduction);
         
         return `<!DOCTYPE html>
@@ -145,6 +163,11 @@ export class StatisticsViewProvider implements vscode.WebviewViewProvider {
         </html>`;
     }
     
+    /**
+     * Formats a byte value into a human-readable size string
+     * @param bytes - Number of bytes to format
+     * @returns Formatted size string with appropriate unit
+     */
     private formatBytes(bytes: number): string {
         if (bytes < 1024) {
             return bytes + ' bytes';

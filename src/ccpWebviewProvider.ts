@@ -1,9 +1,18 @@
 import * as vscode from 'vscode';
 
+/**
+ * Webview provider for the sidebar buttons panel
+ * Provides the UI for comment cleaning operations and configuration
+ */
 export class ButtonsViewProvider implements vscode.WebviewViewProvider {
+  /** Identifier for the webview */
   public static readonly viewType = 'ccpButtons';
   
-  // Add the context parameter to the constructor
+  /**
+   * Creates a new buttons view provider
+   * @param extensionUri - URI of the extension directory
+   * @param context - Extension context for state management
+   */
   constructor(
     private readonly extensionUri: vscode.Uri,
     private readonly context: vscode.ExtensionContext
@@ -11,6 +20,10 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
     console.log('ButtonsViewProvider initialized with context:', this.context.extension.id);
   }
 
+  /**
+   * Resolves the webview content
+   * @param webviewView - The webview to populate
+   */
   resolveWebviewView(webviewView: vscode.WebviewView): void {
     webviewView.webview.options = {
       enableScripts: true,
@@ -32,11 +45,9 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
           vscode.commands.executeCommand('ccp.cleanMultipleFiles', message.options);
           break;
         case 'undo':
-          // Make sure the active editor has focus before attempting undo
           if (vscode.window.activeTextEditor) {
             await vscode.window.showTextDocument(vscode.window.activeTextEditor.document);
             vscode.commands.executeCommand('undo').then(() => {
-              // Show feedback in status bar
               vscode.window.setStatusBarMessage('Undo completed', 3000);
             }, (error) => {
               vscode.window.showErrorMessage(`Cannot undo: ${error || 'Nothing to undo'}`);
@@ -46,11 +57,9 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
           }
           break;
         case 'redo':
-          // Make sure the active editor has focus before attempting redo
           if (vscode.window.activeTextEditor) {
             await vscode.window.showTextDocument(vscode.window.activeTextEditor.document);
             vscode.commands.executeCommand('redo').then(() => {
-              // Show feedback in status bar
               vscode.window.setStatusBarMessage('Redo completed', 3000);
             }, (error) => {
               vscode.window.showErrorMessage(`Cannot redo: ${error || 'Nothing to redo'}`);
@@ -67,13 +76,17 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
           break;
         case 'saveOptions':
           console.log('Saving options to global state:', message.options);
-          // Save options to global state using the class instance's context
           await this.context.globalState.update('ccpOptions', message.options);
           break;
       }
     });
   }
 
+  /**
+   * Generates the HTML content for the webview
+   * @param stylesUri - URI for the stylesheet
+   * @returns HTML content as string
+   */
   private getHtmlContent(stylesUri: string): string {
     return `<!DOCTYPE html>
     <html>
@@ -99,7 +112,7 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
             text-align: center;
             cursor: pointer;
             box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-            font-size: 12px; /* REDUCED from 13px */
+            font-size: 12px;
             font-weight: normal;
           }
           
@@ -161,13 +174,12 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
           
           .option-checkbox {
             display: flex;
-            align-items: flex-start; /* Changed from center to prevent squashing */
+            align-items: flex-start;
             margin: 8px 0;
             font-size: 12px;
             position: relative;
           }
           
-          /* Hide the original checkbox */
           .option-checkbox input[type="checkbox"] {
             position: absolute;
             opacity: 0;
@@ -176,61 +188,55 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
             width: 0;
           }
           
-          /* Create a custom checkbox */
           .checkmark {
             position: relative;
             display: inline-block;
-            height: 12px; /* Made smaller (was 14px) */
-            width: 12px; /* Made smaller (was 14px) */
-            min-width: 12px; /* Prevent shrinking */
-            flex-shrink: 0; /* Prevent shrinking */
+            height: 12px;
+            width: 12px;
+            min-width: 12px;
+            flex-shrink: 0;
             background-color: var(--vscode-editor-background);
-            border: 1.5px solid var(--vscode-editor-foreground); /* Thinner border */
+            border: 1.5px solid var(--vscode-editor-foreground);
             border-radius: 50%;
             margin-right: 8px;
-            margin-top: 2px; /* Align with first line of text */
+            margin-top: 2px;
             transition: all 0.2s ease;
             cursor: pointer;
           }
           
-          /* On mouse-over, add a slight highlight */
           .option-checkbox:hover input ~ .checkmark {
             background-color: var(--vscode-editor-selectionHighlightBackground);
           }
           
-          /* When the checkbox is checked, add a green background */
           .option-checkbox input:checked ~ .checkmark {
             background-color: #2ea043;
             border-color: #2ea043;
           }
           
-          /* Create the checkmark/indicator (hidden when not checked) */
           .checkmark:after {
             content: "";
             position: absolute;
             display: none;
           }
           
-          /* Show the checkmark when checked */
           .option-checkbox input:checked ~ .checkmark:after {
             display: block;
           }
           
-          /* Style the checkmark/indicator */
           .option-checkbox .checkmark:after {
-            left: 3.5px; /* Adjusted for smaller size */
-            top: 0.5px; /* Adjusted for smaller size */
-            width: 3px; /* Smaller checkmark */
-            height: 6px; /* Smaller checkmark */
+            left: 3.5px;
+            top: 0.5px;
+            width: 3px;
+            height: 6px;
             border: solid white;
-            border-width: 0 1.5px 1.5px 0; /* Thinner checkmark */
+            border-width: 0 1.5px 1.5px 0;
             transform: rotate(45deg);
           }
           
           .option-checkbox label {
             cursor: pointer;
             user-select: none;
-            line-height: 1.4; /* Better line height for wrapped text */
+            line-height: 1.4;
             padding-left: 24px;
             margin-left: -24px;
           }
@@ -290,7 +296,6 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
         <script>
           const vscode = acquireVsCodeApi();
           
-          // Initialize with saved state or defaults
           const state = vscode.getState() || {
             createBackup: true,
             preserveTodo: false,
@@ -298,19 +303,16 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
             forceProcess: false
           };
           
-          // Restore checkbox states
           document.getElementById('createBackup').checked = state.createBackup;
           document.getElementById('preserveTodo').checked = state.preserveTodo;
           document.getElementById('keepDocComments').checked = state.keepDocComments;
           document.getElementById('forceProcess').checked = state.forceProcess;
           
-          // Save state when checkboxes change
           document.querySelectorAll('.option-checkbox input').forEach(checkbox => {
             checkbox.addEventListener('change', () => {
               state[checkbox.id] = checkbox.checked;
               vscode.setState(state);
               
-              // Save to extension global state so other commands can access it
               vscode.postMessage({ 
                 command: 'saveOptions',
                 options: {
@@ -360,7 +362,6 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
               const checkbox = circle.previousElementSibling;
               checkbox.checked = !checkbox.checked;
               
-              // Trigger the change event to update state
               const event = new Event('change');
               checkbox.dispatchEvent(event);
             });

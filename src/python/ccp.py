@@ -28,14 +28,29 @@ logger = logging.getLogger(__name__)
 
 
 class CommentPattern:
-    """Represents a comment pattern for a specific language."""
+    """
+    Represents a comment pattern for a specific language.
+    
+    Stores the regex pattern and metadata about comment type
+    for use by language-specific handlers.
+    """
     
     def __init__(self, pattern: str, is_block: bool = False, is_doc: bool = False,
                  needs_string_protection: bool = False, description: str = ""):
+        """
+        Initialize a comment pattern.
+        
+        Args:
+            pattern: Regular expression pattern to match the comment
+            is_block: Whether this is a block comment (vs line comment)
+            is_doc: Whether this is a documentation comment
+            needs_string_protection: Whether this pattern needs protection from string contexts
+            description: Human-readable description of the pattern
+        """
         self.pattern = pattern
-        self.is_block = is_block  # Block vs line comment
-        self.is_doc = is_doc  # Documentation comment
-        self.needs_string_protection = needs_string_protection  # Whether this pattern needs protection from string contexts
+        self.is_block = is_block
+        self.is_doc = is_doc
+        self.needs_string_protection = needs_string_protection
         self.description = description
 
 
@@ -50,6 +65,8 @@ COMMENT_PATTERNS = {
                                          needs_string_protection=True,
                                          description="Python triple single-quote docstring"),
     },
+    # Pattern definitions for all supported languages
+    # JavaScript, TypeScript, and other C-style languages
     'javascript': {
         'line': CommentPattern(r'//.*$', description="JavaScript line comment"),
         'block': CommentPattern(r'/\*[\s\S]*?\*/', is_block=True, description="JavaScript block comment"),
@@ -150,20 +167,50 @@ COMMENT_PATTERNS = {
 
 
 class CommentHandler(ABC):
-    """Base abstract class for language-specific comment handlers."""
+    """
+    Base abstract class for language-specific comment handlers.
+    
+    Provides common functionality while requiring language-specific
+    implementations to define their own removal logic.
+    """
     
     def __init__(self, language_key: str):
+        """
+        Initialize the handler with language-specific patterns.
+        
+        Args:
+            language_key: Key to look up appropriate patterns from registry
+        """
         self.language_key = language_key
         self.patterns = COMMENT_PATTERNS.get(language_key, {})
     
     @abstractmethod
     def remove_comments(self, content: str, keep_doc_comments: bool = False,
                        preserve_todo: bool = False, preserve_patterns: Optional[List[str]] = None) -> str:
-        """Remove comments from the content."""
+        """
+        Remove comments from the content.
+        
+        Args:
+            content: Source code content to process
+            keep_doc_comments: Whether to preserve documentation comments
+            preserve_todo: Whether to preserve TODO and FIXME comments
+            preserve_patterns: List of regex patterns for comments to preserve
+            
+        Returns:
+            Processed content with comments removed according to settings
+        """
         pass
 
     def get_patterns(self, include_doc_comments: bool = True) -> List[CommentPattern]:
-        """Get applicable patterns based on settings."""
+        """
+        Get applicable patterns based on settings.
+        
+        Args:
+            include_doc_comments: Whether to include documentation comment patterns
+            
+        Returns:
+            List of comment patterns to use
+        """
         if include_doc_comments:
             return list(self.patterns.values())
         else:
@@ -171,7 +218,17 @@ class CommentHandler(ABC):
             
     def should_preserve_comment(self, comment: str, preserve_todo: bool = False, 
                           preserve_patterns: Optional[List[str]] = None) -> bool:
-        """Check if a comment should be preserved based on settings."""
+        """
+        Check if a comment should be preserved based on settings.
+        
+        Args:
+            comment: The comment text to check
+            preserve_todo: Whether to preserve TODO and FIXME comments
+            preserve_patterns: List of regex patterns for comments to preserve
+            
+        Returns:
+            True if the comment should be preserved, False otherwise
+        """
         # Check for TODO/FIXME comments
         if preserve_todo and re.search(r'\b(TODO|FIXME)\b', comment, re.IGNORECASE):
             return True
@@ -189,13 +246,31 @@ class CommentHandler(ABC):
 
 
 class PythonCommentHandler(CommentHandler):
-    """Handler for Python comments using the tokenize module."""
+    """
+    Handler for Python comments using the tokenize module.
+    
+    Specializes in handling Python's unique comment syntax including
+    docstrings and line comments.
+    """
     
     def __init__(self):
+        """Initialize the Python comment handler."""
         super().__init__('python')
     
     def remove_comments(self, content: str, keep_doc_comments: bool = False,
                        preserve_todo: bool = False, preserve_patterns: Optional[List[str]] = None) -> str:
+        """
+        Remove comments from Python code.
+        
+        Args:
+            content: Python source code to process
+            keep_doc_comments: Whether to preserve docstrings
+            preserve_todo: Whether to preserve TODO and FIXME comments
+            preserve_patterns: List of regex patterns for comments to preserve
+            
+        Returns:
+            Processed Python code with comments removed according to settings
+        """
         # Handle docstrings first if needed
         if not keep_doc_comments:
             # Use regex for docstrings as tokenize doesn't separate docstrings from strings
@@ -290,6 +365,18 @@ class HtmlCommentHandler(CommentHandler):
     
     def remove_comments(self, content: str, keep_doc_comments: bool = False,
                        preserve_todo: bool = False, preserve_patterns: Optional[List[str]] = None) -> str:
+        """
+        Remove comments from HTML content.
+        
+        Args:
+            content: HTML source code to process
+            keep_doc_comments: Not applicable to HTML, ignored
+            preserve_todo: Whether to preserve TODO and FIXME comments
+            preserve_patterns: List of regex patterns for comments to preserve
+            
+        Returns:
+            Processed HTML code with comments removed according to settings
+        """
         if not preserve_todo and not preserve_patterns:
             # Simple case - no preservation needed
             for pattern_name in ['block', 'block_dotall']:
@@ -324,6 +411,18 @@ class CStyleCommentHandler(CommentHandler):
     
     def remove_comments(self, content: str, keep_doc_comments: bool = False,
                        preserve_todo: bool = False, preserve_patterns: Optional[List[str]] = None) -> str:
+        """
+        Remove comments from C-style code.
+        
+        Args:
+            content: Source code to process
+            keep_doc_comments: Whether to preserve documentation comments
+            preserve_todo: Whether to preserve TODO and FIXME comments
+            preserve_patterns: List of regex patterns for comments to preserve
+            
+        Returns:
+            Processed code with comments removed according to settings
+        """
         # Handle string literals to prevent removing comments inside strings
         chunks = []
         in_string = False
@@ -433,6 +532,18 @@ class SqlCommentHandler(CommentHandler):
     
     def remove_comments(self, content: str, keep_doc_comments: bool = False,
                        preserve_todo: bool = False, preserve_patterns: Optional[List[str]] = None) -> str:
+        """
+        Remove comments from SQL content.
+        
+        Args:
+            content: SQL source code to process
+            keep_doc_comments: Not applicable to SQL, ignored
+            preserve_todo: Whether to preserve TODO and FIXME comments
+            preserve_patterns: List of regex patterns for comments to preserve
+            
+        Returns:
+            Processed SQL code with comments removed according to settings
+        """
         # Handle block comments
         if 'block' in self.patterns and not preserve_todo and not preserve_patterns:
             # Simple case - no preservation needed
@@ -486,6 +597,18 @@ class HashCommentHandler(CommentHandler):
     
     def remove_comments(self, content: str, keep_doc_comments: bool = False,
                        preserve_todo: bool = False, preserve_patterns: Optional[List[str]] = None) -> str:
+        """
+        Remove comments from code using # for line comments.
+        
+        Args:
+            content: Source code to process
+            keep_doc_comments: Not applicable to # comments, ignored
+            preserve_todo: Whether to preserve TODO and FIXME comments
+            preserve_patterns: List of regex patterns for comments to preserve
+            
+        Returns:
+            Processed code with comments removed according to settings
+        """
         result = []
         
         for line in content.split('\n'):
@@ -522,6 +645,18 @@ class LuaCommentHandler(CommentHandler):
     
     def remove_comments(self, content: str, keep_doc_comments: bool = False,
                        preserve_todo: bool = False, preserve_patterns: Optional[List[str]] = None) -> str:
+        """
+        Remove comments from Lua content.
+        
+        Args:
+            content: Lua source code to process
+            keep_doc_comments: Not applicable to Lua, ignored
+            preserve_todo: Whether to preserve TODO and FIXME comments
+            preserve_patterns: List of regex patterns for comments to preserve
+            
+        Returns:
+            Processed Lua code with comments removed according to settings
+        """
         # Handle block comments
         if 'block' in self.patterns and not preserve_todo and not preserve_patterns:
             # Simple case - no preservation needed
@@ -574,6 +709,18 @@ class HaskellCommentHandler(CommentHandler):
     
     def remove_comments(self, content: str, keep_doc_comments: bool = False,
                        preserve_todo: bool = False, preserve_patterns: Optional[List[str]] = None) -> str:
+        """
+        Remove comments from Haskell content.
+        
+        Args:
+            content: Haskell source code to process
+            keep_doc_comments: Not applicable to Haskell, ignored
+            preserve_todo: Whether to preserve TODO and FIXME comments
+            preserve_patterns: List of regex patterns for comments to preserve
+            
+        Returns:
+            Processed Haskell code with comments removed according to settings
+        """
         # Handle block comments
         if 'block' in self.patterns and not preserve_todo and not preserve_patterns:
             # Simple case - no preservation needed
@@ -626,6 +773,18 @@ class MatlabCommentHandler(CommentHandler):
     
     def remove_comments(self, content: str, keep_doc_comments: bool = False,
                        preserve_todo: bool = False, preserve_patterns: Optional[List[str]] = None) -> str:
+        """
+        Remove comments from MATLAB content.
+        
+        Args:
+            content: MATLAB source code to process
+            keep_doc_comments: Not applicable to MATLAB, ignored
+            preserve_todo: Whether to preserve TODO and FIXME comments
+            preserve_patterns: List of regex patterns for comments to preserve
+            
+        Returns:
+            Processed MATLAB code with comments removed according to settings
+        """
         # Handle block comments
         if 'block' in self.patterns and not preserve_todo and not preserve_patterns:
             # Simple case - no preservation needed
@@ -678,6 +837,18 @@ class PowerShellCommentHandler(CommentHandler):
     
     def remove_comments(self, content: str, keep_doc_comments: bool = False,
                        preserve_todo: bool = False, preserve_patterns: Optional[List[str]] = None) -> str:
+        """
+        Remove comments from PowerShell content.
+        
+        Args:
+            content: PowerShell source code to process
+            keep_doc_comments: Not applicable to PowerShell, ignored
+            preserve_todo: Whether to preserve TODO and FIXME comments
+            preserve_patterns: List of regex patterns for comments to preserve
+            
+        Returns:
+            Processed PowerShell code with comments removed according to settings
+        """
         # Handle block comments
         if 'block' in self.patterns and not preserve_todo and not preserve_patterns:
             # Simple case - no preservation needed
@@ -730,6 +901,18 @@ class RubyCommentHandler(CommentHandler):
     
     def remove_comments(self, content: str, keep_doc_comments: bool = False,
                        preserve_todo: bool = False, preserve_patterns: Optional[List[str]] = None) -> str:
+        """
+        Remove comments from Ruby content.
+        
+        Args:
+            content: Ruby source code to process
+            keep_doc_comments: Not applicable to Ruby, ignored
+            preserve_todo: Whether to preserve TODO and FIXME comments
+            preserve_patterns: List of regex patterns for comments to preserve
+            
+        Returns:
+            Processed Ruby code with comments removed according to settings
+        """
         # Handle block comments
         if 'block' in self.patterns and not preserve_todo and not preserve_patterns:
             # Simple case - no preservation needed
@@ -788,6 +971,18 @@ class PerlCommentHandler(CommentHandler):
     
     def remove_comments(self, content: str, keep_doc_comments: bool = False,
                        preserve_todo: bool = False, preserve_patterns: Optional[List[str]] = None) -> str:
+        """
+        Remove comments from Perl content.
+        
+        Args:
+            content: Perl source code to process
+            keep_doc_comments: Not applicable to Perl, ignored
+            preserve_todo: Whether to preserve TODO and FIXME comments
+            preserve_patterns: List of regex patterns for comments to preserve
+            
+        Returns:
+            Processed Perl code with comments removed according to settings
+        """
         # Handle block comments
         if 'block' in self.patterns and not preserve_todo and not preserve_patterns:
             # Simple case - no preservation needed
@@ -844,6 +1039,18 @@ class PhpCommentHandler(CommentHandler):
     
     def remove_comments(self, content: str, keep_doc_comments: bool = False,
                        preserve_todo: bool = False, preserve_patterns: Optional[List[str]] = None) -> str:
+        """
+        Remove comments from PHP content.
+        
+        Args:
+            content: PHP source code to process
+            keep_doc_comments: Not applicable to PHP, ignored
+            preserve_todo: Whether to preserve TODO and FIXME comments
+            preserve_patterns: List of regex patterns for comments to preserve
+            
+        Returns:
+            Processed PHP code with comments removed according to settings
+        """
         # Handle block comments with preservation
         if not preserve_todo and not preserve_patterns:
             # Simple case - no preservation needed
@@ -912,6 +1119,18 @@ class CSharpCommentHandler(CommentHandler):
     
     def remove_comments(self, content: str, keep_doc_comments: bool = False,
                        preserve_todo: bool = False, preserve_patterns: Optional[List[str]] = None) -> str:
+        """
+        Remove comments from C# content.
+        
+        Args:
+            content: C# source code to process
+            keep_doc_comments: Whether to preserve XML documentation comments
+            preserve_todo: Whether to preserve TODO and FIXME comments
+            preserve_patterns: List of regex patterns for comments to preserve
+            
+        Returns:
+            Processed C# code with comments removed according to settings
+        """
         # Handle block comments
         if 'block' in self.patterns and not preserve_todo and not preserve_patterns:
             # Simple case - no preservation needed
@@ -983,7 +1202,11 @@ class CSharpCommentHandler(CommentHandler):
 
 
 class CommentRemover:
-    """Main class to orchestrate comment removal across different languages."""
+    """
+    Main class to orchestrate comment removal across different languages.
+    
+    Manages language detection and delegates to appropriate handlers.
+    """
     
     def __init__(self):
         """Initialize with handlers for each supported language."""
@@ -1047,12 +1270,28 @@ class CommentRemover:
         }
     
     def identify_language(self, file_path: str) -> str:
-        """Determine language type based on file extension."""
+        """
+        Determine language type based on file extension.
+        
+        Args:
+            file_path: Path to the file to analyze
+            
+        Returns:
+            Language identifier string or 'unknown' if not recognized
+        """
         ext = os.path.splitext(file_path)[1].lower()
         return self._extension_map.get(ext, 'unknown')
     
     def count_comments(self, content: str) -> int:
-        """Count comments (approximate) in the content."""
+        """
+        Count comments (approximate) in the content.
+        
+        Args:
+            content: Source code content to analyze
+            
+        Returns:
+            Estimated number of comments in the content
+        """
         count = 0
         patterns = [
             r'//.*$',                # JavaScript/C/C++/Java line comments 
@@ -1087,7 +1326,19 @@ class CommentRemover:
                    preserve_todo: bool = False, 
                    preserve_patterns: Optional[List[str]] = None,
                    keep_doc_comments: bool = False) -> str:
-        """Remove comments from code based on language syntax rules."""
+        """
+        Remove comments from code based on language syntax rules.
+        
+        Args:
+            content: Source code content to process
+            language: Language identifier for appropriate handler selection
+            preserve_todo: Whether to preserve TODO and FIXME comments
+            preserve_patterns: List of regex patterns for comments to preserve
+            keep_doc_comments: Whether to preserve documentation comments
+            
+        Returns:
+            Processed content with comments removed according to settings
+        """
         if language == 'unknown' or language not in self._handlers:
             return content
             
@@ -1112,6 +1363,20 @@ class CommentRemover:
                 force: bool = False, preserve_todo: bool = False,
                 preserve_patterns: Optional[List[str]] = None,
                 keep_doc_comments: bool = False) -> Tuple[bool, Optional[Dict[str, Any]]]:
+        """
+        Process a single file to remove comments.
+        
+        Args:
+            file_path: Path to the file to process
+            backup: Whether to create a backup before modifying
+            force: Whether to process unknown file types
+            preserve_todo: Whether to preserve TODO and FIXME comments
+            preserve_patterns: List of regex patterns for comments to preserve
+            keep_doc_comments: Whether to preserve documentation comments
+            
+        Returns:
+            Tuple of (success_flag, statistics_dict)
+        """
         language = self.identify_language(file_path)
         
         # Skip unknown file types unless forced
@@ -1201,9 +1466,20 @@ class CommentRemover:
 
 
 class BatchProcessor:
-    """Handles batch processing of multiple files with progress tracking."""
+    """
+    Handles batch processing of multiple files with progress tracking.
+    
+    Manages parallel execution and aggregates results.
+    """
     
     def __init__(self, remover: CommentRemover, max_workers: int = 4):
+        """
+        Initialize the batch processor.
+        
+        Args:
+            remover: CommentRemover instance to use for processing
+            max_workers: Maximum number of parallel worker threads
+        """
         self.remover = remover
         self.max_workers = max_workers
     
@@ -1282,7 +1558,12 @@ class BatchProcessor:
 
 
 def parse_args():
-    """Parse command line arguments."""
+    """
+    Parse command line arguments.
+    
+    Returns:
+        Parsed arguments object
+    """
     parser = argparse.ArgumentParser(description='Remove comments from code files.')
     parser.add_argument('file_pattern', help='File pattern to match (e.g., *.py, src/*.js)')
     parser.add_argument('--no-backup', action='store_true', help='Skip creating backup files')
@@ -1300,7 +1581,11 @@ def parse_args():
 
 
 def main():
-    """Main entry point."""
+    """
+    Main entry point for command line execution.
+    
+    Handles argument parsing and orchestrates the cleaning process.
+    """
     # Parse command line arguments
     args = parse_args()
     

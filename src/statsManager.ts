@@ -1,23 +1,45 @@
 import * as vscode from 'vscode';
 
+/**
+ * Interface for storing comment cleaning statistics
+ */
 export interface CCPStatistics {
+    /** Total number of files processed */
     filesProcessed: number;
+    /** Total comments removed across all files */
     totalComments: number;
+    /** Total lines removed across all files */
     totalLines: number;
+    /** Total bytes saved across all operations */
     totalSizeReduction: number;
+    /** Average percentage of file size reduced */
     averageReductionPercent: number;
+    /** Timestamp of last statistics update */
     lastUpdated: Date;
 }
 
+/**
+ * Manages statistics tracking for the Comment Cleaner Pro extension
+ * Uses singleton pattern to provide a central statistics repository
+ */
 export class StatisticsManager {
     private static instance: StatisticsManager;
     private stats: CCPStatistics;
     private readonly storageKey = 'ccp-statistics';
     
+    /**
+     * Creates a statistics manager instance
+     * @param context - Extension context for persistent storage
+     */
     private constructor(private context: vscode.ExtensionContext) {
         this.stats = this.loadStats();
     }
     
+    /**
+     * Gets the singleton instance of the statistics manager
+     * @param context - Extension context for persistent storage
+     * @returns The statistics manager instance
+     */
     public static getInstance(context: vscode.ExtensionContext): StatisticsManager {
         if (!StatisticsManager.instance) {
             StatisticsManager.instance = new StatisticsManager(context);
@@ -25,6 +47,10 @@ export class StatisticsManager {
         return StatisticsManager.instance;
     }
     
+    /**
+     * Loads statistics from persistent storage
+     * @returns Statistics object from storage or defaults if none exist
+     */
     private loadStats(): CCPStatistics {
         const defaultStats: CCPStatistics = {
             filesProcessed: 0,
@@ -39,21 +65,31 @@ export class StatisticsManager {
         return savedStats || defaultStats;
     }
     
+    /**
+     * Saves current statistics to persistent storage
+     */
     private saveStats(): void {
         this.context.globalState.update(this.storageKey, this.stats);
     }
     
+    /**
+     * Returns a copy of the current statistics
+     * @returns Copy of the current statistics object
+     */
     public getCurrentStats(): CCPStatistics {
         return { ...this.stats };
     }
     
+    /**
+     * Updates statistics with results from processed files
+     * @param fileResults - Array of file processing results
+     */
     public updateStats(fileResults: any[]): void {
         if (!fileResults || fileResults.length === 0) {
             console.log("No file results to update stats with");
             return;
         }
         
-        // Enhanced debugging
         console.log("Updating stats with:", JSON.stringify(fileResults, null, 2));
         
         // Check for missing properties
@@ -94,6 +130,9 @@ export class StatisticsManager {
         this.saveStats();
     }
     
+    /**
+     * Resets all statistics to default values
+     */
     public resetStats(): void {
         this.stats = {
             filesProcessed: 0,
