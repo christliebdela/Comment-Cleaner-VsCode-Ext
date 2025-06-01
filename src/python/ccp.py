@@ -123,6 +123,28 @@ COMMENT_PATTERNS = {
         'block': CommentPattern(r'/\*[\s\S]*?\*/', is_block=True, description="Java block comment"),
         'doc': CommentPattern(r'/\*\*[\s\S]*?\*/', is_block=True, is_doc=True, 
                             description="Java doc comment"),
+    },
+    'swift': {
+        'line': CommentPattern(r'//.*$', description="Swift line comment"),
+        'block': CommentPattern(r'/\*[\s\S]*?\*/', is_block=True, description="Swift block comment"),
+        'doc': CommentPattern(r'/\*\*[\s\S]*?\*/', is_block=True, is_doc=True, 
+                            description="Swift documentation comment"),
+    },
+    'kotlin': {
+        'line': CommentPattern(r'//.*$', description="Kotlin line comment"),
+        'block': CommentPattern(r'/\*[\s\S]*?\*/', is_block=True, description="Kotlin block comment"),
+        'doc': CommentPattern(r'/\*\*[\s\S]*?\*/', is_block=True, is_doc=True, 
+                            description="Kotlin documentation comment"),
+    },
+    'rust': {
+        'line': CommentPattern(r'//.*$', description="Rust line comment"),
+        'block': CommentPattern(r'/\*[\s\S]*?\*/', is_block=True, description="Rust block comment"),
+        'doc': CommentPattern(r'///.*$', is_doc=True, description="Rust documentation line comment"),
+    },
+    'dart': {
+        'line': CommentPattern(r'//.*$', description="Dart line comment"),
+        'block': CommentPattern(r'/\*[\s\S]*?\*/', is_block=True, description="Dart block comment"),
+        'doc': CommentPattern(r'///.*$', is_doc=True, description="Dart documentation line comment"),
     }
 }
 
