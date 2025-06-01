@@ -162,6 +162,9 @@ Yes, you can use the dedicated Undo button in the sidebar, use standard VS Code 
 ### Does it work with all programming languages?
 It supports 20+ major languages. For unlisted languages, you can try the "force" option, but results may vary.
 
+### Does it work with embedded code like JavaScript in HTML files?
+No, the current version only processes comments based on the file extension. JavaScript or CSS comments within HTML files will not be removed. We're actively working on adding support for embedded languages in a future release.
+
 ## Privacy & Security
 
 Comment Cleaner Pro:

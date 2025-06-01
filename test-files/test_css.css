@@ -1,11 +1,48 @@
+/* Basic styling for the test page */
 
+/**
+ * Main body styles
+ * Sets up the base typography and spacing
+ */
 body {
   font-family: Arial, sans-serif;
-  margin: 0; 
-  padding: 0;
+  margin: 0; /* Reset margin */
+  padding: 0; /* Reset padding */
 }
 
+/* TODO: Add responsive breakpoints */
 
 h1 {
-  color: blue; // Another style of comment
+  color: blue; 
+  /* This won't work in all browsers */
+}
+
+/* FIXME: Need better contrast for accessibility */
+p {
+  color: #333; /* Dark gray text */
+  line-height: 1.5; /* Better readability */
+}
+
+/*
+ * Multi-line CSS comment
+ * For demonstrating block
+ * comment removal
+ */
+
+/* Single line comment before rule */
+a {
+  text-decoration: none; /* Remove underline */
+}
+
+/* 
+CSS selector grouping:
+- Multiple selectors
+- One set of declarations
+*/
+button,
+input[type="submit"] {
+  background-color: #007bff; /* Blue */
+  color: white;
+  /* Button padding */
+  padding: 8px 16px;
 }
