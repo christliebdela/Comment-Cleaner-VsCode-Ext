@@ -1,12 +1,44 @@
 # Single line comment in YAML
 
-name: Example YAML # End of line comment
-version: 1.0
+# TODO: Add proper validation
+# FIXME: Fix structure issues
 
-# Multi-line comment
-# using multiple # symbols
-# should all be removed
+# Document with comments
+---
+name: Test Configuration # Configuration name
+version: 1.0 # Version number
 
-settings:
-  timeout: 30 # Timeout in seconds
-  retry: true # Enable retry
+# Database configuration
+database:
+  host: localhost # Database host
+  port: 5432 # Database port
+  username: admin # Database username
+  
+# Server configuration
+server:
+  port: 8080 # Server port
+  debug: true # Debug mode
+  
+# List with comments
+endpoints:
+  - name: api # API endpoint
+    path: /api/v1 # API path
+  - name: admin # Admin endpoint
+    path: /admin # Admin path
+
+# TODO: Add authentication configuration
+
+# Nested structure with comments
+logging:
+  level: info # Log level
+  file: logs/app.log # Log file
+  max_size: 10MB # Maximum log file size
+  
+# FIXME: Add proper CORS configuration
+
+# Comment with YAML-like content:
+# fake_config:
+#   key: value
+#   another_key: another_value
+
+# Comment at end of file

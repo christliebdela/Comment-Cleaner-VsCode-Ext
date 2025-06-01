@@ -1,19 +1,49 @@
 <!DOCTYPE html>
 <!-- Basic HTML5 document -->
-<html>
+<html lang="en">
   <head>
     <!-- Meta information section -->
+    <meta charset="UTF-8">
+    <!-- TODO: Add viewport meta tag -->
+    <meta name="description" content="Test file for Comment Cleaner Pro">
+    <!-- FIXME: Add proper SEO keywords -->
     <title>Test HTML</title>
-    <!-- TODO: Add meta tags for SEO -->
-    <!-- FIXME: Add proper character encoding -->
     
     <!-- CSS could be included here -->
     <style>
       /* This is a CSS comment within HTML */
       body {
         background-color: #f0f0f0; /* Light gray background */
+        font-family: Arial, sans-serif; /* Sans-serif font */
+      }
+      
+      /* TODO: Add responsive styles */
+      
+      h1 { 
+        color: #333; 
+        /* FIXME: Improve heading contrast */
       }
     </style>
+    
+    <!-- JavaScript section with comments -->
+    <script>
+      // This is a JavaScript line comment
+      function greet() {
+        /* Multi-line JavaScript comment
+         * that spans multiple lines
+         * in HTML file
+         */
+        
+        // TODO: Add proper error handling
+        const name = 'World'; // Inline comment
+        
+        /**
+         * Documentation comment in JavaScript
+         * @returns {string} A greeting message
+         */
+        return `Hello, ${name}!`;
+      }
+    </script>
   </head>
   <body>
     <!-- Main content starts here -->
@@ -35,6 +65,17 @@
     * Third item
     -->
     
+    <!-- Comment with HTML-like syntax: <div>This is not real HTML</div> -->
+    
     <!-- TODO: Add footer section -->
+    
+    <!-- FIXME: Fix layout issues in mobile view -->
+    
+    <!-- 
+      Edge case: Comment with --> characters:
+      <!-- This is not a real end
+    -->
+    
+    <!-- Comment with JavaScript-style comments: // or /* */ inside -->
   </body>
 </html>

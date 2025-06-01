@@ -3,17 +3,21 @@
 /**
  * Main body styles
  * Sets up the base typography and spacing
+ * @author Comment Cleaner Pro
  */
 body {
   font-family: Arial, sans-serif;
   margin: 0; /* Reset margin */
   padding: 0; /* Reset padding */
+  line-height: 1.6; /* Better readability */
+  color: #333; /* Dark gray text */
 }
 
 /* TODO: Add responsive breakpoints */
 
 h1 {
   color: blue; 
+  font-size: 2rem;
   /* This won't work in all browsers */
 }
 
@@ -21,6 +25,7 @@ h1 {
 p {
   color: #333; /* Dark gray text */
   line-height: 1.5; /* Better readability */
+  margin-bottom: 1em;
 }
 
 /*
@@ -32,6 +37,8 @@ p {
 /* Single line comment before rule */
 a {
   text-decoration: none; /* Remove underline */
+  color: #0066cc; /* Blue link color */
+  transition: color 0.3s; /* Smooth transition */
 }
 
 /* 
@@ -45,4 +52,30 @@ input[type="submit"] {
   color: white;
   /* Button padding */
   padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
 }
+
+/* TODO: Add hover states for interactive elements */
+
+/* Comment with CSS-like content:
+.fake-class {
+  color: red;
+}
+*/
+
+/* FIXME: Fix media queries for better responsive design */
+
+/* Edge case: Comment with * / sequence that could be confused as end marker */
+
+/*
+ * Nested structure example
+ * .parent {
+ *   .child {
+ *     property: value;
+ *   }
+ * }
+ */
+
+/* Comment with escaped characters: \/* and *\/ should be treated as text */
