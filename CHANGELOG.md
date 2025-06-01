@@ -2,6 +2,26 @@
 
 All notable changes to the "Comment Cleaner Pro" extension are documented in this file.
 
+## [0.1.6] - 2025-06-02
+### Fixed
+- Critical issue: Right-click "Clean Current File" command now properly shows configuration dialog
+- "Remove from History" context menu command now correctly removes items
+- Fixed UI checkboxes squashing when window gets smaller
+- Removed the 10-file history limit - now keeps unlimited history
+- Improved circular checkbox rendering with consistent sizing
+- Fixed JavaScript console errors when retrieving saved options
+
+### Changed
+- Enhanced UI with proper section headings for better organization
+- Improved checkbox design with smaller, more consistent circular style
+- Added proper clickable area for both checkbox circles and labels
+- Better type safety for extension options
+
+### Added
+- Complete integration of UI panel configuration settings with commands
+- Green check mark indicators for selected options
+- Better validation of user inputs and configuration options
+
 ## [0.1.5] - 2025-06-01
 ### Fixed
 - Critical statistics tracking issue where only file count was updating
