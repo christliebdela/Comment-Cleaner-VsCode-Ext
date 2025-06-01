@@ -68,9 +68,14 @@ export function activate(context: vscode.ExtensionContext) {
         try {
             let noBackup, forceProcess, preserveTodo, keepDocComments;
             
-            // Fix this condition - add explicit check for empty object
-            if (options && Object.keys(options).length > 0) {
-                // Use options from the webview
+            // Replace the condition at line ~77 with this improved check
+            if (options && typeof options === 'object' && 
+                Object.keys(options).length > 0 &&
+                (options.createBackup !== undefined || 
+                 options.forceProcess !== undefined || 
+                 options.preserveTodo !== undefined || 
+                 options.keepDocComments !== undefined)) {
+                // Only use options if they actually contain configuration values
                 console.log('Using provided options:', options);
                 noBackup = !options.createBackup;
                 forceProcess = options.forceProcess;

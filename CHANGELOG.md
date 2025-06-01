@@ -2,6 +2,22 @@
 
 All notable changes to the "Comment Cleaner Pro" extension are documented in this file.
 
+## [1.0.0] - 2025-06-03
+
+### Major Update
+- **Complete Language Support**: All 25 supported languages now work flawlessly
+- **Fixed Critical C-style Comment Handling**: Corrected line comment removal in Go, Java, Swift, Kotlin, Rust, Dart, and other C-style languages
+- **Fixed Context Menu Configuration**: Right-click "Clean Current File" now properly shows all configuration dialogs
+- Properly handles all comment types (line, block, documentation) in every supported language
+- Enhanced string literal handling to avoid false comment detection
+- Intelligent newline preservation to maintain code structure
+- Complete user experience with consistent configuration across all entry points
+
+### Changed
+- Complete comment handler architecture with improved language-specific processors
+- Enhanced detection of multi-line and documentation comments
+- Improved option validation to ensure configuration dialogs appear appropriately
+
 ## [0.1.7] - 2025-06-02
 
 ### Minor Updates

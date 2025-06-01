@@ -14,26 +14,30 @@
 
 ## Current Release
 
-v0.1.7 - Enhanced configuration dialogs and UI improvements
+v1.0.0 - Major Update: All 25 languages fully supported with fixed configuration dialogs
+
+This release resolves two critical issues:
+- Complete language support for proper comment removal in all supported languages
+- Fixed configuration dialogs ensuring consistent behavior across all entry points
 
 ## Overview
 
-Comment Cleaner Pro is a powerful VS Code extension for removing comments from source code files. It helps you streamline your code by efficiently removing all types of comments (line, block, and documentation) across 20+ programming languages while preserving the core functionality of your code.
+Comment Cleaner Pro is a powerful VS Code extension for removing comments from source code files. It helps you streamline your code by efficiently removing all types of comments (line, block, and documentation) across 25+ programming languages while preserving the core functionality of your code.
 
 ## Key Features
 
 ### Comprehensive Language Support
-- **20+ Programming Languages** - Supports all major languages including Python, JavaScript (including JSX), TypeScript (including TSX), HTML, CSS, C/C++, Java, Ruby, Go, PHP, SQL, Swift, Rust, Kotlin, and more
-- **Intelligent Comment Detection** - Accurately identifies and removes all comment types specific to each language
+- **25+ Programming Languages** - Complete support for all major languages including Python, JavaScript (including JSX), TypeScript (including TSX), HTML, CSS, C/C++, Java, Ruby, Go, PHP, SQL, Swift, Rust, Kotlin, and more
+- **Flawless Comment Detection** - Accurately identifies and removes all comment types specific to each language
 - **Preservation of Code Structure** - Maintains code indentation and formatting while removing comments
 
 ### Flexible Processing Options
-- **Single File Processing** - Clean comments from the current file with a single click
+- **Single File Processing** - Clean comments from the current file with consistent configuration options
 - **Batch Processing** - Process multiple files simultaneously using glob patterns
 - **Automatic Backups** - Create safety backups before removing comments
 - **Customizable Rules** - Configure how unknown file types and special comments are handled
-- **Configuration Persistence** - Settings in the UI panel now properly apply to all operations
-- **Clear Configuration Dialogs** - Intuitive options when using context menu commands
+- **Configuration Consistency** - All entry points (context menu, command palette, sidebar) provide the same configuration options
+- **Clear Configuration Dialogs** - Intuitive options for all cleaning operations
 - **Undo/Redo Support** - Easily revert or reapply changes with dedicated undo/redo buttons
 
 ### Enhanced User Experience
@@ -62,6 +66,8 @@ Comment Cleaner Pro is a powerful VS Code extension for removing comments from s
 | **Mobile Development** | Swift, Dart |
 | **Functional** | Haskell |
 
+All languages are now fully supported with complete comment removal capabilities for line comments, block comments, and documentation comments!
+
 ## Installation
 
 1. Open VS Code
@@ -79,8 +85,12 @@ Comment Cleaner Pro is a powerful VS Code extension for removing comments from s
 1. Open a source code file in the editor
 2. Right-click anywhere in the editor
 3. Select "Comment Cleaner Pro: Clean Current File"
-4. Choose whether to create a backup
-5. The editor will refresh automatically with comments removed
+4. Configure your cleaning options:
+   - Choose whether to create a backup
+   - Select if TODO & FIXME comments should be preserved
+   - Decide whether to keep documentation comments
+   - Determine if unknown file types should be processed
+5. The editor will refresh automatically with comments removed according to your settings
 
 ### Method 2: Command Palette
 1. Press `Ctrl+Shift+P` (Windows/Linux) or `Cmd+Shift+P` (Mac)
