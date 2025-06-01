@@ -125,7 +125,8 @@ class CommentHandler(ABC):
         self.patterns = COMMENT_PATTERNS.get(language_key, {})
     
     @abstractmethod
-    def remove_comments(self, content: str, keep_doc_comments: bool = False) -> str:
+    def remove_comments(self, content: str, keep_doc_comments: bool = False,
+                       preserve_todo: bool = False, preserve_patterns: Optional[List[str]] = None) -> str:
         """Remove comments from the content."""
         pass
 
@@ -135,6 +136,24 @@ class CommentHandler(ABC):
             return list(self.patterns.values())
         else:
             return [p for p in self.patterns.values() if not p.is_doc]
+            
+    def should_preserve_comment(self, comment: str, preserve_todo: bool = False, 
+                          preserve_patterns: Optional[List[str]] = None) -> bool:
+        """Check if a comment should be preserved based on settings."""
+        # Check for TODO/FIXME comments
+        if preserve_todo and re.search(r'\b(TODO|FIXME)\b', comment, re.IGNORECASE):
+            return True
+            
+        # Check against custom patterns
+        if preserve_patterns:
+            for pattern in preserve_patterns:
+                try:
+                    if re.search(pattern, comment):
+                        return True
+                except re.error:
+                    logger.warning(f"Invalid regex pattern: {pattern}")
+                
+        return False
 
 
 class PythonCommentHandler(CommentHandler):
@@ -143,54 +162,92 @@ class PythonCommentHandler(CommentHandler):
     def __init__(self):
         super().__init__('python')
     
-    def remove_comments(self, content: str, keep_doc_comments: bool = False) -> str:
+    def remove_comments(self, content: str, keep_doc_comments: bool = False,
+                       preserve_todo: bool = False, preserve_patterns: Optional[List[str]] = None) -> str:
         # Handle docstrings first if needed
         if not keep_doc_comments:
             # Use regex for docstrings as tokenize doesn't separate docstrings from strings
             for pattern_name in ['docstring_double', 'docstring_single']:
                 if pattern_name in self.patterns:
                     pattern = self.patterns[pattern_name].pattern
-                    content = re.sub(pattern, '', content)
-        
-        # Use tokenize for line comments - much more reliable
-        result = []
-        try:
-            # tokenize requires bytes input
-            source_bytes = content.encode('utf-8')
-            
-            # Create tokens from the source
-            tokens = list(tokenize.tokenize(BytesIO(source_bytes).readline))
-            
-            # Reconstruct content without comments
-            last_token_end = (1, 0)  # Start at line 1, column 0
-            
-            for token in tokens:
-                token_type = token.type
-                token_string = token.string
-                token_start = token.start
-                token_end = token.end
-                
-                # Keep all non-comment tokens
-                if token_type != tokenize.COMMENT:
-                    # Add whitespace/newlines between tokens
-                    if token_start[0] > last_token_end[0]:
-                        # Add newlines if needed
-                        result.append('\n' * (token_start[0] - last_token_end[0]))
-                        last_token_end = (token_start[0], 0)
-                    elif token_start[1] > last_token_end[1]:
-                        # Add spaces if needed
-                        result.append(' ' * (token_start[1] - last_token_end[1]))
                     
-                    # Add the token itself
-                    result.append(token_string)
-                    last_token_end = token_end
+                    # Find all docstrings and check if any need to be preserved
+                    if preserve_todo or preserve_patterns:
+                        matches = re.finditer(pattern, content)
+                        for match in matches:
+                            match_text = match.group(0)
+                            if self.should_preserve_comment(match_text, preserve_todo, preserve_patterns):
+                                continue  # Skip this docstring, it should be preserved
+                            else:
+                                # Replace only this specific docstring
+                                content = content.replace(match_text, '', 1)
+                    else:
+                        # No preservation needed, remove all docstrings
+                        content = re.sub(pattern, '', content)
+        
+        # For line comments with preservation support, we need a custom approach
+        if preserve_todo or preserve_patterns:
+            # Process each line individually to check for preserved comments
+            lines = content.split('\n')
+            result_lines = []
             
-            return ''.join(result)
-        except Exception as e:
-            logger.warning(f"Tokenizer failed: {e}. Falling back to regex-based parsing.")
-            # Fall back to regex-based approach
-            content = re.sub(r'#.*$', '', content, flags=re.MULTILINE)
-            return content
+            for line in lines:
+                if '#' in line:
+                    # Find the position of the # character (not in a string)
+                    comment_start = line.find('#')
+                    code_part = line[:comment_start]
+                    comment_part = line[comment_start:]
+                    
+                    if self.should_preserve_comment(comment_part, preserve_todo, preserve_patterns):
+                        result_lines.append(line)  # Keep the whole line with comment
+                    else:
+                        result_lines.append(code_part)  # Keep just the code part
+                else:
+                    result_lines.append(line)
+            
+            content = '\n'.join(result_lines)
+            
+        # Use tokenize for regular line comments if no preservation is needed
+        if not preserve_todo and not preserve_patterns:
+            try:
+                # tokenize requires bytes input
+                source_bytes = content.encode('utf-8')
+                
+                # Create tokens from the source
+                tokens = list(tokenize.tokenize(BytesIO(source_bytes).readline))
+                
+                # Reconstruct content without comments
+                result = []
+                last_token_end = (1, 0)  # Start at line 1, column 0
+                
+                for token in tokens:
+                    token_type = token.type
+                    token_string = token.string
+                    token_start = token.start
+                    token_end = token.end
+                    
+                    # Keep all non-comment tokens
+                    if token_type != tokenize.COMMENT:
+                        # Add whitespace/newlines between tokens
+                        if token_start[0] > last_token_end[0]:
+                            # Add newlines if needed
+                            result.append('\n' * (token_start[0] - last_token_end[0]))
+                            last_token_end = (token_start[0], 0)
+                        elif token_start[1] > last_token_end[1]:
+                            # Add spaces if needed
+                            result.append(' ' * (token_start[1] - last_token_end[1]))
+                        
+                        # Add the token itself
+                        result.append(token_string)
+                        last_token_end = token_end
+                
+                return ''.join(result)
+            except Exception as e:
+                logger.warning(f"Tokenizer failed: {e}. Falling back to regex-based parsing.")
+                # Fall back to regex-based approach
+                content = re.sub(r'#.*$', '', content, flags=re.MULTILINE)
+        
+        return content
 
 
 class HtmlCommentHandler(CommentHandler):
@@ -199,11 +256,30 @@ class HtmlCommentHandler(CommentHandler):
     def __init__(self):
         super().__init__('html')
     
-    def remove_comments(self, content: str, keep_doc_comments: bool = False) -> str:
-        for pattern_name in ['block', 'block_dotall']:
-            if pattern_name in self.patterns:
-                pattern = self.patterns[pattern_name].pattern
-                content = re.sub(pattern, '', content)
+    def remove_comments(self, content: str, keep_doc_comments: bool = False,
+                       preserve_todo: bool = False, preserve_patterns: Optional[List[str]] = None) -> str:
+        if not preserve_todo and not preserve_patterns:
+            # Simple case - no preservation needed
+            for pattern_name in ['block', 'block_dotall']:
+                if pattern_name in self.patterns:
+                    pattern = self.patterns[pattern_name].pattern
+                    content = re.sub(pattern, '', content)
+        else:
+            # Need to check each comment
+            for pattern_name in ['block', 'block_dotall']:
+                if pattern_name in self.patterns:
+                    pattern = self.patterns[pattern_name].pattern
+                    matches = re.finditer(pattern, content)
+                    
+                    # We need to process comments from back to front to avoid position shifts
+                    matches = list(matches)
+                    for match in reversed(matches):
+                        comment = match.group(0)
+                        
+                        if not self.should_preserve_comment(comment, preserve_todo, preserve_patterns):
+                            # Remove this comment
+                            start, end = match.span()
+                            content = content[:start] + content[end:]
         
         return content
 
@@ -214,7 +290,8 @@ class CStyleCommentHandler(CommentHandler):
     def __init__(self, language_key: str = 'javascript'):
         super().__init__(language_key)
     
-    def remove_comments(self, content: str, keep_doc_comments: bool = False) -> str:
+    def remove_comments(self, content: str, keep_doc_comments: bool = False,
+                       preserve_todo: bool = False, preserve_patterns: Optional[List[str]] = None) -> str:
         # Handle string literals to prevent removing comments inside strings
         chunks = []
         in_string = False
@@ -225,10 +302,17 @@ class CStyleCommentHandler(CommentHandler):
             # Check for line comments
             if content[i:i+2] == '//' and not in_string and 'line' in self.patterns:
                 # Found line comment
+                line_start = i
                 line_end = content.find('\n', i)
                 if line_end == -1:
+                    comment = content[i:]
+                    if self.should_preserve_comment(comment, preserve_todo, preserve_patterns):
+                        chunks.append(comment)
                     i = len(content)  # End of content
                 else:
+                    comment = content[i:line_end]
+                    if self.should_preserve_comment(comment, preserve_todo, preserve_patterns):
+                        chunks.append(comment)
                     i = line_end  # Move to next line
                 
             # Check for block comments
@@ -236,39 +320,73 @@ class CStyleCommentHandler(CommentHandler):
                 # Found block comment
                 if content[i:i+3] == '/**' and keep_doc_comments and 'doc' in self.patterns:
                     # Preserve doc comment
-                    chunks.append(content[i:i+3])
-                    i += 3
-                else:
-                    # Skip block comment
                     end = content.find('*/', i + 2)
-                    if end == -1:
-                        i = len(content)  # Unterminated comment
+                    if end != -1:
+                        chunks.append(content[i:end+2])
+                        i = end + 2
                     else:
-                        i = end + 2  # Skip comment and closing tag
-        
-            # String handling
-            elif content[i] in ['"', "'"] and (i == 0 or content[i-1] != '\\'):
-                # String handling
-                if not in_string:
-                    # Start of string
-                    in_string = True
-                    string_char = content[i]
-                    chunks.append(content[i])
-                    i += 1
-                elif content[i] == string_char:
-                    # End of string with matching quote
-                    in_string = False
-                    chunks.append(content[i])
-                    i += 1
+                        chunks.append(content[i:])
+                        i = len(content)
                 else:
-                    # Different quote character inside a string
-                    chunks.append(content[i])
+                    # Check if we need to preserve this block comment
+                    end = content.find('*/', i + 2)
+                    if end != -1:
+                        comment = content[i:end+2]
+                        if self.should_preserve_comment(comment, preserve_todo, preserve_patterns):
+                            chunks.append(comment)
+                        i = end + 2  # Skip comment and closing tag
+                    else:
+                        # Unterminated comment
+                        comment = content[i:]
+                        if self.should_preserve_comment(comment, preserve_todo, preserve_patterns):
+                            chunks.append(comment)
+                        i = len(content)
+            
+            # Template literals (backticks) in JavaScript/TypeScript
+            elif content[i] == '`' and self.language_key in ['javascript', 'typescript']:
+                # Handle template literal
+                start = i
+                i += 1
+                # Find the end of the template literal
+                while i < len(content) and content[i] != '`':
+                    # Skip escaped characters
+                    if content[i] == '\\' and i+1 < len(content):
+                        i += 2
+                    else:
+                        i += 1
+                
+                # Include the closing backtick if found
+                if i < len(content):
                     i += 1
+                    
+                # Add the entire template literal
+                chunks.append(content[start:i])
+                
+            # String handling with better escaped quote support
+            elif content[i] in ['"', "'"] and (i == 0 or content[i-1] != '\\'):
+                string_start = i
+                char = content[i]
+                i += 1
+                
+                # Find the end of the string
+                while i < len(content) and (content[i] != char or content[i-1] == '\\'):
+                    # Handle escaped characters correctly
+                    if content[i] == '\\' and i+1 < len(content):
+                        i += 2  # Skip the escaped character
+                    else:
+                        i += 1
+                        
+                # Add the closing quote if found
+                if i < len(content):
+                    i += 1
+                    
+                # Add the entire string
+                chunks.append(content[string_start:i])
             else:
                 # Regular code or string content
                 chunks.append(content[i])
                 i += 1
-    
+        
         return ''.join(chunks)
 
 
@@ -278,17 +396,48 @@ class SqlCommentHandler(CommentHandler):
     def __init__(self):
         super().__init__('sql')
     
-    def remove_comments(self, content: str, keep_doc_comments: bool = False) -> str:
-        # Remove block comments
-        if 'block' in self.patterns:
+    def remove_comments(self, content: str, keep_doc_comments: bool = False,
+                       preserve_todo: bool = False, preserve_patterns: Optional[List[str]] = None) -> str:
+        # Handle block comments
+        if 'block' in self.patterns and not preserve_todo and not preserve_patterns:
+            # Simple case - no preservation needed
             content = re.sub(self.patterns['block'].pattern, '', content)
+        elif 'block' in self.patterns:
+            # Need to check each comment
+            block_pattern = self.patterns['block'].pattern
+            matches = re.finditer(block_pattern, content)
+            
+            # Process from back to front to avoid position shifts
+            matches = list(matches)
+            for match in reversed(matches):
+                comment = match.group(0)
+                
+                if not self.should_preserve_comment(comment, preserve_todo, preserve_patterns):
+                    # Remove this comment
+                    start, end = match.span()
+                    content = content[:start] + content[end:]
         
         # Handle line comments
         result = []
         for line in content.split('\n'):
             if '--' in line and 'line' in self.patterns:
-                line = line.split('--')[0]
-            result.append(line)
+                # Find the position of the -- sequence
+                comment_pos = line.find('--')
+                
+                # Split the line into code and comment
+                code_part = line[:comment_pos]
+                comment_part = line[comment_pos:]
+                
+                # Check if we need to preserve this comment
+                if preserve_todo or preserve_patterns:
+                    if self.should_preserve_comment(comment_part, preserve_todo, preserve_patterns):
+                        result.append(line)  # Keep the whole line
+                        continue
+                
+                # Otherwise just keep the code part
+                result.append(code_part)
+            else:
+                result.append(line)
             
         return '\n'.join(result)
 
@@ -300,17 +449,30 @@ class HashCommentHandler(CommentHandler):
         super().__init__(language_key)
         self.preserve_shebang = preserve_shebang
     
-    def remove_comments(self, content: str, keep_doc_comments: bool = False) -> str:
+    def remove_comments(self, content: str, keep_doc_comments: bool = False,
+                       preserve_todo: bool = False, preserve_patterns: Optional[List[str]] = None) -> str:
         result = []
         
         for line in content.split('\n'):
             if '#' in line:
+                # Find the position of the comment
+                comment_pos = line.find('#')
+                
+                # Get the code part and comment part
+                code_part = line[:comment_pos]
+                comment_part = line[comment_pos:]
+                
                 # Optionally preserve shebang lines
-                if self.preserve_shebang and line.strip().startswith('#!'):
+                if self.preserve_shebang and comment_part.strip().startswith('#!'):
                     result.append(line)
+                # Preserve TODOs and pattern matches if requested
+                elif preserve_todo or preserve_patterns:
+                    if self.should_preserve_comment(comment_part, preserve_todo, preserve_patterns):
+                        result.append(line)  # Keep the whole line with comment
+                    else:
+                        result.append(code_part)  # Keep just the code part
                 else:
-                    line = line.split('#')[0]
-                    result.append(line)
+                    result.append(code_part)
             else:
                 result.append(line)
                 
@@ -323,17 +485,48 @@ class LuaCommentHandler(CommentHandler):
     def __init__(self):
         super().__init__('lua')
     
-    def remove_comments(self, content: str, keep_doc_comments: bool = False) -> str:
-        # Remove block comments
-        if 'block' in self.patterns:
+    def remove_comments(self, content: str, keep_doc_comments: bool = False,
+                       preserve_todo: bool = False, preserve_patterns: Optional[List[str]] = None) -> str:
+        # Handle block comments
+        if 'block' in self.patterns and not preserve_todo and not preserve_patterns:
+            # Simple case - no preservation needed
             content = re.sub(self.patterns['block'].pattern, '', content)
+        elif 'block' in self.patterns:
+            # Need to check each block comment
+            block_pattern = self.patterns['block'].pattern
+            matches = re.finditer(block_pattern, content)
+            
+            # Process from back to front to avoid position shifts
+            matches = list(matches)
+            for match in reversed(matches):
+                comment = match.group(0)
+                
+                if not self.should_preserve_comment(comment, preserve_todo, preserve_patterns):
+                    # Remove this comment
+                    start, end = match.span()
+                    content = content[:start] + content[end:]
         
         # Handle line comments
         result = []
         for line in content.split('\n'):
             if '--' in line and 'line' in self.patterns:
-                line = line.split('--')[0]
-            result.append(line)
+                # Find the position of the -- sequence
+                comment_pos = line.find('--')
+                
+                # Split the line into code and comment
+                code_part = line[:comment_pos]
+                comment_part = line[comment_pos:]
+                
+                # Check if we need to preserve this comment
+                if preserve_todo or preserve_patterns:
+                    if self.should_preserve_comment(comment_part, preserve_todo, preserve_patterns):
+                        result.append(line)  # Keep the whole line
+                        continue
+                
+                # Otherwise just keep the code part
+                result.append(code_part)
+            else:
+                result.append(line)
             
         return '\n'.join(result)
 
@@ -344,17 +537,48 @@ class HaskellCommentHandler(CommentHandler):
     def __init__(self):
         super().__init__('haskell')
     
-    def remove_comments(self, content: str, keep_doc_comments: bool = False) -> str:
-        # Remove block comments
-        if 'block' in self.patterns:
+    def remove_comments(self, content: str, keep_doc_comments: bool = False,
+                       preserve_todo: bool = False, preserve_patterns: Optional[List[str]] = None) -> str:
+        # Handle block comments
+        if 'block' in self.patterns and not preserve_todo and not preserve_patterns:
+            # Simple case - no preservation needed
             content = re.sub(self.patterns['block'].pattern, '', content)
+        elif 'block' in self.patterns:
+            # Need to check each block comment
+            block_pattern = self.patterns['block'].pattern
+            matches = re.finditer(block_pattern, content)
+            
+            # Process from back to front to avoid position shifts
+            matches = list(matches)
+            for match in reversed(matches):
+                comment = match.group(0)
+                
+                if not self.should_preserve_comment(comment, preserve_todo, preserve_patterns):
+                    # Remove this comment
+                    start, end = match.span()
+                    content = content[:start] + content[end:]
         
         # Handle line comments
         result = []
         for line in content.split('\n'):
             if '--' in line and 'line' in self.patterns:
-                line = line.split('--')[0]
-            result.append(line)
+                # Find the position of the -- sequence
+                comment_pos = line.find('--')
+                
+                # Split the line into code and comment
+                code_part = line[:comment_pos]
+                comment_part = line[comment_pos:]
+                
+                # Check if we need to preserve this comment
+                if preserve_todo or preserve_patterns:
+                    if self.should_preserve_comment(comment_part, preserve_todo, preserve_patterns):
+                        result.append(line)  # Keep the whole line
+                        continue
+                
+                # Otherwise just keep the code part
+                result.append(code_part)
+            else:
+                result.append(line)
             
         return '\n'.join(result)
 
@@ -365,17 +589,48 @@ class MatlabCommentHandler(CommentHandler):
     def __init__(self):
         super().__init__('matlab')
     
-    def remove_comments(self, content: str, keep_doc_comments: bool = False) -> str:
-        # Remove block comments
-        if 'block' in self.patterns:
+    def remove_comments(self, content: str, keep_doc_comments: bool = False,
+                       preserve_todo: bool = False, preserve_patterns: Optional[List[str]] = None) -> str:
+        # Handle block comments
+        if 'block' in self.patterns and not preserve_todo and not preserve_patterns:
+            # Simple case - no preservation needed
             content = re.sub(self.patterns['block'].pattern, '', content)
+        elif 'block' in self.patterns:
+            # Need to check each block comment
+            block_pattern = self.patterns['block'].pattern
+            matches = re.finditer(block_pattern, content)
+            
+            # Process from back to front to avoid position shifts
+            matches = list(matches)
+            for match in reversed(matches):
+                comment = match.group(0)
+                
+                if not self.should_preserve_comment(comment, preserve_todo, preserve_patterns):
+                    # Remove this comment
+                    start, end = match.span()
+                    content = content[:start] + content[end:]
         
         # Handle line comments
         result = []
         for line in content.split('\n'):
             if '%' in line and 'line' in self.patterns:
-                line = line.split('%')[0]
-            result.append(line)
+                # Find the position of the % character
+                comment_pos = line.find('%')
+                
+                # Split the line into code and comment
+                code_part = line[:comment_pos]
+                comment_part = line[comment_pos:]
+                
+                # Check if we need to preserve this comment
+                if preserve_todo or preserve_patterns:
+                    if self.should_preserve_comment(comment_part, preserve_todo, preserve_patterns):
+                        result.append(line)  # Keep the whole line
+                        continue
+                
+                # Otherwise just keep the code part
+                result.append(code_part)
+            else:
+                result.append(line)
             
         return '\n'.join(result)
 
@@ -386,17 +641,48 @@ class PowerShellCommentHandler(CommentHandler):
     def __init__(self):
         super().__init__('powershell')
     
-    def remove_comments(self, content: str, keep_doc_comments: bool = False) -> str:
-        # Remove block comments
-        if 'block' in self.patterns:
+    def remove_comments(self, content: str, keep_doc_comments: bool = False,
+                       preserve_todo: bool = False, preserve_patterns: Optional[List[str]] = None) -> str:
+        # Handle block comments
+        if 'block' in self.patterns and not preserve_todo and not preserve_patterns:
+            # Simple case - no preservation needed
             content = re.sub(self.patterns['block'].pattern, '', content)
+        elif 'block' in self.patterns:
+            # Need to check each block comment
+            block_pattern = self.patterns['block'].pattern
+            matches = re.finditer(block_pattern, content)
+            
+            # Process from back to front to avoid position shifts
+            matches = list(matches)
+            for match in reversed(matches):
+                comment = match.group(0)
+                
+                if not self.should_preserve_comment(comment, preserve_todo, preserve_patterns):
+                    # Remove this comment
+                    start, end = match.span()
+                    content = content[:start] + content[end:]
         
         # Handle line comments
         result = []
         for line in content.split('\n'):
             if '#' in line and 'line' in self.patterns:
-                line = line.split('#')[0]
-            result.append(line)
+                # Find the position of the # character
+                comment_pos = line.find('#')
+                
+                # Split the line into code and comment
+                code_part = line[:comment_pos]
+                comment_part = line[comment_pos:]
+                
+                # Check if we need to preserve this comment
+                if preserve_todo or preserve_patterns:
+                    if self.should_preserve_comment(comment_part, preserve_todo, preserve_patterns):
+                        result.append(line)  # Keep the whole line
+                        continue
+                
+                # Otherwise just keep the code part
+                result.append(code_part)
+            else:
+                result.append(line)
             
         return '\n'.join(result)
 
@@ -407,10 +693,26 @@ class RubyCommentHandler(CommentHandler):
     def __init__(self):
         super().__init__('ruby')
     
-    def remove_comments(self, content: str, keep_doc_comments: bool = False) -> str:
-        # Remove block comments
-        if 'block' in self.patterns:
+    def remove_comments(self, content: str, keep_doc_comments: bool = False,
+                       preserve_todo: bool = False, preserve_patterns: Optional[List[str]] = None) -> str:
+        # Handle block comments
+        if 'block' in self.patterns and not preserve_todo and not preserve_patterns:
+            # Simple case - no preservation needed
             content = re.sub(self.patterns['block'].pattern, '', content)
+        elif 'block' in self.patterns:
+            # Need to check each block comment
+            block_pattern = self.patterns['block'].pattern
+            matches = re.finditer(block_pattern, content)
+            
+            # Process from back to front to avoid position shifts
+            matches = list(matches)
+            for match in reversed(matches):
+                comment = match.group(0)
+                
+                if not self.should_preserve_comment(comment, preserve_todo, preserve_patterns):
+                    # Remove this comment
+                    start, end = match.span()
+                    content = content[:start] + content[end:]
         
         # Handle line comments (preserve shebang)
         result = []
@@ -418,10 +720,27 @@ class RubyCommentHandler(CommentHandler):
             if '#' in line and 'line' in self.patterns:
                 # Preserve shebang lines (both #! and # ! formats)
                 stripped = line.strip()
-                if not (stripped.startswith('#!') or stripped.startswith('# !')):
-                    line = line.split('#')[0]
-                # else keep the line with the shebang
-            result.append(line)
+                if stripped.startswith('#!') or stripped.startswith('# !'):
+                    result.append(line)
+                    continue
+                
+                # Find the position of the # character
+                comment_pos = line.find('#')
+                
+                # Split the line into code and comment
+                code_part = line[:comment_pos]
+                comment_part = line[comment_pos:]
+                
+                # Check if we need to preserve this comment
+                if preserve_todo or preserve_patterns:
+                    if self.should_preserve_comment(comment_part, preserve_todo, preserve_patterns):
+                        result.append(line)  # Keep the whole line
+                        continue
+                
+                # Otherwise just keep the code part
+                result.append(code_part)
+            else:
+                result.append(line)
             
         return '\n'.join(result)
 
@@ -432,10 +751,26 @@ class PerlCommentHandler(CommentHandler):
     def __init__(self):
         super().__init__('perl')
     
-    def remove_comments(self, content: str, keep_doc_comments: bool = False) -> str:
-        # Remove block comments
-        if 'block' in self.patterns:
+    def remove_comments(self, content: str, keep_doc_comments: bool = False,
+                       preserve_todo: bool = False, preserve_patterns: Optional[List[str]] = None) -> str:
+        # Handle block comments
+        if 'block' in self.patterns and not preserve_todo and not preserve_patterns:
+            # Simple case - no preservation needed
             content = re.sub(self.patterns['block'].pattern, '', content)
+        elif 'block' in self.patterns:
+            # Need to check each block comment
+            block_pattern = self.patterns['block'].pattern
+            matches = re.finditer(block_pattern, content)
+            
+            # Process from back to front to avoid position shifts
+            matches = list(matches)
+            for match in reversed(matches):
+                comment = match.group(0)
+                
+                if not self.should_preserve_comment(comment, preserve_todo, preserve_patterns):
+                    # Remove this comment
+                    start, end = match.span()
+                    content = content[:start] + content[end:]
         
         # Handle line comments (preserving shebangs)
         result = []
@@ -443,9 +778,23 @@ class PerlCommentHandler(CommentHandler):
             if '#' in line and 'line' in self.patterns:
                 if line.strip().startswith('#!'):
                     result.append(line)
-                else:
-                    line = line.split('#')[0]
-                    result.append(line)
+                    continue
+                
+                # Find the position of the # character
+                comment_pos = line.find('#')
+                
+                # Split the line into code and comment
+                code_part = line[:comment_pos]
+                comment_part = line[comment_pos:]
+                
+                # Check if we need to preserve this comment
+                if preserve_todo or preserve_patterns:
+                    if self.should_preserve_comment(comment_part, preserve_todo, preserve_patterns):
+                        result.append(line)  # Keep the whole line
+                        continue
+                
+                # Otherwise just keep the code part
+                result.append(code_part)
             else:
                 result.append(line)
                 
@@ -458,21 +807,64 @@ class PhpCommentHandler(CommentHandler):
     def __init__(self):
         super().__init__('php')
     
-    def remove_comments(self, content: str, keep_doc_comments: bool = False) -> str:
-        # Remove block comments
-        content = re.sub(r'/\*[\s\S]*?\*/', '', content)
+    def remove_comments(self, content: str, keep_doc_comments: bool = False,
+                       preserve_todo: bool = False, preserve_patterns: Optional[List[str]] = None) -> str:
+        # Handle block comments with preservation
+        if not preserve_todo and not preserve_patterns:
+            # Simple case - no preservation needed
+            content = re.sub(r'/\*[\s\S]*?\*/', '', content)
+        else:
+            # Need to check each block comment
+            block_pattern = r'/\*[\s\S]*?\*/'
+            matches = re.finditer(block_pattern, content)
+            
+            # Process from back to front to avoid position shifts
+            matches = list(matches)
+            for match in reversed(matches):
+                comment = match.group(0)
+                
+                if not self.should_preserve_comment(comment, preserve_todo, preserve_patterns):
+                    # Remove this comment
+                    start, end = match.span()
+                    content = content[:start] + content[end:]
         
+        # Handle line comments
         result = []
         for line in content.split('\n'):
+            # Process the line for both // and # comments
+            processed_line = line
+            
             # First handle // comments
-            if '//' in line:
-                line = line.split('//')[0]
+            if '//' in processed_line:
+                comment_pos = processed_line.find('//')
+                code_part = processed_line[:comment_pos]
+                comment_part = processed_line[comment_pos:]
+                
+                if preserve_todo or preserve_patterns:
+                    if self.should_preserve_comment(comment_part, preserve_todo, preserve_patterns):
+                        # Keep this comment
+                        pass
+                    else:
+                        processed_line = code_part
+                else:
+                    processed_line = code_part
             
             # Then handle # comments
-            if '#' in line:
-                line = line.split('#')[0]
+            if '#' in processed_line:
+                comment_pos = processed_line.find('#')
+                code_part = processed_line[:comment_pos]
+                comment_part = processed_line[comment_pos:]
                 
-            result.append(line)
+                if preserve_todo or preserve_patterns:
+                    if self.should_preserve_comment(comment_part, preserve_todo, preserve_patterns):
+                        # Keep this comment
+                        pass
+                    else:
+                        processed_line = code_part
+                else:
+                    processed_line = code_part
+            
+            result.append(processed_line)
             
         return '\n'.join(result)
 
@@ -483,21 +875,74 @@ class CSharpCommentHandler(CommentHandler):
     def __init__(self):
         super().__init__('csharp')
     
-    def remove_comments(self, content: str, keep_doc_comments: bool = False) -> str:
-        # Remove block comments
-        if 'block' in self.patterns:
+    def remove_comments(self, content: str, keep_doc_comments: bool = False,
+                       preserve_todo: bool = False, preserve_patterns: Optional[List[str]] = None) -> str:
+        # Handle block comments
+        if 'block' in self.patterns and not preserve_todo and not preserve_patterns:
+            # Simple case - no preservation needed
             content = re.sub(self.patterns['block'].pattern, '', content)
+        elif 'block' in self.patterns:
+            # Need to check each block comment
+            block_pattern = self.patterns['block'].pattern
+            matches = re.finditer(block_pattern, content)
+            
+            # Process from back to front to avoid position shifts
+            matches = list(matches)
+            for match in reversed(matches):
+                comment = match.group(0)
+                
+                if not self.should_preserve_comment(comment, preserve_todo, preserve_patterns):
+                    # Remove this comment
+                    start, end = match.span()
+                    content = content[:start] + content[end:]
         
-        # Remove XML documentation comments (///)
-        if not keep_doc_comments and 'doc' in self.patterns:
+        # Handle XML documentation comments (///)
+        if not keep_doc_comments and 'doc' in self.patterns and not (preserve_todo or preserve_patterns):
+            # Simple case - no preservation needed
             content = re.sub(self.patterns['doc'].pattern, '', content, flags=re.MULTILINE)
+        elif 'doc' in self.patterns and not keep_doc_comments:
+            # Need to check each doc comment
+            doc_pattern = self.patterns['doc'].pattern
+            result = []
+            
+            for line in content.split('\n'):
+                if line.strip().startswith('///'):
+                    if preserve_todo or preserve_patterns:
+                        if self.should_preserve_comment(line, preserve_todo, preserve_patterns):
+                            result.append(line)  # Keep this doc comment
+                            continue
+                    # Skip this line if it's a doc comment that shouldn't be preserved
+                else:
+                    result.append(line)
+            
+            content = '\n'.join(result)
         
         # Handle line comments
         result = []
         for line in content.split('\n'):
             if '//' in line and 'line' in self.patterns:
-                line = line.split('//')[0]
-            result.append(line)
+                # Ignore if it's a doc comment that we've already handled
+                if line.strip().startswith('///'):
+                    result.append(line)
+                    continue
+                
+                # Find the position of the // sequence
+                comment_pos = line.find('//')
+                
+                # Split the line into code and comment
+                code_part = line[:comment_pos]
+                comment_part = line[comment_pos:]
+                
+                # Check if we need to preserve this comment
+                if preserve_todo or preserve_patterns:
+                    if self.should_preserve_comment(comment_part, preserve_todo, preserve_patterns):
+                        result.append(line)  # Keep the whole line
+                        continue
+                
+                # Otherwise just keep the code part
+                result.append(code_part)
+            else:
+                result.append(line)
             
         return '\n'.join(result)
 
@@ -604,9 +1049,9 @@ class CommentRemover:
         return count
     
     def remove_comments(self, content: str, language: str, 
-                        preserve_todo: bool = False, 
-                        preserve_patterns: Optional[List[str]] = None,
-                        keep_doc_comments: bool = False) -> str:
+                   preserve_todo: bool = False, 
+                   preserve_patterns: Optional[List[str]] = None,
+                   keep_doc_comments: bool = False) -> str:
         """Remove comments from code based on language syntax rules."""
         if language == 'unknown' or language not in self._handlers:
             return content
@@ -614,8 +1059,13 @@ class CommentRemover:
         # Get the appropriate handler for this language
         handler = self._handlers[language]
         
-        # Process the content
-        cleaned = handler.remove_comments(content, keep_doc_comments)
+        # Process the content with all parameters
+        cleaned = handler.remove_comments(
+            content, 
+            keep_doc_comments=keep_doc_comments,
+            preserve_todo=preserve_todo,
+            preserve_patterns=preserve_patterns
+        )
         
         # Clean up the result by removing trailing whitespace and excessive newlines
         cleaned = '\n'.join(line.rstrip() for line in cleaned.split('\n'))
@@ -624,23 +1074,9 @@ class CommentRemover:
         return cleaned
     
     def process_file(self, file_path: str, backup: bool = True, 
-                    force: bool = False, preserve_todo: bool = False,
-                    preserve_patterns: Optional[List[str]] = None,
-                    keep_doc_comments: bool = False) -> Tuple[bool, Optional[Dict[str, Any]]]:
-        """
-        Process a file to remove comments while handling backups and errors.
-        
-        Args:
-            file_path: Path to file to process
-            backup: Whether to create backup files
-            force: Whether to process unknown file types
-            preserve_todo: Whether to preserve TODO and FIXME comments
-            preserve_patterns: List of regex patterns for comments to preserve
-            keep_doc_comments: Whether to preserve documentation comments
-            
-        Returns:
-            Tuple of (success, stats_dict)
-        """
+                force: bool = False, preserve_todo: bool = False,
+                preserve_patterns: Optional[List[str]] = None,
+                keep_doc_comments: bool = False) -> Tuple[bool, Optional[Dict[str, Any]]]:
         language = self.identify_language(file_path)
         
         # Skip unknown file types unless forced
@@ -661,9 +1097,22 @@ class CommentRemover:
             # Statistics tracking
             original_size = os.path.getsize(file_path)
             
-            # Read file content
-            with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
-                content = f.read()
+            # Try multiple encodings to read the file
+            encodings_to_try = ['utf-8', 'latin-1', 'iso-8859-1', 'cp1252']
+            content = None
+            
+            for encoding in encodings_to_try:
+                try:
+                    with open(file_path, 'r', encoding=encoding) as f:
+                        content = f.read()
+                        used_encoding = encoding
+                    break  # Stop if successful
+                except UnicodeDecodeError:
+                    continue
+        
+            if content is None:
+                logger.error(f"  Error: Unable to decode {file_path} with supported encodings.")
+                return (False, None)
             
             # Count original lines
             original_lines = content.count('\n') + 1
@@ -680,8 +1129,8 @@ class CommentRemover:
             cleaned_lines = cleaned.count('\n') + 1
             lines_removed = original_lines - cleaned_lines
             
-            # Write cleaned content back to file
-            with open(file_path, 'w', encoding='utf-8') as f:
+            # Write cleaned content back to file using the same encoding
+            with open(file_path, 'w', encoding=used_encoding) as f:
                 f.write(cleaned)
             
             # Calculate statistics

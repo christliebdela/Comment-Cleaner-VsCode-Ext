@@ -2,8 +2,14 @@ import * as vscode from 'vscode';
 
 export class ButtonsViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'ccpButtons';
-
-  constructor(private readonly extensionUri: vscode.Uri) {}
+  
+  // Add the context parameter to the constructor
+  constructor(
+    private readonly extensionUri: vscode.Uri,
+    private readonly context: vscode.ExtensionContext
+  ) {
+    console.log('ButtonsViewProvider initialized with context:', this.context.extension.id);
+  }
 
   resolveWebviewView(webviewView: vscode.WebviewView): void {
     webviewView.webview.options = {
@@ -20,10 +26,10 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
     webviewView.webview.onDidReceiveMessage(async message => {
       switch (message.command) {
         case 'cleanCurrentFile':
-          vscode.commands.executeCommand('ccp.cleanComments');
+          vscode.commands.executeCommand('ccp.cleanComments', message.options);
           break;
         case 'cleanMultipleFiles':
-          vscode.commands.executeCommand('ccp.cleanMultipleFiles');
+          vscode.commands.executeCommand('ccp.cleanMultipleFiles', message.options);
           break;
         case 'undo':
           // Make sure the active editor has focus before attempting undo
@@ -58,6 +64,11 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
           break;
         case 'filterByLanguage':
           vscode.commands.executeCommand('ccp.setLanguageFilter');
+          break;
+        case 'saveOptions':
+          console.log('Saving options to global state:', message.options);
+          // Save options to global state using the class instance's context
+          await this.context.globalState.update('ccpOptions', message.options);
           break;
       }
     });
@@ -133,6 +144,96 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
             margin: 0;
             flex: 1;
           }
+          
+          .options-container {
+            margin-top: 12px;
+            border-top: 1px solid var(--vscode-panel-border);
+            padding-top: 8px;
+          }
+          
+          .section-header {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--vscode-foreground);
+            user-select: none;
+          }
+          
+          .option-checkbox {
+            display: flex;
+            align-items: flex-start; /* Changed from center to prevent squashing */
+            margin: 8px 0;
+            font-size: 12px;
+            position: relative;
+          }
+          
+          /* Hide the original checkbox */
+          .option-checkbox input[type="checkbox"] {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+          }
+          
+          /* Create a custom checkbox */
+          .checkmark {
+            position: relative;
+            display: inline-block;
+            height: 12px; /* Made smaller (was 14px) */
+            width: 12px; /* Made smaller (was 14px) */
+            min-width: 12px; /* Prevent shrinking */
+            flex-shrink: 0; /* Prevent shrinking */
+            background-color: var(--vscode-editor-background);
+            border: 1.5px solid var(--vscode-editor-foreground); /* Thinner border */
+            border-radius: 50%;
+            margin-right: 8px;
+            margin-top: 2px; /* Align with first line of text */
+            transition: all 0.2s ease;
+            cursor: pointer;
+          }
+          
+          /* On mouse-over, add a slight highlight */
+          .option-checkbox:hover input ~ .checkmark {
+            background-color: var(--vscode-editor-selectionHighlightBackground);
+          }
+          
+          /* When the checkbox is checked, add a green background */
+          .option-checkbox input:checked ~ .checkmark {
+            background-color: #2ea043;
+            border-color: #2ea043;
+          }
+          
+          /* Create the checkmark/indicator (hidden when not checked) */
+          .checkmark:after {
+            content: "";
+            position: absolute;
+            display: none;
+          }
+          
+          /* Show the checkmark when checked */
+          .option-checkbox input:checked ~ .checkmark:after {
+            display: block;
+          }
+          
+          /* Style the checkmark/indicator */
+          .option-checkbox .checkmark:after {
+            left: 3.5px; /* Adjusted for smaller size */
+            top: 0.5px; /* Adjusted for smaller size */
+            width: 3px; /* Smaller checkmark */
+            height: 6px; /* Smaller checkmark */
+            border: solid white;
+            border-width: 0 1.5px 1.5px 0; /* Thinner checkmark */
+            transform: rotate(45deg);
+          }
+          
+          .option-checkbox label {
+            cursor: pointer;
+            user-select: none;
+            line-height: 1.4; /* Better line height for wrapped text */
+            padding-left: 24px;
+            margin-left: -24px;
+          }
         </style>
       </head>
       <body>
@@ -158,15 +259,92 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
           </button>
         </div>
         
+        <div class="options-container">
+          <h3 class="section-header">Configurations</h3>
+          
+          <div class="option-checkbox">
+            <input type="checkbox" id="createBackup" checked />
+            <span class="checkmark"></span>
+            <label for="createBackup">Create backup files</label>
+          </div>
+          
+          <div class="option-checkbox">
+            <input type="checkbox" id="preserveTodo" />
+            <span class="checkmark"></span>
+            <label for="preserveTodo">Preserve TODO & FIXME comments</label>
+          </div>
+          
+          <div class="option-checkbox">
+            <input type="checkbox" id="keepDocComments" />
+            <span class="checkmark"></span>
+            <label for="keepDocComments">Keep documentation comments</label>
+          </div>
+          
+          <div class="option-checkbox">
+            <input type="checkbox" id="forceProcess" />
+            <span class="checkmark"></span>
+            <label for="forceProcess">Force processing of unknown types</label>
+          </div>
+        </div>
+        
         <script>
           const vscode = acquireVsCodeApi();
           
+          // Initialize with saved state or defaults
+          const state = vscode.getState() || {
+            createBackup: true,
+            preserveTodo: false,
+            keepDocComments: false,
+            forceProcess: false
+          };
+          
+          // Restore checkbox states
+          document.getElementById('createBackup').checked = state.createBackup;
+          document.getElementById('preserveTodo').checked = state.preserveTodo;
+          document.getElementById('keepDocComments').checked = state.keepDocComments;
+          document.getElementById('forceProcess').checked = state.forceProcess;
+          
+          // Save state when checkboxes change
+          document.querySelectorAll('.option-checkbox input').forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+              state[checkbox.id] = checkbox.checked;
+              vscode.setState(state);
+              
+              // Save to extension global state so other commands can access it
+              vscode.postMessage({ 
+                command: 'saveOptions',
+                options: {
+                  createBackup: document.getElementById('createBackup').checked,
+                  preserveTodo: document.getElementById('preserveTodo').checked,
+                  keepDocComments: document.getElementById('keepDocComments').checked,
+                  forceProcess: document.getElementById('forceProcess').checked
+                }
+              });
+            });
+          });
+          
           document.getElementById('cleanCurrentFile').addEventListener('click', () => {
-            vscode.postMessage({ command: 'cleanCurrentFile' });
+            vscode.postMessage({ 
+              command: 'cleanCurrentFile',
+              options: {
+                createBackup: document.getElementById('createBackup').checked,
+                preserveTodo: document.getElementById('preserveTodo').checked,
+                keepDocComments: document.getElementById('keepDocComments').checked,
+                forceProcess: document.getElementById('forceProcess').checked
+              }
+            });
           });
           
           document.getElementById('cleanMultipleFiles').addEventListener('click', () => {
-            vscode.postMessage({ command: 'cleanMultipleFiles' });
+            vscode.postMessage({ 
+              command: 'cleanMultipleFiles',
+              options: {
+                createBackup: document.getElementById('createBackup').checked,
+                preserveTodo: document.getElementById('preserveTodo').checked,
+                keepDocComments: document.getElementById('keepDocComments').checked,
+                forceProcess: document.getElementById('forceProcess').checked
+              }
+            });
           });
           
           document.getElementById('undoButton').addEventListener('click', () => {
@@ -175,6 +353,17 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
           
           document.getElementById('redoButton').addEventListener('click', () => {
             vscode.postMessage({ command: 'redo' });
+          });
+          
+          document.querySelectorAll('.checkmark').forEach(circle => {
+            circle.addEventListener('click', () => {
+              const checkbox = circle.previousElementSibling;
+              checkbox.checked = !checkbox.checked;
+              
+              // Trigger the change event to update state
+              const event = new Event('change');
+              checkbox.dispatchEvent(event);
+            });
           });
         </script>
       </body>

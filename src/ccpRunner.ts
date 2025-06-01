@@ -2,7 +2,14 @@ import * as cp from 'child_process';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
-export function runCcpScript(filePath: string, noBackup: boolean, force: boolean): Promise<string> {
+export function runCcpScript(
+    filePath: string, 
+    noBackup: boolean, 
+    force: boolean,
+    preserveTodo: boolean = false,
+    preservePatterns: any[] = [],
+    keepDocComments: boolean = false
+): Promise<string> {
     return new Promise((resolve, reject) => {
         // Get path to the Python script, relative to extension directory
         const pythonScriptPath = path.join(__dirname, 'python', 'ccp.py');
@@ -26,6 +33,18 @@ export function runCcpScript(filePath: string, noBackup: boolean, force: boolean
         
         if (force) {
             pythonArgs.push('--force');
+        }
+        
+        if (preserveTodo) {
+            pythonArgs.push('--preserve-todo');
+        }
+        
+        if (keepDocComments) {
+            pythonArgs.push('--keep-doc-comments');
+        }
+        
+        if (preservePatterns && preservePatterns.length > 0) {
+            pythonArgs.push('--preserve-patterns', JSON.stringify(preservePatterns));
         }
         
         // Log the full command for debugging
@@ -68,9 +87,24 @@ export function runCcpScript(filePath: string, noBackup: boolean, force: boolean
     });
 }
 
-export async function executeCcp(filePath: string, noBackup: boolean, force: boolean): Promise<any> {
+export async function executeCcp(
+    filePath: string, 
+    noBackup: boolean, 
+    force: boolean,
+    preserveTodo: boolean = false,
+    preservePatterns: any[] = [],
+    keepDocComments: boolean = false
+): Promise<any> {
     try {
-        const output = await runCcpScript(filePath, noBackup, force);
+        // Update the runCcpScript call to include the new parameters
+        const output = await runCcpScript(
+            filePath, 
+            noBackup, 
+            force, 
+            preserveTodo, 
+            preservePatterns, 
+            keepDocComments
+        );
         console.log("Python script output:", output);
         
         // Always use parseCleanResults now, no dry run option

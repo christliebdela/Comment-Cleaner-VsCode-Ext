@@ -78,9 +78,6 @@ export class HistoryViewProvider implements vscode.TreeDataProvider<FileItem> {
   addToHistory(filePath: string): void {
     if (!this.history.includes(filePath)) {
       this.history.unshift(filePath);
-      if (this.history.length > 10) {
-        this.history.pop();
-      }
     }
     this.refresh();
   }

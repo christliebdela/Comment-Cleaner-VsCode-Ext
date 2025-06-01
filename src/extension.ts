@@ -8,13 +8,32 @@ import { StatisticsViewProvider } from './statsViewProvider';
 import * as path from 'path';
 import * as os from 'os';
 
+interface CCPOptions {
+    createBackup: boolean;
+    preserveTodo: boolean;
+    keepDocComments: boolean;
+    forceProcess: boolean;
+}
+
 export function activate(context: vscode.ExtensionContext) {
+    console.log('Extension activated with context:', context.extension.id);
+    
+    // Initialize default options if they don't exist
+    if (!context.globalState.get('ccpOptions')) {
+        context.globalState.update('ccpOptions', {
+            createBackup: true,
+            preserveTodo: false,
+            keepDocComments: false,
+            forceProcess: false
+        });
+    }
+    
     // Create the statistics manager
     const statsManager = StatisticsManager.getInstance(context);
     
     // Create view providers
     const historyViewProvider = new HistoryViewProvider();
-    const buttonsProvider = new ButtonsViewProvider(context.extensionUri);
+    const buttonsProvider = new ButtonsViewProvider(context.extensionUri, context);
     const statsViewProvider = new StatisticsViewProvider(context.extensionUri, statsManager);
     
     // Register tree data providers
@@ -36,7 +55,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.executeCommand('setContext', 'ccpHasResults', false);
     
     // Register command for single file processing
-    let cleanCurrentFile = vscode.commands.registerCommand('ccp.cleanComments', async () => {
+    let cleanCurrentFile = vscode.commands.registerCommand('ccp.cleanComments', async (options) => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
             vscode.window.showErrorMessage('No active editor found.');
@@ -47,21 +66,75 @@ export function activate(context: vscode.ExtensionContext) {
         await document.save();
         
         try {
-            const backup = await vscode.window.showQuickPick(
-                ['Yes, Create a Backup File', 'Don\'t Create a Backup File'], {
-                    placeHolder: 'Create a backup before cleaning?',
-                    ignoreFocusOut: true // Prevents dismissal when clicking outside
-                }
-            );
+            let noBackup, forceProcess, preserveTodo, keepDocComments;
             
-            // If the user dismissed the dialog (clicked outside, pressed Escape)
-            if (!backup) {
-                return; // Cancel the operation
+            // Fix this condition - add explicit check for empty object
+            if (options && Object.keys(options).length > 0) {
+                // Use options from the webview
+                console.log('Using provided options:', options);
+                noBackup = !options.createBackup;
+                forceProcess = options.forceProcess;
+                preserveTodo = options.preserveTodo;
+                keepDocComments = options.keepDocComments;
+            } else {
+                // Add debug logging
+                console.log('Showing dialog for configuration');
+                
+                // Create backup?
+                const backup = await vscode.window.showQuickPick(
+                    ['Yes, Create a Backup File', 'Don\'t Create a Backup File'], {
+                        placeHolder: 'Create a backup before cleaning?',
+                        ignoreFocusOut: true
+                    }
+                );
+                
+                if (!backup) {
+                    console.log('User cancelled backup dialog');
+                    return; // User cancelled
+                }
+                noBackup = backup === 'Don\'t Create a Backup File';
+                
+                // Preserve TODO/FIXME?
+                const todo = await vscode.window.showQuickPick(
+                    ['Yes, Preserve TODO & FIXME Comments', 'No, Remove All Comments'], {
+                        placeHolder: 'Preserve TODO and FIXME comments?',
+                        ignoreFocusOut: true
+                    }
+                );
+                
+                if (!todo) return; // User cancelled  
+                preserveTodo = todo === 'Yes, Preserve TODO & FIXME Comments';
+                
+                // Keep doc comments?
+                const docs = await vscode.window.showQuickPick(
+                    ['Yes, Keep Documentation Comments', 'No, Remove All Comments'], {
+                        placeHolder: 'Keep documentation comments?',
+                        ignoreFocusOut: true
+                    }
+                );
+                
+                if (!docs) return; // User cancelled
+                keepDocComments = docs === 'Yes, Keep Documentation Comments';
+                
+                // Force processing?
+                const force = await vscode.window.showQuickPick(
+                    ['Yes, Force Processing of Unknown Types', 'No, Skip Unknown Types'], {
+                        placeHolder: 'Force processing of unknown file types?',
+                        ignoreFocusOut: true
+                    }
+                );
+                
+                if (!force) return; // User cancelled
+                forceProcess = force === 'Yes, Force Processing of Unknown Types';
             }
             
-            const noBackup = backup === 'Don\'t Create a Backup File';
+            // Get any custom preserve patterns from settings
+            const config = vscode.workspace.getConfiguration('commentCleanerPro');
+            const preservePatterns = config.get('preservePatterns', []);
             
-            const result = await executeCcp(document.fileName, noBackup, false);
+            // Run the processor with the determined settings
+            const result = await executeCcp(document.fileName, noBackup, forceProcess, 
+                                           preserveTodo, preservePatterns, keepDocComments);
             
             // Update statistics if results were returned
             if (result) {
@@ -83,7 +156,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Register command for batch file processing
     let cleanMultipleFiles = vscode.commands.registerCommand('ccp.cleanMultipleFiles', async () => {
-        await selectAndProcessFiles(historyViewProvider);
+        await selectAndProcessFiles(historyViewProvider, context);
     });
 
     // Add new commands
@@ -112,8 +185,14 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
-    let removeFromHistory = vscode.commands.registerCommand('ccp.removeFromHistory', (filePath) => {
-        historyViewProvider.removeFromHistory(filePath);
+    let removeFromHistory = vscode.commands.registerCommand('ccp.removeFromHistory', (item) => {
+        // The item is the entire TreeItem, not just the filePath
+        if (item && item.filePath) {
+            historyViewProvider.removeFromHistory(item.filePath);
+        } else if (typeof item === 'string') {
+            // For backward compatibility
+            historyViewProvider.removeFromHistory(item);
+        }
     });
 
     let setLanguageFilter = vscode.commands.registerCommand('ccp.setLanguageFilter', async () => {

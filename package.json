@@ -49,6 +49,7 @@
       "editor/context": [
         {
           "command": "ccp.cleanComments",
+          "args": {},
           "group": "modification"
         }
       ],
