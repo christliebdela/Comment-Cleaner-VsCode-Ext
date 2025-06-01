@@ -221,9 +221,6 @@ class CStyleCommentHandler(CommentHandler):
         string_char = None
         i = 0
         
-        # Temporary placeholders for strings
-        string_placeholders = []
-        
         while i < len(content):
             # Check for line comments
             if content[i:i+2] == '//' and not in_string and 'line' in self.patterns:
@@ -233,7 +230,7 @@ class CStyleCommentHandler(CommentHandler):
                     i = len(content)  # End of content
                 else:
                     i = line_end  # Move to next line
-                    
+                
             # Check for block comments
             elif content[i:i+2] == '/*' and not in_string:
                 # Found block comment
@@ -248,7 +245,7 @@ class CStyleCommentHandler(CommentHandler):
                         i = len(content)  # Unterminated comment
                     else:
                         i = end + 2  # Skip comment and closing tag
-            
+        
             # String handling
             elif content[i] in ['"', "'"] and (i == 0 or content[i-1] != '\\'):
                 # String handling
@@ -256,34 +253,23 @@ class CStyleCommentHandler(CommentHandler):
                     # Start of string
                     in_string = True
                     string_char = content[i]
-                    start = i
+                    chunks.append(content[i])
                     i += 1
                 elif content[i] == string_char:
-                    # End of string
+                    # End of string with matching quote
                     in_string = False
-                    string_content = content[start:i+1]
-                    placeholder = f"__STRING_PLACEHOLDER_{len(string_placeholders)}__"
-                    string_placeholders.append(string_content)
-                    chunks.append(placeholder)
+                    chunks.append(content[i])
                     i += 1
                 else:
-                    # Different quote in a string
+                    # Different quote character inside a string
                     chunks.append(content[i])
                     i += 1
             else:
-                # Regular code
-                if not in_string:
-                    chunks.append(content[i])
+                # Regular code or string content
+                chunks.append(content[i])
                 i += 1
-        
-        # Process line comments in the combined content
-        result = ''.join(chunks)
-        
-        # Restore string literals
-        for idx, string in enumerate(string_placeholders):
-            result = result.replace(f"__STRING_PLACEHOLDER_{idx}__", string)
-            
-        return result
+    
+        return ''.join(chunks)
 
 
 class SqlCommentHandler(CommentHandler):
