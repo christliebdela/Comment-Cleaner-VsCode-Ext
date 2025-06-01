@@ -113,6 +113,16 @@ COMMENT_PATTERNS = {
         'line': CommentPattern(r'//.*$', description="C# line comment"),
         'block': CommentPattern(r'/\*[\s\S]*?\*/', is_block=True, description="C# block comment"),
         'doc': CommentPattern(r'///.*$', is_doc=True, description="C# XML documentation comment"),
+    },
+    'go': {
+        'line': CommentPattern(r'//.*$', description="Go line comment"),
+        'block': CommentPattern(r'/\*[\s\S]*?\*/', is_block=True, description="Go block comment"),
+    },
+    'java': {
+        'line': CommentPattern(r'//.*$', description="Java line comment"),
+        'block': CommentPattern(r'/\*[\s\S]*?\*/', is_block=True, description="Java block comment"),
+        'doc': CommentPattern(r'/\*\*[\s\S]*?\*/', is_block=True, is_doc=True, 
+                            description="Java doc comment"),
     }
 }
 
@@ -313,7 +323,10 @@ class CStyleCommentHandler(CommentHandler):
                     comment = content[i:line_end]
                     if self.should_preserve_comment(comment, preserve_todo, preserve_patterns):
                         chunks.append(comment)
-                    i = line_end  # Move to next line
+                        chunks.append('\n')  # Add newline to keep line structure
+                    else:
+                        chunks.append('\n')  # Add newline but skip comment
+                    i = line_end + 1  # Move PAST the newline
                 
             # Check for block comments
             elif content[i:i+2] == '/*' and not in_string:
