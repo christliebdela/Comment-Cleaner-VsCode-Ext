@@ -1,7 +1,7 @@
 # Comment Cleaner Pro
 
 <p align="left">
-  <img src="media/comment-cleaner-pro.jpg" width="128" height="128" alt="Comment Cleaner Pro Logo">
+  <img src="media/comment-cleaner-pro.jpg" width="auto" height="374.38" alt="Comment Cleaner Pro Logo">
 </p>
 
 <p align="left">
