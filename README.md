@@ -14,19 +14,11 @@
 
 ## Current Release
 
-v0.1.6 - Enhanced configuration dialogs and UI improvements
+v0.1.7 - Enhanced configuration dialogs and UI improvements
 
 ## Overview
 
 Comment Cleaner Pro is a powerful VS Code extension for removing comments from source code files. It helps you streamline your code by efficiently removing all types of comments (line, block, and documentation) across 20+ programming languages while preserving the core functionality of your code.
-
-## The Ironic Truth
-
-> "Yes, this comment remover has comments in its source code. It's like a barber with fabulous hair." 
-
-We believe in documenting our code to help contributors, even while building a tool that removes comments. Our extension removes comments from _production code_, not development code. We're like dentists who eat candy but still brush their teeth! 😉
-
-You could say our source code lives by the motto: _"Do as I say, not as I'm coded."_
 
 ## Key Features
 

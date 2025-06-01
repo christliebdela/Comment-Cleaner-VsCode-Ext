@@ -2,6 +2,12 @@
 
 All notable changes to the "Comment Cleaner Pro" extension are documented in this file.
 
+## [0.1.7] - 2025-06-02
+
+### Minor Updates
+- Added project banner
+- Updated project icons
+
 ## [0.1.6] - 2025-06-02
 ### Fixed
 - Critical issue: Right-click "Clean Current File" command now properly shows configuration dialog
