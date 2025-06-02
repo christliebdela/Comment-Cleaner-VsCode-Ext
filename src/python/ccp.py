@@ -271,6 +271,9 @@ class PythonCommentHandler(CommentHandler):
         Returns:
             Processed Python code with comments removed according to settings
         """
+        # First, explicitly remove encoding declarations and shebang lines
+        content = re.sub(r'^#!.*$|^#.*?coding[=:]\s*[-\w.]+.*$', '', content, flags=re.MULTILINE)
+        
         # Handle docstrings first if needed
         if not keep_doc_comments:
             # Use regex for docstrings as tokenize doesn't separate docstrings from strings

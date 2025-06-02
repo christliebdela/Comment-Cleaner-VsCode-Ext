@@ -2,7 +2,22 @@
 
 All notable changes to the "Comment Cleaner Pro" extension are documented in this file.
 
-## [1.0.0] - 2025-06-03
+## [1.0.1] - 2025-06-02
+
+Minor Update
+
+### Changed
+- **Extension Logo and Banner**: Improved extension logo and banner 
+- **Enhanced Documentation**: Restructured features list with visual emphasis
+- **Marketplace Presentation**: Improved extension presentation in VS Code Marketplace
+
+### Added
+- **VS Code Extension Metadata**: Added proper changelog entry point for VS Code marketplace
+- **Language-Specific Documentation**: Organized supported languages into clear categories
+- **Improved Visual Styling**: Enhanced badges and visual presentation of documentation
+
+
+## [1.0.0] - 2025-06-01
 
 ### Major Update
 - **Complete Language Support**: All 25 supported languages now work flawlessly
@@ -18,13 +33,13 @@ All notable changes to the "Comment Cleaner Pro" extension are documented in thi
 - Enhanced detection of multi-line and documentation comments
 - Improved option validation to ensure configuration dialogs appear appropriately
 
-## [0.1.7] - 2025-06-02
+## [0.1.7] - 2025-06-31
 
 ### Minor Updates
 - Added project banner
 - Updated project icons
 
-## [0.1.6] - 2025-06-02
+## [0.1.6] - 2025-06-31
 ### Fixed
 - Critical issue: Right-click "Clean Current File" command now properly shows configuration dialog
 - "Remove from History" context menu command now correctly removes items
@@ -44,7 +59,7 @@ All notable changes to the "Comment Cleaner Pro" extension are documented in thi
 - Green check mark indicators for selected options
 - Better validation of user inputs and configuration options
 
-## [0.1.5] - 2025-06-01
+## [0.1.5] - 2025-06-30
 ### Fixed
 - Critical statistics tracking issue where only file count was updating
 - Improved Python output parsing for reliable statistics collection
@@ -55,7 +70,7 @@ All notable changes to the "Comment Cleaner Pro" extension are documented in thi
 - Updated documentation with humorous acknowledegment of the comment paradox
 - Enhanced output handling resilience for different Python implementations
 
-## [0.1.4] - 2025-05-31
+## [0.1.4] - 2025-05-30
 ### Added
 - Undo/Redo buttons to the Actions panel for easy reverting and restoring changes
 - Enhanced statistics tracking with line count reduction metrics
