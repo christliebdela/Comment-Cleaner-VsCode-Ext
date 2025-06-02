@@ -177,7 +177,8 @@
     "type": "git",
     "url": "https://github.com/christliebdela/Comment-Cleaner-VsCode-Ext"
   },
-  "changelog": "https://github.com/christliebdela/Comment-Cleaner-VsCode-Ext/blob/main/CHANGELOG.md",
+  "markdown": "github",
+  "changelog": "CHANGELOG.md",
   "keywords": [
     "VS Code",
     "Extension",
