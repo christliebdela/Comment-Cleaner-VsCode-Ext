@@ -24,49 +24,63 @@ This release resolves two critical issues:
 
 Comment Cleaner Pro is a powerful VS Code extension for removing comments from source code files. It helps you streamline your code by efficiently removing all types of comments (line, block, and documentation) across 25+ programming languages while preserving the core functionality of your code.
 
-## Key Features
+## Features
 
-### Comprehensive Language Support
-- **25+ Programming Languages** - Complete support for all major languages including Python, JavaScript (including JSX), TypeScript (including TSX), HTML, CSS, C/C++, Java, Ruby, Go, PHP, SQL, Swift, Rust, Kotlin, and more
-- **Flawless Comment Detection** - Accurately identifies and removes all comment types specific to each language
-- **Preservation of Code Structure** - Maintains code indentation and formatting while removing comments
+- ✅ **Removes AI-generated comments** from supported file types
+- ✅ **Preserves meaningful comments** for better readability
+- ✅ **One-click cleanup** with an easy-to-use command
+- ✅ **Supports multiple programming languages**
+- ✅ **Automatic backups** create safety files before removing comments
+- ✅ **Detailed statistics** track the number of comments and lines removed
+- ✅ **Undo/Redo support** to easily revert or restore changes
+- ✅ **Configuration consistency** across all entry points
 
-### Flexible Processing Options
-- **Single File Processing** - Clean comments from the current file with consistent configuration options
-- **Batch Processing** - Process multiple files simultaneously using glob patterns
-- **Automatic Backups** - Create safety backups before removing comments
-- **Customizable Rules** - Configure how unknown file types and special comments are handled
-- **Configuration Consistency** - All entry points (context menu, command palette, sidebar) provide the same configuration options
-- **Clear Configuration Dialogs** - Intuitive options for all cleaning operations
-- **Undo/Redo Support** - Easily revert or reapply changes with dedicated undo/redo buttons
+## Currently Supports
 
-### Enhanced User Experience
-- **Modern UI Controls** - Circular checkboxes with green indicators for selected options
-- **Unlimited History** - Track all cleaned files without arbitrary limits
-- **Individual File Management** - Remove specific files from history as needed
-- **Responsive Design** - UI elements maintain their shape and clarity at all window sizes
+<p align="left">
+  <!-- Web Development -->
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg" width="40" height="40" alt="JavaScript" title="JavaScript" />
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg" width="40" height="40" alt="TypeScript" title="TypeScript" />
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg" width="40" height="40" alt="HTML" title="HTML" />
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/css3/css3-original.svg" width="40" height="40" alt="CSS" title="CSS" />
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/php/php-original.svg" width="40" height="40" alt="PHP" title="PHP" />
+  
+  <!-- Systems Programming -->
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/c/c-original.svg" width="40" height="40" alt="C" title="C" />
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cplusplus/cplusplus-original.svg" width="40" height="40" alt="C++" title="C++" />
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/rust/rust-original.svg" />
+ width="40" height="40" alt="Rust" title="Rust" />
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original-wordmark.svg" width="40" height="40" alt="Go" title="Go" />
+  
+  <!-- Enterprise -->
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg" width="40" height="40" alt="Java" title="Java" />
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/csharp/csharp-original.svg" width="40" height="40" alt="C#" title="C#" />
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/kotlin/kotlin-original.svg" width="40" height="40" alt="Kotlin" title="Kotlin" />
+  
+  <!-- Scripting -->
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" width="40" height="40" alt="Python" title="Python" />
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/ruby/ruby-original.svg" width="40" height="40" alt="Ruby" title="Ruby" />
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/perl/perl-original.svg" width="40" height="40" alt="Perl" title="Perl" />
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/bash/bash-original.svg" width="40" height="40" alt="Bash" title="Bash" />
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/lua/lua-original.svg" width="40" height="40" alt="Lua" title="Lua" />
+</p>
 
-### Detailed Statistics
-- **Comment Count** - Track the number of comments removed per file
-- **Line Reduction** - See exactly how many lines were removed
-- **File Size Impact** - Measure the size reduction achieved
-- **Accurate Tracking** - Now with improved accuracy in statistics tracking
+<p align="left">
+  <!-- Data & Analysis -->
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mysql/mysql-original.svg" width="40" height="40" alt="SQL" title="SQL" />
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/yaml/yaml-original.svg" width="40" height="40" alt="YAML" title="YAML" />
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/r/r-original.svg" width="40" height="40" alt="R" title="R" />
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/matlab/matlab-original.svg" width="40" height="40" alt="MATLAB" title="MATLAB" />
+  
+  <!-- Mobile Development -->
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/swift/swift-original.svg" width="40" height="40" alt="Swift" title="Swift" />
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/dart/dart-original.svg" width="40" height="40" alt="Dart" title="Dart" />
+  
+  <!-- Functional -->
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/haskell/haskell-original.svg" width="40" height="40" alt="Haskell" title="Haskell" />
+</p>
 
-![Comment Cleaner Pro in action](media/demo.gif)
-
-## Supported Languages
-
-| Language Group | Supported Languages |
-|---------------|---------------------|
-| **Web Development** | JavaScript (including JSX), TypeScript (including TSX), HTML, CSS, PHP |
-| **Systems Programming** | C, C++, Rust, Go |
-| **Enterprise** | Java, C#, Kotlin |
-| **Scripting** | Python, Ruby, Perl, Bash, PowerShell, Lua |
-| **Data & Analysis** | SQL, YAML, R, MATLAB |
-| **Mobile Development** | Swift, Dart |
-| **Functional** | Haskell |
-
-All languages are now fully supported with complete comment removal capabilities for line comments, block comments, and documentation comments!
+Support for other languages is coming soon. Stay tuned!
 
 ## Installation
 
@@ -190,5 +204,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 
 Created and maintained by <a href="https://github.com/christliebdela">Christlieb Dela</a>.
-
-<!-- Yes, this is a comment in a comment remover's README. The irony isn't lost on us! -->
