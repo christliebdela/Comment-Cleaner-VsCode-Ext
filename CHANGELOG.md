@@ -2,9 +2,17 @@
 
 All notable changes to the "Comment Cleaner Pro" extension are documented in this file.
 
+## [1.0.2] - 2025-06-02
+
+Minor Update
+
+### Changed
+
+
 ## [1.0.1] - 2025-06-02
 
 Minor Update
+- **Removed Banner from the marketplace**: 
 
 ### Changed
 - **Extension Logo and Banner**: Improved extension logo and banner 

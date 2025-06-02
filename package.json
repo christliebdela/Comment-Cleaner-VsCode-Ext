@@ -2,7 +2,7 @@
   "name": "comment-cleaner-pro",
   "displayName": "Comment Cleaner Pro",
   "description": "Streamline your code by effortlessly removing comments across 20+ programming languages. Improve readability, reduce file size, and prepare code for production with powerful cleaning options and detailed statistics.",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "publisher": "ChristliebDela",
   "icon": "media/icon.png",
   "engines": {
@@ -178,6 +178,7 @@
     "url": "https://github.com/christliebdela/Comment-Cleaner-VsCode-Ext"
   },
   "markdown": "github",
+  "readme": "README.marketplace.md",
   "changelog": "CHANGELOG.md",
   "keywords": [
     "VS Code",
