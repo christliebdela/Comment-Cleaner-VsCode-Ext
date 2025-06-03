@@ -1,6 +1,9 @@
 # Change Log
 
 All notable changes to the "Comment Cleaner Pro" extension are documented in this file.
+## [1.0.4] - 2025-06-03
+
+Minor Update - Fixed Missing Documentation On VsCode Marketplace
 
 ## [1.0.3] - 2025-06-03
 
