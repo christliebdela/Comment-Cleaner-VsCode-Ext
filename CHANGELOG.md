@@ -2,6 +2,20 @@
 
 All notable changes to the "Comment Cleaner Pro" extension are documented in this file.
 
+## [1.0.3] - 2025-06-03
+
+Minor Update - Documentation Improvements
+
+### Changed
+- **Feature Description**: Updated feature list to clarify that the extension removes all comment types (not just AI-generated ones)
+- **Language Support Layout**: Replaced unorganized language badges with a structured category-based table
+- **Visit Counter**: Replaced non-functioning SVG counter with compatible badge solution
+
+### Added
+- **Key Features Section**: Added comprehensive key features section with detailed descriptions of capabilities
+- **Organized Language Categories**: Added visual categorization of supported languages for better readability
+- **Visual Consistency**: Implemented consistent badge styling throughout documentation
+
 ## [1.0.2] - 2025-06-02
 
 Minor Update
