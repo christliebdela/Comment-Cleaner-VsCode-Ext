@@ -2,19 +2,9 @@ import * as cp from 'child_process';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
-/**
- * Executes the CCP Python script with the provided parameters
- * @param filePath - Path to the file being processed
- * @param noBackup - Whether to skip backup creation
- * @param force - Whether to force processing for unsupported file types
- * @param preserveTodo - Whether to keep TODO and FIXME comments
- * @param preservePatterns - Array of regex patterns for comments to preserve
- * @param keepDocComments - Whether to keep documentation comments
- * @returns Promise resolving with the Python script's output
- */
 export function runCcpScript(
-    filePath: string, 
-    noBackup: boolean, 
+    filePath: string,
+    noBackup: boolean,
     force: boolean,
     preserveTodo: boolean = false,
     preservePatterns: any[] = [],
@@ -22,59 +12,59 @@ export function runCcpScript(
 ): Promise<string> {
     return new Promise((resolve, reject) => {
         const pythonScriptPath = path.join(__dirname, 'python', 'ccp.py');
-        
+
         const fs = require('fs');
         if (!fs.existsSync(pythonScriptPath)) {
             reject(`Python script not found: ${pythonScriptPath}`);
             return;
         }
-        
+
         const pythonArgs = [
             pythonScriptPath,
             filePath,
         ];
-        
+
         if (noBackup) {
             pythonArgs.push('--no-backup');
         }
-        
+
         if (force) {
             pythonArgs.push('--force');
         }
-        
+
         if (preserveTodo) {
             pythonArgs.push('--preserve-todo');
         }
-        
+
         if (keepDocComments) {
             pythonArgs.push('--keep-doc-comments');
         }
-        
+
         if (preservePatterns && preservePatterns.length > 0) {
             pythonArgs.push('--preserve-patterns', JSON.stringify(preservePatterns));
         }
-        
+
         console.log(`Executing: python ${pythonArgs.join(' ')}`);
         vscode.window.showInformationMessage(`Running: python with ${pythonScriptPath}`);
-        
+
         const pythonProcess = cp.spawn('python', pythonArgs);
-        
+
         let stdout = '';
         let stderr = '';
-        
+
         pythonProcess.stdout.on('data', (data) => {
             stdout += data.toString();
             console.log(`Python stdout: ${data}`);
         });
-        
+
         pythonProcess.stderr.on('data', (data) => {
             stderr += data.toString();
             console.log(`Python stderr: ${data}`);
         });
-        
+
         pythonProcess.on('close', (code) => {
             console.log(`Python process exited with code ${code}`);
-            
+
             if (code !== 0) {
                 reject(`Python script failed with code ${code}: ${stderr}`);
             } else {
@@ -84,26 +74,16 @@ export function runCcpScript(
                 resolve(stdout + '\n' + stderr);
             }
         });
-        
+
         pythonProcess.on('error', (err) => {
             reject(`Failed to execute Python: ${err.message}`);
         });
     });
 }
 
-/**
- * High-level function to execute the comment cleaning process and parse results
- * @param filePath - Path to the file being processed
- * @param noBackup - Whether to skip backup creation
- * @param force - Whether to force processing for unsupported file types
- * @param preserveTodo - Whether to keep TODO and FIXME comments
- * @param preservePatterns - Array of regex patterns for comments to preserve
- * @param keepDocComments - Whether to keep documentation comments
- * @returns Promise resolving with parsed results object
- */
 export async function executeCcp(
-    filePath: string, 
-    noBackup: boolean, 
+    filePath: string,
+    noBackup: boolean,
     force: boolean,
     preserveTodo: boolean = false,
     preservePatterns: any[] = [],
@@ -111,15 +91,15 @@ export async function executeCcp(
 ): Promise<any> {
     try {
         const output = await runCcpScript(
-            filePath, 
-            noBackup, 
-            force, 
-            preserveTodo, 
-            preservePatterns, 
+            filePath,
+            noBackup,
+            force,
+            preserveTodo,
+            preservePatterns,
             keepDocComments
         );
         console.log("Python script output:", output);
-        
+
         const results = parseCleanResults(output, filePath);
         return results;
     } catch (error) {
@@ -128,12 +108,6 @@ export async function executeCcp(
     }
 }
 
-/**
- * Parses the output from the Python script to extract cleaning statistics
- * @param output - Raw output string from Python script
- * @param filePath - Path to the processed file
- * @returns Object containing parsed cleaning statistics
- */
 function parseCleanResults(output: string, filePath: string): any {
     const results: any = {
         fileName: path.basename(filePath),
@@ -143,15 +117,15 @@ function parseCleanResults(output: string, filePath: string): any {
         sizeReduction: 0,
         sizePercentage: 0
     };
-    
+
     console.log("Raw Python output to parse:", output);
-    
-    const commentMatch = output.match(/Removed\s+approximately\s+(\d+)\s+comments?\s*\((\d+)\s+lines?\)/i) || 
+
+    const commentMatch = output.match(/Removed\s+approximately\s+(\d+)\s+comments?\s*\((\d+)\s+lines?\)/i) ||
                        output.match(/Removed.*?(\d+).*?comment.*?\((\d+).*?line/i);
-    
+
     const sizeMatch = output.match(/File\s+size\s+reduced\s+by\s+(\d+)\s+bytes\s+\(([0-9.]+)%\)/i) ||
                     output.match(/reduced.*?by\s+(\d+)\s+bytes.*?\(([0-9.]+)%\)/i);
-    
+
     if (commentMatch) {
         results.commentCount = parseInt(commentMatch[1]);
         results.linesRemoved = parseInt(commentMatch[2]);
@@ -159,7 +133,7 @@ function parseCleanResults(output: string, filePath: string): any {
     } else {
         console.log("Failed to match comment pattern in output");
     }
-    
+
     if (sizeMatch) {
         results.sizeReduction = parseInt(sizeMatch[1]);
         results.sizePercentage = parseFloat(sizeMatch[2]);
@@ -167,6 +141,6 @@ function parseCleanResults(output: string, filePath: string): any {
     } else {
         console.log("Failed to match size pattern in output");
     }
-    
+
     return results;
 }

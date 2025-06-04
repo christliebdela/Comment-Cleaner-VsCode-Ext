@@ -8,9 +8,6 @@ import { StatisticsViewProvider } from './statsViewProvider';
 import * as path from 'path';
 import * as os from 'os';
 
-/**
- * Configuration options for comment cleaning operations
- */
 interface CCPOptions {
     createBackup: boolean;
     preserveTodo: boolean;
@@ -18,14 +15,9 @@ interface CCPOptions {
     forceProcess: boolean;
 }
 
-/**
- * Activates the extension
- * @param context The extension context
- */
 export function activate(context: vscode.ExtensionContext) {
     console.log('Extension activated with context:', context.extension.id);
-    
-    // Initialize default options if they don't exist
+
     if (!context.globalState.get('ccpOptions')) {
         context.globalState.update('ccpOptions', {
             createBackup: true,
@@ -34,37 +26,29 @@ export function activate(context: vscode.ExtensionContext) {
             forceProcess: false
         });
     }
-    
-    // Create the statistics manager
+
     const statsManager = StatisticsManager.getInstance(context);
-    
-    // Create view providers
+
     const historyViewProvider = new HistoryViewProvider();
     const buttonsProvider = new ButtonsViewProvider(context.extensionUri, context);
     const statsViewProvider = new StatisticsViewProvider(context.extensionUri, statsManager);
-    
-    // Register tree data providers
+
     vscode.window.registerTreeDataProvider('ccpHistory', historyViewProvider);
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider(
-            ButtonsViewProvider.viewType, 
+            ButtonsViewProvider.viewType,
             buttonsProvider
         )
     );
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider(
-            StatisticsViewProvider.viewType, 
+            StatisticsViewProvider.viewType,
             statsViewProvider
         )
     );
-    
-    // Set context to hide results view initially
+
     vscode.commands.executeCommand('setContext', 'ccpHasResults', false);
-    
-    /**
-     * Cleans comments from the active editor's file
-     * Prompts for configuration options if not provided
-     */
+
     let cleanCurrentFile = vscode.commands.registerCommand('ccp.cleanComments', async (options) => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
@@ -74,40 +58,36 @@ export function activate(context: vscode.ExtensionContext) {
 
         const document = editor.document;
         await document.save();
-        
+
         try {
-            // Get saved options from global state
+
             const savedOptions = context.globalState.get<CCPOptions>('ccpOptions');
-            const noBackup = savedOptions?.createBackup === false; // Note the inversion of logic
+            const noBackup = savedOptions?.createBackup === false;
             const preserveTodo = savedOptions?.preserveTodo === true;
             const keepDocComments = savedOptions?.keepDocComments === true;
             const forceProcess = savedOptions?.forceProcess === true;
-            
-            // Get any custom preserve patterns from settings
+
             const config = vscode.workspace.getConfiguration('commentCleanerPro');
             const preservePatterns = config.get('preservePatterns', []);
-            
-            // Run the processor with the determined settings
+
             const result = await executeCcp(
-                document.fileName, 
-                noBackup, 
+                document.fileName,
+                noBackup,
                 forceProcess,
                 preserveTodo,
                 preservePatterns,
                 keepDocComments
             );
-            
-            // Update statistics if results were returned
+
             if (result) {
                 statsManager.updateStats([result]);
                 statsViewProvider.updateView();
             }
-            
+
             await vscode.commands.executeCommand('workbench.action.files.revert');
-            
-            // Add to history
+
             historyViewProvider.addToHistory(document.fileName);
-            
+
             vscode.window.showInformationMessage('Comments removed successfully!');
             updateStatusBar('Comments removed successfully!');
         } catch (error) {
@@ -115,16 +95,10 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
-    /**
-     * Initiates cleaning of multiple files
-     */
     let cleanMultipleFiles = vscode.commands.registerCommand('ccp.cleanMultipleFiles', async () => {
         await selectAndProcessFiles(historyViewProvider, context);
     });
 
-    /**
-     * Opens a diff view between a file and its backup
-     */
     let compareWithBackup = vscode.commands.registerCommand('ccp.compareWithBackup', async (filePath) => {
         const backupPath = filePath + '.bak';
         if (await fileExists(backupPath)) {
@@ -136,9 +110,6 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
-    /**
-     * Restores a file from its backup
-     */
     let restoreFromBackup = vscode.commands.registerCommand('ccp.restoreFromBackup', async (filePath) => {
         const backupPath = filePath + '.bak';
         if (await fileExists(backupPath)) {
@@ -153,9 +124,6 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
-    /**
-     * Removes a file from the history view
-     */
     let removeFromHistory = vscode.commands.registerCommand('ccp.removeFromHistory', (item) => {
         if (item && item.filePath) {
             historyViewProvider.removeFromHistory(item.filePath);
@@ -164,63 +132,50 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
-    /**
-     * Sets a filter for displaying history by language
-     */
     let setLanguageFilter = vscode.commands.registerCommand('ccp.setLanguageFilter', async () => {
-        const languages = ['javascript', 'typescript', 'python', 'html', 'css', 'c', 'cpp', 'java', 'ruby', 'go', 
-                          'php', 'sql', 'swift', 'rust', 'kotlin', 'bash', 'powershell', 'lua', 'perl', 
+        const languages = ['javascript', 'typescript', 'python', 'html', 'css', 'c', 'cpp', 'java', 'ruby', 'go',
+                          'php', 'sql', 'swift', 'rust', 'kotlin', 'bash', 'powershell', 'lua', 'perl',
                           'yaml', 'haskell', 'dart', 'matlab', 'r', 'csharp', 'all'];
-        
+
         const selected = await vscode.window.showQuickPick(languages, {
             placeHolder: 'Select language to filter by (or "all" to show all)'
         });
-        
+
         if (selected) {
             historyViewProvider.setLanguageFilter(selected === 'all' ? undefined : selected);
         }
     });
 
-    /**
-     * Clears the history view
-     */
     let clearHistory = vscode.commands.registerCommand('ccp.clearHistory', async () => {
         const answer = await vscode.window.showInformationMessage(
-            'Are you sure you want to clear the history?', 
+            'Are you sure you want to clear the history?',
             { modal: true },
             'Yes', 'No'
         );
-        
+
         if (answer === 'Yes') {
             historyViewProvider.clearHistory();
             vscode.window.showInformationMessage('History cleared');
         }
     });
 
-    // Create and configure status bar item
     const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
     statusBarItem.command = 'ccp.cleanComments';
     statusBarItem.text = "$(trash) Clean Comments";
     statusBarItem.tooltip = "Clean comments from current file";
     statusBarItem.show();
 
-    // Register commands
     context.subscriptions.push(
-        cleanCurrentFile, 
-        cleanMultipleFiles, 
-        compareWithBackup, 
-        restoreFromBackup, 
-        removeFromHistory, 
-        setLanguageFilter, 
-        clearHistory, 
+        cleanCurrentFile,
+        cleanMultipleFiles,
+        compareWithBackup,
+        restoreFromBackup,
+        removeFromHistory,
+        setLanguageFilter,
+        clearHistory,
         statusBarItem
     );
 
-    /**
-     * Updates the status bar message temporarily
-     * @param message - Message to display
-     * @param timeout - Duration in ms to show message
-     */
     function updateStatusBar(message: string, timeout: number = 5000) {
         const originalText = statusBarItem.text;
         statusBarItem.text = message;
@@ -230,11 +185,6 @@ export function activate(context: vscode.ExtensionContext) {
     }
 }
 
-/**
- * Checks if a file exists
- * @param path - Path to the file to check
- * @returns Promise resolving to boolean indicating if file exists
- */
 async function fileExists(path: string): Promise<boolean> {
     try {
         await vscode.workspace.fs.stat(vscode.Uri.file(path));
@@ -244,7 +194,4 @@ async function fileExists(path: string): Promise<boolean> {
     }
 }
 
-/**
- * Deactivates the extension
- */
 export function deactivate() {}

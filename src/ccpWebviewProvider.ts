@@ -1,18 +1,9 @@
 import * as vscode from 'vscode';
 
-/**
- * Webview provider for the sidebar buttons panel
- * Provides the UI for comment cleaning operations and configuration
- */
 export class ButtonsViewProvider implements vscode.WebviewViewProvider {
-  /** Identifier for the webview */
+
   public static readonly viewType = 'ccpButtons';
-  
-  /**
-   * Creates a new buttons view provider
-   * @param extensionUri - URI of the extension directory
-   * @param context - Extension context for state management
-   */
+
   constructor(
     private readonly extensionUri: vscode.Uri,
     private readonly context: vscode.ExtensionContext
@@ -20,22 +11,18 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
     console.log('ButtonsViewProvider initialized with context:', this.context.extension.id);
   }
 
-  /**
-   * Resolves the webview content
-   * @param webviewView - The webview to populate
-   */
   resolveWebviewView(webviewView: vscode.WebviewView): void {
     webviewView.webview.options = {
       enableScripts: true,
       localResourceRoots: [this.extensionUri]
     };
-    
+
     const stylesUri = webviewView.webview.asWebviewUri(
       vscode.Uri.joinPath(this.extensionUri, 'media', 'ccpStyles.css')
     );
-    
+
     webviewView.webview.html = this.getHtmlContent(stylesUri.toString());
-    
+
     webviewView.webview.onDidReceiveMessage(async message => {
       switch (message.command) {
         case 'cleanCurrentFile':
@@ -82,11 +69,6 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
     });
   }
 
-  /**
-   * Generates the HTML content for the webview
-   * @param stylesUri - URI for the stylesheet
-   * @returns HTML content as string
-   */
   private getHtmlContent(stylesUri: string): string {
     return `<!DOCTYPE html>
     <html>
@@ -101,7 +83,7 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
             overflow-y: hidden;
             height: auto;
           }
-          
+
           .actions-panel {
             background-color: var(--vscode-editor-background);
             border-radius: 4px;
@@ -109,7 +91,7 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
             margin-bottom: 10px;
             border: 1px solid var(--vscode-panel-border);
           }
-          
+
           .action-button {
             background-color: var(--vscode-button-background);
             color: var(--vscode-button-foreground);
@@ -124,11 +106,11 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
             width: 100%;
             margin: 6px 0;
           }
-          
+
           .action-button:hover {
             background-color: var(--vscode-button-hoverBackground);
           }
-          
+
           .button-icon {
             margin-right: 8px;
             width: 16px;
@@ -136,33 +118,33 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
             background-size: contain;
             display: inline-block;
           }
-          
+
           .trash-icon {
             background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg' fill='white'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M10 3h3v1h-1v9l-1 1H4l-1-1V4H2V3h3V2a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1zM9 2H6v1h3V2zM4 13h7V4H4v9zm2-8H5v7h1V5zm1 0h1v7H7V5zm2 0h1v7H9V5z'/%3E%3C/svg%3E") no-repeat center;
           }
-          
+
           .files-icon {
             background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg' fill='white'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M13.71 4.29l-3-3L10 1H4L3 2v12l1 1h9l1-1V5l-.29-.71zM13 14H4V2h5v3h4v9zm-7-7h5v1H6V7zm0 2h5v1H6V9zm0 2h5v1H6v-1z'/%3E%3C/svg%3E") no-repeat center;
           }
-          
+
           .undo-icon {
             background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath stroke='none' d='M0 0h24v24H0z' fill='none'/%3E%3Cpath d='M9 14l-4 -4l4 -4' /%3E%3Cpath d='M5 10h11a4 4 0 1 1 0 8h-1' /%3E%3C/svg%3E") no-repeat center;
           }
-          
+
           .redo-icon {
             background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath stroke='none' d='M0 0h24v24H0z' fill='none'/%3E%3Cpath d='M15 14l4 -4l-4 -4' /%3E%3Cpath d='M19 10h-11a4 4 0 1 0 0 8h1' /%3E%3C/svg%3E") no-repeat center;
           }
-          
+
           .button-group {
             display: flex;
             gap: 8px;
           }
-          
+
           .button-group .action-button {
             flex: 1;
             margin: 0;
           }
-          
+
           .section-label {
             font-size: 11px;
             color: var(--vscode-descriptionForeground);
@@ -171,13 +153,13 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
             user-select: none;
             font-weight: 600;
           }
-          
+
           .actions-container {
             display: flex;
             flex-direction: column;
             height: auto;
           }
-          
+
           /* Checkbox styles */
           .option-checkbox {
             display: flex;
@@ -186,7 +168,7 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
             font-size: 12px;
             position: relative;
           }
-          
+
           .option-checkbox input[type="checkbox"] {
             position: absolute;
             opacity: 0;
@@ -194,7 +176,7 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
             height: 0;
             width: 0;
           }
-          
+
           .checkmark {
             position: relative;
             display: inline-block;
@@ -210,26 +192,26 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
             transition: all 0.2s ease;
             cursor: pointer;
           }
-          
+
           .option-checkbox:hover input ~ .checkmark {
             background-color: var(--vscode-editor-selectionHighlightBackground);
           }
-          
+
           .option-checkbox input:checked ~ .checkmark {
             background-color: #2ea043;
             border-color: #2ea043;
           }
-          
+
           .checkmark:after {
             content: "";
             position: absolute;
             display: none;
           }
-          
+
           .option-checkbox input:checked ~ .checkmark:after {
             display: block;
           }
-          
+
           .option-checkbox .checkmark:after {
             left: 3.5px;
             top: 0.5px;
@@ -239,7 +221,7 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
             border-width: 0 1.5px 1.5px 0;
             transform: rotate(45deg);
           }
-          
+
           .option-checkbox label {
             cursor: pointer;
             user-select: none;
@@ -257,25 +239,25 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
               <span class="button-icon trash-icon"></span>
               Clean Current File
             </button>
-            
+
             <button class="action-button" id="cleanMultipleFiles">
               <span class="button-icon files-icon"></span>
               Clean Multiple Files
             </button>
-            
+
             <div class="button-group" style="margin-top: 8px">
               <button class="action-button" id="undoButton">
                 <span class="button-icon undo-icon"></span>
                 Undo
               </button>
-              
+
               <button class="action-button" id="redoButton">
                 <span class="button-icon redo-icon"></span>
                 Redo
               </button>
             </div>
           </div>
-          
+
           <div class="section-label">CONFIGURATIONS</div>
           <div class="actions-panel">
             <div class="option-checkbox">
@@ -283,19 +265,19 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
               <span class="checkmark"></span>
               <label for="createBackup">Create backup files</label>
             </div>
-            
+
             <div class="option-checkbox">
               <input type="checkbox" id="preserveTodo" />
               <span class="checkmark"></span>
               <label for="preserveTodo">Preserve TODO & FIXME</label>
             </div>
-            
+
             <div class="option-checkbox">
               <input type="checkbox" id="keepDocComments" />
               <span class="checkmark"></span>
               <label for="keepDocComments">Keep documentation</label>
             </div>
-            
+
             <div class="option-checkbox">
               <input type="checkbox" id="forceProcess" />
               <span class="checkmark"></span>
@@ -303,10 +285,10 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
             </div>
           </div>
         </div>
-        
+
         <script>
           const vscode = acquireVsCodeApi();
-          
+
           // Load saved options from state
           const savedOptions = vscode.getState()?.options || {
             createBackup: true,
@@ -314,13 +296,13 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
             keepDocComments: false,
             forceProcess: false
           };
-          
+
           // Initialize checkbox states
           document.getElementById('createBackup').checked = savedOptions.createBackup;
           document.getElementById('preserveTodo').checked = savedOptions.preserveTodo;
           document.getElementById('keepDocComments').checked = savedOptions.keepDocComments;
           document.getElementById('forceProcess').checked = savedOptions.forceProcess;
-          
+
           // Update state when checkboxes change
           document.querySelectorAll('.option-checkbox input').forEach(checkbox => {
             checkbox.addEventListener('change', () => {
@@ -330,26 +312,26 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
                 keepDocComments: document.getElementById('keepDocComments').checked,
                 forceProcess: document.getElementById('forceProcess').checked
               };
-              
+
               vscode.setState({ options });
-              vscode.postMessage({ 
+              vscode.postMessage({
                 command: 'saveOptions',
                 options
               });
             });
           });
-          
+
           // Checkbox circle click handler
           document.querySelectorAll('.checkmark').forEach(circle => {
             circle.addEventListener('click', () => {
               const checkbox = circle.previousElementSibling;
               checkbox.checked = !checkbox.checked;
-              
+
               const event = new Event('change');
               checkbox.dispatchEvent(event);
             });
           });
-          
+
           // Button click handlers
           document.getElementById('cleanCurrentFile').addEventListener('click', () => {
             const options = {
@@ -358,13 +340,13 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
               keepDocComments: document.getElementById('keepDocComments').checked,
               forceProcess: document.getElementById('forceProcess').checked
             };
-            
-            vscode.postMessage({ 
+
+            vscode.postMessage({
               command: 'cleanCurrentFile',
               options
             });
           });
-          
+
           document.getElementById('cleanMultipleFiles').addEventListener('click', () => {
             const options = {
               createBackup: document.getElementById('createBackup').checked,
@@ -372,25 +354,25 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
               keepDocComments: document.getElementById('keepDocComments').checked,
               forceProcess: document.getElementById('forceProcess').checked
             };
-            
-            vscode.postMessage({ 
+
+            vscode.postMessage({
               command: 'cleanMultipleFiles',
               options
             });
           });
-          
+
           document.getElementById('undoButton').addEventListener('click', () => {
             vscode.postMessage({ command: 'undo' });
           });
-          
+
           document.getElementById('redoButton').addEventListener('click', () => {
             vscode.postMessage({ command: 'redo' });
           });
-          
+
           // Set the view height to match content height to avoid scrolling
           window.addEventListener('load', () => {
             const contentHeight = document.querySelector('.actions-container').scrollHeight;
-            vscode.postMessage({ 
+            vscode.postMessage({
               command: 'setHeight',
               height: contentHeight
             });

@@ -2,46 +2,25 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { executeCcp } from './ccpRunner';
 
-/**
- * Tree view provider for file operations in the sidebar
- * Provides actions for cleaning individual and multiple files
- */
 export class FilesViewProvider implements vscode.TreeDataProvider<FileItem> {
   private _onDidChangeTreeData: vscode.EventEmitter<FileItem | undefined | null | void> = new vscode.EventEmitter<FileItem | undefined | null | void>();
   readonly onDidChangeTreeData: vscode.Event<FileItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
   private _languageFilter: string | undefined;
 
-  /**
-   * Refreshes the tree view
-   */
   refresh(): void {
     this._onDidChangeTreeData.fire();
   }
 
-  /**
-   * Sets a language filter for the tree view
-   * @param language - Language identifier to filter by, or undefined to clear filter
-   */
   setLanguageFilter(language: string | undefined) {
     this._languageFilter = language;
     this._onDidChangeTreeData.fire();
   }
 
-  /**
-   * Returns the tree item for a given element
-   * @param element - The item to display
-   * @returns The tree item for display
-   */
   getTreeItem(element: FileItem): vscode.TreeItem {
     return element;
   }
 
-  /**
-   * Gets child items for a tree element
-   * @param element - Parent element, or undefined for root
-   * @returns Promise resolving with child items
-   */
   getChildren(element?: FileItem): Thenable<FileItem[]> {
     if (element) {
       return Promise.resolve([]);
@@ -70,7 +49,7 @@ export class FilesViewProvider implements vscode.TreeDataProvider<FileItem> {
           command: 'ccp.cleanMultipleFiles',
           title: 'Clean Multiple Files'
         },
-        undefined, 
+        undefined,
         true
       );
       cleanMultipleItem.iconPath = new vscode.ThemeIcon('files');
@@ -80,10 +59,6 @@ export class FilesViewProvider implements vscode.TreeDataProvider<FileItem> {
   }
 }
 
-/**
- * Tree view provider for processed file history
- * Maintains a list of previously cleaned files and provides filtering capabilities
- */
 export class HistoryViewProvider implements vscode.TreeDataProvider<FileItem> {
   private _onDidChangeTreeData: vscode.EventEmitter<FileItem | undefined | null | void> = new vscode.EventEmitter<FileItem | undefined | null | void>();
   readonly onDidChangeTreeData: vscode.Event<FileItem | undefined | null | void> = this._onDidChangeTreeData.event;
@@ -94,17 +69,10 @@ export class HistoryViewProvider implements vscode.TreeDataProvider<FileItem> {
     this.history = [];
   }
 
-  /**
-   * Refreshes the history view
-   */
   refresh(): void {
     this._onDidChangeTreeData.fire();
   }
 
-  /**
-   * Adds a file to the history
-   * @param filePath - Path of file to add to history
-   */
   addToHistory(filePath: string): void {
     if (!this.history.includes(filePath)) {
       this.history.unshift(filePath);
@@ -112,10 +80,6 @@ export class HistoryViewProvider implements vscode.TreeDataProvider<FileItem> {
     this.refresh();
   }
 
-  /**
-   * Removes a file from the history
-   * @param filePath - Path of file to remove from history
-   */
   removeFromHistory(filePath: string): void {
     const index = this.history.indexOf(filePath);
     if (index !== -1) {
@@ -124,37 +88,20 @@ export class HistoryViewProvider implements vscode.TreeDataProvider<FileItem> {
     }
   }
 
-  /**
-   * Sets a language filter for the history view
-   * @param language - Language identifier to filter by, or undefined to clear filter
-   */
   setLanguageFilter(language: string | undefined) {
     this._languageFilter = language;
     this.refresh();
   }
 
-  /**
-   * Clears the entire history
-   */
   clearHistory(): void {
     this.history = [];
     this.refresh();
   }
 
-  /**
-   * Returns the tree item for a given element
-   * @param element - The item to display
-   * @returns The tree item for display
-   */
   getTreeItem(element: FileItem): vscode.TreeItem {
     return element;
   }
 
-  /**
-   * Gets child items for a tree element
-   * @param element - Parent element, or undefined for root
-   * @returns Promise resolving with child items
-   */
   getChildren(element?: FileItem): Thenable<FileItem[]> {
     if (element) {
       return Promise.resolve([]);
@@ -166,7 +113,7 @@ export class HistoryViewProvider implements vscode.TreeDataProvider<FileItem> {
       }
 
       const items: FileItem[] = [];
-      
+
       const filterItem = new FileItem(
         'Filter by Language',
         vscode.TreeItemCollapsibleState.None,
@@ -183,10 +130,10 @@ export class HistoryViewProvider implements vscode.TreeDataProvider<FileItem> {
       filterItem.description = this._languageFilter ? `(${this._languageFilter})` : '';
       items.push(filterItem);
 
-      const filteredHistory = this._languageFilter 
+      const filteredHistory = this._languageFilter
         ? this.history.filter(file => {
             const ext = path.extname(file).toLowerCase();
-            // Use direct extension comparison instead of identifyLanguage
+
             return identifyLanguage(ext) === this._languageFilter;
           })
         : this.history;
@@ -204,7 +151,7 @@ export class HistoryViewProvider implements vscode.TreeDataProvider<FileItem> {
             title: 'Open File',
             arguments: [vscode.Uri.file(file)]
           },
-          file  // Pass the file path as the 4th parameter here
+          file
         );
         item.contextValue = 'historyItem';
         item.tooltip = file;
@@ -214,7 +161,7 @@ export class HistoryViewProvider implements vscode.TreeDataProvider<FileItem> {
 
       if (filteredHistory.length === 0 && this.history.length > 0) {
         items.push(new FileItem(
-          `No ${this._languageFilter} files in history`, 
+          `No ${this._languageFilter} files in history`,
           vscode.TreeItemCollapsibleState.None
         ));
       }
@@ -224,35 +171,25 @@ export class HistoryViewProvider implements vscode.TreeDataProvider<FileItem> {
   }
 }
 
-/**
- * Tree item representing a file or action in the sidepanel views
- */
 class FileItem extends vscode.TreeItem {
-  /**
-   * Creates a new file item
-   * @param label - Display name of the item
-   * @param collapsibleState - Whether item can be expanded
-   * @param command - Command to execute when item is clicked
-   * @param filePath - Path to the file (for history items)
-   * @param isButton - Whether this item represents an action button
-   */
+
   constructor(
     public readonly label: string,
     public readonly collapsibleState: vscode.TreeItemCollapsibleState,
     public readonly command?: vscode.Command,
-    public filePath?: string, // Remove 'readonly' to allow modification
+    public filePath?: string,
     public readonly isButton: boolean = false
   ) {
     super(label, collapsibleState);
     this.tooltip = filePath || label;
-    
+
     if (isButton) {
       this.description = "";
       this.tooltip = command?.title || label;
     } else {
       this.description = filePath ? path.dirname(filePath) : '';
     }
-    
+
     if (label === 'Clean Current File') {
       this.iconPath = new vscode.ThemeIcon('trash');
       this.contextValue = 'buttonItem';
@@ -273,7 +210,7 @@ class FileItem extends vscode.TreeItem {
       this.contextValue = 'buttonItem';
     } else {
       if (filePath) {
-        // Replace generic file icon with language-specific icon
+
         this.iconPath = getFileIcon(filePath);
         this.contextValue = 'historyItem';
       }
@@ -281,16 +218,12 @@ class FileItem extends vscode.TreeItem {
   }
 }
 
-/**
- * Identifies the language from a file extension
- */
 function identifyLanguage(extension: string): string {
-  // Remove the leading dot if present
+
   if (extension.startsWith('.')) {
     extension = extension.substring(1);
   }
 
-  // Map common extensions to their language IDs
   const extensionMap: Record<string, string> = {
     'js': 'javascript',
     'jsx': 'javascriptreact',
@@ -327,17 +260,11 @@ function identifyLanguage(extension: string): string {
     'r': 'r',
     'cs': 'csharp'
   };
-  
+
   return extensionMap[extension.toLowerCase()] || 'plaintext';
 }
 
-/**
- * Gets an appropriate icon for a file based on its extension
- * @param filePath - Path to the file
- * @returns ThemeIcon appropriate for the file type
- */
 function getFileIcon(filePath: string): vscode.ThemeIcon {
-  // Use file type theme icons that are guaranteed to exist in VS Code
-  // This is a more reliable approach than language-specific icons
+
   return new vscode.ThemeIcon('file-code');
 }
