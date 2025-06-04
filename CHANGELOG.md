@@ -2,6 +2,25 @@
 
 All notable changes to the "Comment Cleaner Pro" extension are documented in this file.
 
+## [1.0.7] - 2025-06-04
+
+### Added
+- **File Icons in History View**
+  - Added file icons to history items
+  - Implemented uniform file-code icon system for all file types
+  - Ensured icon compatibility across all VS Code themes
+
+### Changed
+- **Improved History Panel UI**
+  - Enhanced visual hierarchy in the cleaned files list
+  - Improved file item rendering with consistent icon presentation
+
+### Technical
+- Added `getFileIcon()` function to generate appropriate ThemeIcon instances
+- Integrated icon generation into the FileItem constructor
+- Enhanced file type detection using extension mapping
+- Maintained backward compatibility with existing history functionality
+
 ## [1.0.6] - 2025-06-05
 
 ### Added
