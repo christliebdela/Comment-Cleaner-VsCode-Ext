@@ -35,3 +35,20 @@
     content: "\eb9f";
     font-family: "codicon";
 }
+
+.section-header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle-icon {
+  font-size: 10px;
+  margin-right: 8px;
+}
+
+.section-header-container:hover {
+  opacity: 0.8;
+}

@@ -1,6 +1,43 @@
 # Change Log
 
 All notable changes to the "Comment Cleaner Pro" extension are documented in this file.
+
+## [1.0.5] - 2025-06-04
+
+### Fixed
+- **Files Processed Counter**
+  - Now tracks unique files using a Set data structure
+  - Only increments counter for first-time processing of each file
+  - Maintains persistent history of processed files
+- **Language Filter Not Working**
+  - Improved language detection with comprehensive file extension mapping
+  - Fixed comparison logic between selected language and file extensions
+  - Added debug logging to help troubleshoot filter issues
+- **UI Configurations Not Respected**
+  - Fixed option passing between UI and processing functions
+  - Ensured checkbox states properly affect cleaning operations
+  - Connected webview state management with extension commands
+
+### Changed
+- **Cleaner Section Layout**
+  - Removed redundant "EDIT OPERATIONS" heading
+  - Merged undo/redo buttons into the Clean Code panel
+  - Maintained consistent spacing between elements
+- **Better Visual Consistency**
+  - Standardized section label styling and spacing
+  - Added horizontal scrolling to the stats section
+  - Improved checkbox styling and clickable areas
+- **More Intuitive Organization**
+  - Grouped related controls together
+  - Used uppercase section labels for better visual hierarchy
+  - Removed unnecessary tooltips for cleaner interface
+
+### Technical
+- Fixed StatisticsManager singleton pattern implementation
+- Resolved TypeScript compilation error with readonly property
+- Enhanced error handling and improved console logging
+
+
 ## [1.0.4] - 2025-06-03
 
 Minor Update - Fixed Missing Documentation On VsCode Marketplace

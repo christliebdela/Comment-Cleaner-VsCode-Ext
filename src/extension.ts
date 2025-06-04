@@ -76,79 +76,26 @@ export function activate(context: vscode.ExtensionContext) {
         await document.save();
         
         try {
-            let noBackup, forceProcess, preserveTodo, keepDocComments;
-            
-            if (options && typeof options === 'object' && 
-                Object.keys(options).length > 0 &&
-                (options.createBackup !== undefined || 
-                 options.forceProcess !== undefined || 
-                 options.preserveTodo !== undefined || 
-                 options.keepDocComments !== undefined)) {
-                // Use provided options
-                console.log('Using provided options:', options);
-                noBackup = !options.createBackup;
-                forceProcess = options.forceProcess;
-                preserveTodo = options.preserveTodo;
-                keepDocComments = options.keepDocComments;
-            } else {
-                // Show configuration dialog
-                console.log('Showing dialog for configuration');
-                
-                // Create backup?
-                const backup = await vscode.window.showQuickPick(
-                    ['Yes, Create a Backup File', 'Don\'t Create a Backup File'], {
-                        placeHolder: 'Create a backup before cleaning?',
-                        ignoreFocusOut: true
-                    }
-                );
-                
-                if (!backup) {
-                    console.log('User cancelled backup dialog');
-                    return;
-                }
-                noBackup = backup === 'Don\'t Create a Backup File';
-                
-                // Preserve TODO/FIXME?
-                const todo = await vscode.window.showQuickPick(
-                    ['Yes, Preserve TODO & FIXME Comments', 'No, Remove All Comments'], {
-                        placeHolder: 'Preserve TODO and FIXME comments?',
-                        ignoreFocusOut: true
-                    }
-                );
-                
-                if (!todo) return;
-                preserveTodo = todo === 'Yes, Preserve TODO & FIXME Comments';
-                
-                // Keep doc comments?
-                const docs = await vscode.window.showQuickPick(
-                    ['Yes, Keep Documentation Comments', 'No, Remove All Comments'], {
-                        placeHolder: 'Keep documentation comments?',
-                        ignoreFocusOut: true
-                    }
-                );
-                
-                if (!docs) return;
-                keepDocComments = docs === 'Yes, Keep Documentation Comments';
-                
-                // Force processing?
-                const force = await vscode.window.showQuickPick(
-                    ['Yes, Force Processing of Unknown Types', 'No, Skip Unknown Types'], {
-                        placeHolder: 'Force processing of unknown file types?',
-                        ignoreFocusOut: true
-                    }
-                );
-                
-                if (!force) return;
-                forceProcess = force === 'Yes, Force Processing of Unknown Types';
-            }
+            // Get saved options from global state
+            const savedOptions = context.globalState.get<CCPOptions>('ccpOptions');
+            const noBackup = savedOptions?.createBackup === false; // Note the inversion of logic
+            const preserveTodo = savedOptions?.preserveTodo === true;
+            const keepDocComments = savedOptions?.keepDocComments === true;
+            const forceProcess = savedOptions?.forceProcess === true;
             
             // Get any custom preserve patterns from settings
             const config = vscode.workspace.getConfiguration('commentCleanerPro');
             const preservePatterns = config.get('preservePatterns', []);
             
             // Run the processor with the determined settings
-            const result = await executeCcp(document.fileName, noBackup, forceProcess, 
-                                           preserveTodo, preservePatterns, keepDocComments);
+            const result = await executeCcp(
+                document.fileName, 
+                noBackup, 
+                forceProcess,
+                preserveTodo,
+                preservePatterns,
+                keepDocComments
+            );
             
             // Update statistics if results were returned
             if (result) {

@@ -96,24 +96,33 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
         <link rel="stylesheet" type="text/css" href="${stylesUri}">
         <style>
           body {
-            padding: 0 12px;
+            padding: 10px;
+            color: var(--vscode-foreground);
+            overflow-y: hidden;
+            height: auto;
           }
+          
+          .actions-panel {
+            background-color: var(--vscode-editor-background);
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid var(--vscode-panel-border);
+          }
+          
           .action-button {
+            background-color: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+            border: none;
+            padding: 8px 12px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background-color: var(--vscode-button-background);
-            color: var(--vscode-button-foreground);
-            border-radius: 3px;
-            padding: 8px 10px;
-            margin: 6px 0;
-            border: none;
             width: 100%;
-            text-align: center;
-            cursor: pointer;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-            font-size: 12px;
-            font-weight: normal;
+            margin: 6px 0;
           }
           
           .action-button:hover {
@@ -126,56 +135,54 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
             height: 16px;
             background-size: contain;
             display: inline-block;
-            vertical-align: text-bottom;
           }
           
           .trash-icon {
-            background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg' fill='white'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M10 3h3v1h-1v9l-1 1H4l-1-1V4H2V3h3V2a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1zM9 2H6v1h3V2zM4 13h7V4H4v9zm2-8H5v7h1V5zm1 0h1v7H7V5zm2 0h1v7H9V5z'/%3E%3C/svg%3E") no-repeat;
+            background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg' fill='white'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M10 3h3v1h-1v9l-1 1H4l-1-1V4H2V3h3V2a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1zM9 2H6v1h3V2zM4 13h7V4H4v9zm2-8H5v7h1V5zm1 0h1v7H7V5zm2 0h1v7H9V5z'/%3E%3C/svg%3E") no-repeat center;
           }
           
           .files-icon {
-            background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg' fill='white'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M13.71 4.29l-3-3L10 1H4L3 2v12l1 1h9l1-1V5l-.29-.71zM13 14H4V2h5v3h4v9zm-7-7h5v1H6V7zm0 2h5v1H6V9zm0 2h5v1H6v-1zm0 2h3v1H6v-1z'/%3E%3C/svg%3E") no-repeat;
+            background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg' fill='white'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M13.71 4.29l-3-3L10 1H4L3 2v12l1 1h9l1-1V5l-.29-.71zM13 14H4V2h5v3h4v9zm-7-7h5v1H6V7zm0 2h5v1H6V9zm0 2h5v1H6v-1z'/%3E%3C/svg%3E") no-repeat center;
           }
           
           .undo-icon {
-            background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath stroke='none' d='M0 0h24v24H0z' fill='none'/%3E%3Cpath d='M9 14l-4 -4l4 -4' /%3E%3Cpath d='M5 10h11a4 4 0 1 1 0 8h-1' /%3E%3C/svg%3E") no-repeat;
-            background-size: contain;
+            background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath stroke='none' d='M0 0h24v24H0z' fill='none'/%3E%3Cpath d='M9 14l-4 -4l4 -4' /%3E%3Cpath d='M5 10h11a4 4 0 1 1 0 8h-1' /%3E%3C/svg%3E") no-repeat center;
           }
           
           .redo-icon {
-            background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath stroke='none' d='M0 0h24v24H0z' fill='none'/%3E%3Cpath d='M15 14l4 -4l-4 -4' /%3E%3Cpath d='M19 10h-11a4 4 0 1 0 0 8h1' /%3E%3C/svg%3E") no-repeat;
-            background-size: contain;
+            background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath stroke='none' d='M0 0h24v24H0z' fill='none'/%3E%3Cpath d='M15 14l4 -4l-4 -4' /%3E%3Cpath d='M19 10h-11a4 4 0 1 0 0 8h1' /%3E%3C/svg%3E") no-repeat center;
           }
           
           .button-group {
             display: flex;
-            gap: 6px;
-            margin: 6px 0;
+            gap: 8px;
           }
           
           .button-group .action-button {
-            margin: 0;
             flex: 1;
+            margin: 0;
           }
           
-          .options-container {
-            margin-top: 12px;
-            border-top: 1px solid var(--vscode-panel-border);
-            padding-top: 8px;
-          }
-          
-          .section-header {
-            font-size: 13px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: var(--vscode-foreground);
+          .section-label {
+            font-size: 11px;
+            color: var(--vscode-descriptionForeground);
+            margin-bottom: 6px;
+            margin-top: 6px;
             user-select: none;
+            font-weight: 600;
           }
           
+          .actions-container {
+            display: flex;
+            flex-direction: column;
+            height: auto;
+          }
+          
+          /* Checkbox styles */
           .option-checkbox {
             display: flex;
             align-items: flex-start;
-            margin: 8px 0;
+            margin: 6px 0;
             font-size: 12px;
             position: relative;
           }
@@ -243,109 +250,132 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
         </style>
       </head>
       <body>
-        <button class="action-button" id="cleanCurrentFile">
-          <span class="button-icon trash-icon"></span>
-          Clean Current File
-        </button>
-        
-        <button class="action-button" id="cleanMultipleFiles">
-          <span class="button-icon files-icon"></span>
-          Clean Multiple Files
-        </button>
-        
-        <div class="button-group">
-          <button class="action-button" id="undoButton" title="Undo (Ctrl+Z)">
-            <span class="button-icon undo-icon"></span>
-            Undo
-          </button>
-          
-          <button class="action-button" id="redoButton" title="Redo (Ctrl+Y or Ctrl+Shift+Z)">
-            <span class="button-icon redo-icon"></span>
-            Redo
-          </button>
-        </div>
-        
-        <div class="options-container">
-          <h3 class="section-header">Configurations</h3>
-          
-          <div class="option-checkbox">
-            <input type="checkbox" id="createBackup" checked />
-            <span class="checkmark"></span>
-            <label for="createBackup">Create backup files</label>
+        <div class="actions-container">
+          <div class="section-label">CLEAN CODE</div>
+          <div class="actions-panel">
+            <button class="action-button" id="cleanCurrentFile">
+              <span class="button-icon trash-icon"></span>
+              Clean Current File
+            </button>
+            
+            <button class="action-button" id="cleanMultipleFiles">
+              <span class="button-icon files-icon"></span>
+              Clean Multiple Files
+            </button>
+            
+            <div class="button-group" style="margin-top: 8px">
+              <button class="action-button" id="undoButton">
+                <span class="button-icon undo-icon"></span>
+                Undo
+              </button>
+              
+              <button class="action-button" id="redoButton">
+                <span class="button-icon redo-icon"></span>
+                Redo
+              </button>
+            </div>
           </div>
           
-          <div class="option-checkbox">
-            <input type="checkbox" id="preserveTodo" />
-            <span class="checkmark"></span>
-            <label for="preserveTodo">Preserve TODO & FIXME comments</label>
-          </div>
-          
-          <div class="option-checkbox">
-            <input type="checkbox" id="keepDocComments" />
-            <span class="checkmark"></span>
-            <label for="keepDocComments">Keep documentation comments</label>
-          </div>
-          
-          <div class="option-checkbox">
-            <input type="checkbox" id="forceProcess" />
-            <span class="checkmark"></span>
-            <label for="forceProcess">Force processing of unknown types</label>
+          <div class="section-label">CONFIGURATIONS</div>
+          <div class="actions-panel">
+            <div class="option-checkbox">
+              <input type="checkbox" id="createBackup" checked />
+              <span class="checkmark"></span>
+              <label for="createBackup">Create backup files</label>
+            </div>
+            
+            <div class="option-checkbox">
+              <input type="checkbox" id="preserveTodo" />
+              <span class="checkmark"></span>
+              <label for="preserveTodo">Preserve TODO & FIXME</label>
+            </div>
+            
+            <div class="option-checkbox">
+              <input type="checkbox" id="keepDocComments" />
+              <span class="checkmark"></span>
+              <label for="keepDocComments">Keep documentation</label>
+            </div>
+            
+            <div class="option-checkbox">
+              <input type="checkbox" id="forceProcess" />
+              <span class="checkmark"></span>
+              <label for="forceProcess">Process unknown types</label>
+            </div>
           </div>
         </div>
         
         <script>
           const vscode = acquireVsCodeApi();
           
-          const state = vscode.getState() || {
+          // Load saved options from state
+          const savedOptions = vscode.getState()?.options || {
             createBackup: true,
             preserveTodo: false,
             keepDocComments: false,
             forceProcess: false
           };
           
-          document.getElementById('createBackup').checked = state.createBackup;
-          document.getElementById('preserveTodo').checked = state.preserveTodo;
-          document.getElementById('keepDocComments').checked = state.keepDocComments;
-          document.getElementById('forceProcess').checked = state.forceProcess;
+          // Initialize checkbox states
+          document.getElementById('createBackup').checked = savedOptions.createBackup;
+          document.getElementById('preserveTodo').checked = savedOptions.preserveTodo;
+          document.getElementById('keepDocComments').checked = savedOptions.keepDocComments;
+          document.getElementById('forceProcess').checked = savedOptions.forceProcess;
           
+          // Update state when checkboxes change
           document.querySelectorAll('.option-checkbox input').forEach(checkbox => {
             checkbox.addEventListener('change', () => {
-              state[checkbox.id] = checkbox.checked;
-              vscode.setState(state);
+              const options = {
+                createBackup: document.getElementById('createBackup').checked,
+                preserveTodo: document.getElementById('preserveTodo').checked,
+                keepDocComments: document.getElementById('keepDocComments').checked,
+                forceProcess: document.getElementById('forceProcess').checked
+              };
               
+              vscode.setState({ options });
               vscode.postMessage({ 
                 command: 'saveOptions',
-                options: {
-                  createBackup: document.getElementById('createBackup').checked,
-                  preserveTodo: document.getElementById('preserveTodo').checked,
-                  keepDocComments: document.getElementById('keepDocComments').checked,
-                  forceProcess: document.getElementById('forceProcess').checked
-                }
+                options
               });
             });
           });
           
+          // Checkbox circle click handler
+          document.querySelectorAll('.checkmark').forEach(circle => {
+            circle.addEventListener('click', () => {
+              const checkbox = circle.previousElementSibling;
+              checkbox.checked = !checkbox.checked;
+              
+              const event = new Event('change');
+              checkbox.dispatchEvent(event);
+            });
+          });
+          
+          // Button click handlers
           document.getElementById('cleanCurrentFile').addEventListener('click', () => {
+            const options = {
+              createBackup: document.getElementById('createBackup').checked,
+              preserveTodo: document.getElementById('preserveTodo').checked,
+              keepDocComments: document.getElementById('keepDocComments').checked,
+              forceProcess: document.getElementById('forceProcess').checked
+            };
+            
             vscode.postMessage({ 
               command: 'cleanCurrentFile',
-              options: {
-                createBackup: document.getElementById('createBackup').checked,
-                preserveTodo: document.getElementById('preserveTodo').checked,
-                keepDocComments: document.getElementById('keepDocComments').checked,
-                forceProcess: document.getElementById('forceProcess').checked
-              }
+              options
             });
           });
           
           document.getElementById('cleanMultipleFiles').addEventListener('click', () => {
+            const options = {
+              createBackup: document.getElementById('createBackup').checked,
+              preserveTodo: document.getElementById('preserveTodo').checked,
+              keepDocComments: document.getElementById('keepDocComments').checked,
+              forceProcess: document.getElementById('forceProcess').checked
+            };
+            
             vscode.postMessage({ 
               command: 'cleanMultipleFiles',
-              options: {
-                createBackup: document.getElementById('createBackup').checked,
-                preserveTodo: document.getElementById('preserveTodo').checked,
-                keepDocComments: document.getElementById('keepDocComments').checked,
-                forceProcess: document.getElementById('forceProcess').checked
-              }
+              options
             });
           });
           
@@ -357,13 +387,12 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
             vscode.postMessage({ command: 'redo' });
           });
           
-          document.querySelectorAll('.checkmark').forEach(circle => {
-            circle.addEventListener('click', () => {
-              const checkbox = circle.previousElementSibling;
-              checkbox.checked = !checkbox.checked;
-              
-              const event = new Event('change');
-              checkbox.dispatchEvent(event);
+          // Set the view height to match content height to avoid scrolling
+          window.addEventListener('load', () => {
+            const contentHeight = document.querySelector('.actions-container').scrollHeight;
+            vscode.postMessage({ 
+              command: 'setHeight',
+              height: contentHeight
             });
           });
         </script>

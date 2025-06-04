@@ -180,15 +180,19 @@ export class HistoryViewProvider implements vscode.TreeDataProvider<FileItem> {
       filterItem.iconPath = new vscode.ThemeIcon('filter');
       filterItem.contextValue = 'buttonItem';
       filterItem.tooltip = 'Filter history by programming language';
-      filterItem.description = '';
+      filterItem.description = this._languageFilter ? `(${this._languageFilter})` : '';
       items.push(filterItem);
 
       const filteredHistory = this._languageFilter 
         ? this.history.filter(file => {
             const ext = path.extname(file).toLowerCase();
+            // Use direct extension comparison instead of identifyLanguage
             return identifyLanguage(ext) === this._languageFilter;
           })
         : this.history;
+
+      console.log(`Filter: ${this._languageFilter}, Files in history: ${this.history.length}, Files after filter: ${filteredHistory.length}`);
+      console.log(`File extensions in history: ${this.history.map(f => path.extname(f)).join(', ')}`);
 
       filteredHistory.forEach(file => {
         const filename = path.basename(file);
@@ -199,13 +203,22 @@ export class HistoryViewProvider implements vscode.TreeDataProvider<FileItem> {
             command: 'vscode.open',
             title: 'Open File',
             arguments: [vscode.Uri.file(file)]
-          },
-          file
+          }
         );
         item.contextValue = 'historyItem';
+        item.tooltip = file;
+        item.description = path.dirname(file);
+        item.filePath = file;
         items.push(item);
       });
-      
+
+      if (filteredHistory.length === 0 && this.history.length > 0) {
+        items.push(new FileItem(
+          `No ${this._languageFilter} files in history`, 
+          vscode.TreeItemCollapsibleState.None
+        ));
+      }
+
       return Promise.resolve(items);
     }
   }
@@ -227,7 +240,7 @@ class FileItem extends vscode.TreeItem {
     public readonly label: string,
     public readonly collapsibleState: vscode.TreeItemCollapsibleState,
     public readonly command?: vscode.Command,
-    public readonly filePath?: string,
+    public filePath?: string, // Remove 'readonly' to allow modification
     public readonly isButton: boolean = false
   ) {
     super(label, collapsibleState);
@@ -268,16 +281,51 @@ class FileItem extends vscode.TreeItem {
 }
 
 /**
- * Maps file extensions to programming language identifiers
- * @param extension - File extension including dot (e.g. ".js")
- * @returns Language identifier string
+ * Identifies the language from a file extension
  */
 function identifyLanguage(extension: string): string {
-  const extensionMap: {[key: string]: string} = {
-    '.py': 'python',
-    '.html': 'html', '.htm': 'html',
-    '.css': 'css',
-    // Add other mappings as needed
+  // Remove the leading dot if present
+  if (extension.startsWith('.')) {
+    extension = extension.substring(1);
+  }
+
+  // Map common extensions to their language IDs
+  const extensionMap: Record<string, string> = {
+    'js': 'javascript',
+    'jsx': 'javascriptreact',
+    'ts': 'typescript',
+    'tsx': 'typescriptreact',
+    'py': 'python',
+    'html': 'html',
+    'css': 'css',
+    'c': 'c',
+    'cpp': 'cpp',
+    'cc': 'cpp',
+    'cxx': 'cpp',
+    'h': 'c',
+    'hpp': 'cpp',
+    'java': 'java',
+    'rb': 'ruby',
+    'go': 'go',
+    'php': 'php',
+    'sql': 'sql',
+    'swift': 'swift',
+    'rs': 'rust',
+    'kt': 'kotlin',
+    'sh': 'shellscript',
+    'bash': 'shellscript',
+    'ps1': 'powershell',
+    'lua': 'lua',
+    'pl': 'perl',
+    'pm': 'perl',
+    'yaml': 'yaml',
+    'yml': 'yaml',
+    'hs': 'haskell',
+    'dart': 'dart',
+    'm': 'matlab',
+    'r': 'r',
+    'cs': 'csharp'
   };
-  return extensionMap[extension] || 'unknown';
+  
+  return extensionMap[extension.toLowerCase()] || 'plaintext';
 }

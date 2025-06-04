@@ -25,14 +25,21 @@ export interface CCPStatistics {
 export class StatisticsManager {
     private static instance: StatisticsManager;
     private stats: CCPStatistics;
-    private readonly storageKey = 'ccp-statistics';
-    
+    private context: vscode.ExtensionContext;
+    private storageKey: string = 'ccpStatistics';
+    private processedFiles: Set<string> = new Set(); // Track unique files
+
     /**
      * Creates a statistics manager instance
      * @param context - Extension context for persistent storage
      */
-    private constructor(private context: vscode.ExtensionContext) {
+    private constructor(context: vscode.ExtensionContext) {
+        this.context = context;
         this.stats = this.loadStats();
+        
+        // Load previously processed files from storage
+        const savedFiles = this.context.globalState.get<string[]>('ccpProcessedFiles', []);
+        this.processedFiles = new Set(savedFiles);
     }
     
     /**
@@ -105,7 +112,23 @@ export class StatisticsManager {
         
         console.log(`Stats summary: ${totalComments} comments, ${totalLines} lines, ${totalSize} bytes`);
         
-        this.stats.filesProcessed += fileResults.length;
+        // Count only new unique files
+        let newFilesCount = 0;
+        fileResults.forEach(file => {
+            if (file.filePath && !this.processedFiles.has(file.filePath)) {
+                this.processedFiles.add(file.filePath);
+                newFilesCount++;
+            }
+        });
+        
+        // Update processed files in storage
+        this.context.globalState.update('ccpProcessedFiles', 
+            Array.from(this.processedFiles));
+        
+        // Increment files processed count only for new unique files
+        this.stats.filesProcessed += newFilesCount;
+        
+        // Always update other statistics
         this.stats.totalComments += totalComments;
         this.stats.totalLines += totalLines;
         this.stats.totalSizeReduction += totalSize;
@@ -120,7 +143,7 @@ export class StatisticsManager {
             }, 0) / totalSize;
             
             this.stats.averageReductionPercent = 
-                ((this.stats.averageReductionPercent * (this.stats.filesProcessed - fileResults.length)) + 
+                ((this.stats.averageReductionPercent * (this.stats.filesProcessed - newFilesCount)) + 
                 weightedPercentage) / this.stats.filesProcessed;
         }
         
@@ -142,6 +165,11 @@ export class StatisticsManager {
             averageReductionPercent: 0,
             lastUpdated: new Date()
         };
+        
+        // Clear the processed files set as well
+        this.processedFiles.clear();
+        this.context.globalState.update('ccpProcessedFiles', []);
+        
         this.saveStats();
     }
 }

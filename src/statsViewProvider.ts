@@ -69,6 +69,11 @@ export class StatisticsViewProvider implements vscode.WebviewViewProvider {
         
         const formattedSize = this.formatBytes(stats.totalSizeReduction);
         
+        // Get efficiency percentage and color
+        const efficiencyPercent = stats.averageReductionPercent;
+        const efficiencyColor = efficiencyPercent > 60 ? '#2ea043' : 
+                               (efficiencyPercent > 30 ? '#d29922' : '#f85149');
+        
         return `<!DOCTYPE html>
         <html>
           <head>
@@ -78,29 +83,53 @@ export class StatisticsViewProvider implements vscode.WebviewViewProvider {
             <style>
               body {
                 padding: 10px;
+                color: var(--vscode-foreground);
+                overflow-y: hidden;
+                height: auto;
               }
               
-              h3 {
-                margin-top: 0;
+              .stats-header {
+                font-size: 13px;
+                font-weight: 600;
+                margin-bottom: 12px;
+                color: var(--vscode-foreground);
                 border-bottom: 1px solid var(--vscode-panel-border);
                 padding-bottom: 5px;
-                margin-bottom: 15px;
+                user-select: none;
               }
               
-              .stats-grid {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 10px 15px;
-                margin-bottom: 20px;
+              .stats-panel {
+                background-color: var(--vscode-editor-background);
+                border-radius: 4px;
+                padding: 12px;
+                margin-bottom: 12px;
+                border: 1px solid var(--vscode-panel-border);
+                min-width: 200px;
               }
               
-              .stat-label {
-                opacity: 0.8;
+              .stats-item {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 4px 0;
+                font-size: 12px;
               }
               
-              .stat-value {
-                font-weight: bold;
-                text-align: right;
+              .stats-label {
+                color: var(--vscode-descriptionForeground);
+              }
+              
+              .stats-value {
+                font-weight: 600;
+                color: var(--vscode-foreground);
+              }
+              
+              .progress-bar {
+                height: 4px;
+                background-color: ${efficiencyColor};
+                width: 100%;
+                margin: 8px 0 12px 0;
+                border-radius: 2px;
               }
               
               .reset-button {
@@ -110,8 +139,10 @@ export class StatisticsViewProvider implements vscode.WebviewViewProvider {
                 padding: 6px 12px;
                 border-radius: 3px;
                 cursor: pointer;
+                font-size: 12px;
+                display: block;
                 width: 100%;
-                margin-top: 10px;
+                min-width: 200px;
               }
               
               .reset-button:hover {
@@ -119,37 +150,60 @@ export class StatisticsViewProvider implements vscode.WebviewViewProvider {
               }
               
               .last-updated {
-                font-size: 0.85em;
-                opacity: 0.8;
-                margin-top: 15px;
+                font-size: 11px;
+                color: var(--vscode-descriptionForeground);
+                margin-top: 10px;
                 text-align: center;
+              }
+              
+              .stats-container {
+                display: flex;
+                flex-direction: column;
+                height: auto;
+                overflow-x: auto;
+                overflow-y: hidden;
+                white-space: nowrap;
               }
             </style>
           </head>
           <body>
-            <h3>All-Time Statistics</h3>
-            
-            <div class="stats-grid">
-              <div class="stat-label">Files Processed:</div>
-              <div class="stat-value">${stats.filesProcessed.toLocaleString()}</div>
+            <div class="stats-container">
+              <h3 class="stats-header">Usage Statistics</h3>
               
-              <div class="stat-label">Comments Removed:</div>
-              <div class="stat-value">${stats.totalComments.toLocaleString()}</div>
+              <div class="stats-panel">
+                <div class="stats-item">
+                  <span class="stats-label">Files Processed</span>
+                  <span class="stats-value">${stats.filesProcessed.toLocaleString()}</span>
+                </div>
+                
+                <div class="stats-item">
+                  <span class="stats-label">Comments Removed</span>
+                  <span class="stats-value">${stats.totalComments.toLocaleString()}</span>
+                </div>
+                
+                <div class="stats-item">
+                  <span class="stats-label">Lines Reduced</span>
+                  <span class="stats-value">${stats.totalLines.toLocaleString()}</span>
+                </div>
+                
+                <div class="stats-item">
+                  <span class="stats-label">Size Reduction</span>
+                  <span class="stats-value">${formattedSize}</span>
+                </div>
+                
+                <div class="stats-item">
+                  <span class="stats-label">Efficiency</span>
+                  <span class="stats-value" style="color: ${efficiencyColor};">${efficiencyPercent.toFixed(1)}%</span>
+                </div>
+                
+                <div class="progress-bar"></div>
+              </div>
               
-              <div class="stat-label">Lines Removed:</div>
-              <div class="stat-value">${stats.totalLines.toLocaleString()}</div>
+              <button class="reset-button" id="resetStats">Reset Statistics</button>
               
-              <div class="stat-label">Size Reduction:</div>
-              <div class="stat-value">${formattedSize}</div>
-              
-              <div class="stat-label">Avg Reduction:</div>
-              <div class="stat-value">${stats.averageReductionPercent.toFixed(1)}%</div>
-            </div>
-            
-            <button class="reset-button" id="resetStats">Reset Statistics</button>
-            
-            <div class="last-updated">
-              Last updated: ${lastUpdated}
+              <div class="last-updated">
+                Last updated: ${lastUpdated}
+              </div>
             </div>
             
             <script>
@@ -157,6 +211,15 @@ export class StatisticsViewProvider implements vscode.WebviewViewProvider {
               
               document.getElementById('resetStats').addEventListener('click', () => {
                 vscode.postMessage({ command: 'resetStats' });
+              });
+              
+              // Set the view height to match content height to avoid scrolling
+              window.addEventListener('load', () => {
+                const contentHeight = document.querySelector('.stats-container').scrollHeight;
+                vscode.postMessage({ 
+                  command: 'setHeight',
+                  height: contentHeight
+                });
               });
             </script>
           </body>
