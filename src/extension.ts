@@ -253,7 +253,7 @@ export function activate(context: vscode.ExtensionContext) {
     // Create and configure status bar item
     const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
     statusBarItem.command = 'ccp.cleanComments';
-    statusBarItem.text = "$(comment-discussion) Clean Comments";
+    statusBarItem.text = "$(trash) Clean Comments";
     statusBarItem.tooltip = "Clean comments from current file";
     statusBarItem.show();
 
