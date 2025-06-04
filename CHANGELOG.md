@@ -2,6 +2,28 @@
 
 All notable changes to the "Comment Cleaner Pro" extension are documented in this file.
 
+## [1.0.6] - 2025-06-05
+
+### Added
+- **File-Specific Statistics View**
+  - New toggle to switch between "All Files" and "Current File" views
+  - Auto-updating file statistics when switching between editor tabs
+  - Persistent view preference across sessions
+  - Detailed metrics for individual files with proper formatting
+  - Intuitive messaging when no statistics are available for current file
+
+### Changed
+- **Improved UI Consistency**
+  - Made toggle buttons span full width with equal sizing
+  - Standardized styling across different statistics views
+  - Enhanced file path display with folder/file format
+
+### Technical
+- Added `fileStats` map to track individual file statistics
+- Extended configuration settings with `statisticsViewMode` preference
+- Implemented editor change detection for real-time view updates
+- Added file display path formatting helper
+
 ## [1.0.5] - 2025-06-04
 
 ### Fixed

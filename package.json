@@ -2,7 +2,7 @@
   "name": "comment-cleaner-pro",
   "displayName": "Comment Cleaner Pro",
   "description": "Streamline your code by effortlessly removing comments across 20+ programming languages. Improve readability, reduce file size, and prepare code for production with powerful cleaning options and detailed statistics.",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "publisher": "ChristliebDela",
   "icon": "media/icon.png",
   "engines": {
@@ -148,6 +148,15 @@
           "type": "array",
           "default": [],
           "description": "Preserve comments matching these regex patterns"
+        },
+        "commentCleanerPro.statisticsViewMode": {
+          "type": "string",
+          "default": "global",
+          "enum": [
+            "global",
+            "file"
+          ],
+          "description": "Default view mode for statistics panel (All Files or Current File)"
         }
       }
     },

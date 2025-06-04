@@ -16,6 +16,26 @@ export interface CCPStatistics {
     averageReductionPercent: number;
     /** Timestamp of last statistics update */
     lastUpdated: Date;
+    /** Per-file statistics */
+    fileStats: Map<string, FileSpecificStats>;
+}
+
+/**
+ * Interface for file-specific statistics
+ */
+export interface FileSpecificStats {
+    /** Number of comments removed in the file */
+    commentCount: number;
+    /** Number of lines removed in the file */
+    linesRemoved: number;
+    /** Size reduction in bytes for the file */
+    sizeReduction: number;
+    /** Percentage of size reduction for the file */
+    sizePercentage: number;
+    /** Timestamp of last update for the file stats */
+    lastUpdated: Date;
+    /** Path of the file */
+    filePath: string;
 }
 
 /**
@@ -43,6 +63,65 @@ export class StatisticsManager {
     }
     
     /**
+     * Loads statistics from persistent storage
+     * @returns Statistics object from storage or defaults if none exist
+     */
+    private loadStats(): CCPStatistics {
+        const savedStats = this.context.globalState.get<any>(this.storageKey);
+        
+        if (savedStats) {
+            // Convert fileStats back to Map from plain object
+            const fileStats = new Map<string, FileSpecificStats>();
+            if (savedStats.fileStats) {
+                Object.keys(savedStats.fileStats).forEach(filePath => {
+                    fileStats.set(filePath, {
+                        ...savedStats.fileStats[filePath],
+                        lastUpdated: new Date(savedStats.fileStats[filePath].lastUpdated)
+                    });
+                });
+            }
+            
+            return {
+                filesProcessed: savedStats.filesProcessed || 0,
+                totalComments: savedStats.totalComments || 0,
+                totalLines: savedStats.totalLines || 0,
+                totalSizeReduction: savedStats.totalSizeReduction || 0,
+                averageReductionPercent: savedStats.averageReductionPercent || 0,
+                lastUpdated: savedStats.lastUpdated ? new Date(savedStats.lastUpdated) : new Date(),
+                fileStats: fileStats
+            };
+        }
+        
+        return {
+            filesProcessed: 0,
+            totalComments: 0,
+            totalLines: 0,
+            totalSizeReduction: 0,
+            averageReductionPercent: 0,
+            lastUpdated: new Date(),
+            fileStats: new Map<string, FileSpecificStats>()
+        };
+    }
+    
+    /**
+     * Saves statistics to persistent storage
+     */
+    private saveStats(): void {
+        // Convert Map to plain object for storage
+        const fileStatsObj: { [key: string]: FileSpecificStats } = {};
+        this.stats.fileStats.forEach((value, key) => {
+            fileStatsObj[key] = value;
+        });
+        
+        const statsToSave = {
+            ...this.stats,
+            fileStats: fileStatsObj
+        };
+        
+        this.context.globalState.update(this.storageKey, statsToSave);
+    }
+    
+    /**
      * Gets the singleton instance of the statistics manager
      * @param context - Extension context for persistent storage
      * @returns The statistics manager instance
@@ -55,36 +134,20 @@ export class StatisticsManager {
     }
     
     /**
-     * Loads statistics from persistent storage
-     * @returns Statistics object from storage or defaults if none exist
-     */
-    private loadStats(): CCPStatistics {
-        const defaultStats: CCPStatistics = {
-            filesProcessed: 0,
-            totalComments: 0,
-            totalLines: 0,
-            totalSizeReduction: 0,
-            averageReductionPercent: 0,
-            lastUpdated: new Date()
-        };
-        
-        const savedStats = this.context.globalState.get<CCPStatistics>(this.storageKey);
-        return savedStats || defaultStats;
-    }
-    
-    /**
-     * Saves current statistics to persistent storage
-     */
-    private saveStats(): void {
-        this.context.globalState.update(this.storageKey, this.stats);
-    }
-    
-    /**
      * Returns a copy of the current statistics
      * @returns Copy of the current statistics object
      */
     public getCurrentStats(): CCPStatistics {
         return { ...this.stats };
+    }
+    
+    /**
+     * Gets statistics for a specific file
+     * @param filePath Path to the file
+     * @returns File-specific statistics or undefined if not found
+     */
+    public getFileStats(filePath: string): FileSpecificStats | undefined {
+        return this.stats.fileStats.get(filePath);
     }
     
     /**
@@ -114,10 +177,24 @@ export class StatisticsManager {
         
         // Count only new unique files
         let newFilesCount = 0;
+        
+        // Update file-specific statistics
         fileResults.forEach(file => {
-            if (file.filePath && !this.processedFiles.has(file.filePath)) {
-                this.processedFiles.add(file.filePath);
-                newFilesCount++;
+            if (file.filePath) {
+                // Create or update file-specific stats
+                this.stats.fileStats.set(file.filePath, {
+                    commentCount: file.commentCount || 0,
+                    linesRemoved: file.linesRemoved || 0, 
+                    sizeReduction: file.sizeReduction || 0,
+                    sizePercentage: file.sizePercentage || 0,
+                    lastUpdated: new Date(),
+                    filePath: file.filePath
+                });
+                
+                if (!this.processedFiles.has(file.filePath)) {
+                    this.processedFiles.add(file.filePath);
+                    newFilesCount++;
+                }
             }
         });
         
@@ -163,7 +240,8 @@ export class StatisticsManager {
             totalLines: 0,
             totalSizeReduction: 0,
             averageReductionPercent: 0,
-            lastUpdated: new Date()
+            lastUpdated: new Date(),
+            fileStats: new Map<string, FileSpecificStats>()
         };
         
         // Clear the processed files set as well
