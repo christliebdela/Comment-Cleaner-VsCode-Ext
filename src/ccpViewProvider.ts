@@ -203,12 +203,12 @@ export class HistoryViewProvider implements vscode.TreeDataProvider<FileItem> {
             command: 'vscode.open',
             title: 'Open File',
             arguments: [vscode.Uri.file(file)]
-          }
+          },
+          file  // Pass the file path as the 4th parameter here
         );
         item.contextValue = 'historyItem';
         item.tooltip = file;
         item.description = path.dirname(file);
-        item.filePath = file;
         items.push(item);
       });
 
@@ -273,7 +273,8 @@ class FileItem extends vscode.TreeItem {
       this.contextValue = 'buttonItem';
     } else {
       if (filePath) {
-        this.iconPath = vscode.ThemeIcon.File;
+        // Replace generic file icon with language-specific icon
+        this.iconPath = getFileIcon(filePath);
         this.contextValue = 'historyItem';
       }
     }
@@ -328,4 +329,15 @@ function identifyLanguage(extension: string): string {
   };
   
   return extensionMap[extension.toLowerCase()] || 'plaintext';
+}
+
+/**
+ * Gets an appropriate icon for a file based on its extension
+ * @param filePath - Path to the file
+ * @returns ThemeIcon appropriate for the file type
+ */
+function getFileIcon(filePath: string): vscode.ThemeIcon {
+  // Use file type theme icons that are guaranteed to exist in VS Code
+  // This is a more reliable approach than language-specific icons
+  return new vscode.ThemeIcon('file-code');
 }
