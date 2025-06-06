@@ -180,19 +180,41 @@ Comment Cleaner Pro:
 - Requires no authentication or online services
 - Has minimal extension permissions
 
-## Release History
+## Project Information
 
-See the [CHANGELOG](https://github.com/christliebdela/Comment-Cleaner-VsCode-Ext/blob/main/CHANGELOG.md) for details about each release.
-
-## Contributing
-
-Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+<div align="center">
+  <table>
+    <tr>
+      <td align="center">
+        <a href="https://github.com/christliebdela/Comment-Cleaner-VsCode-Ext/blob/main/CHANGELOG.md">
+          <img src="https://img.shields.io/badge/View-Changelog-blue?style=for-the-badge&logo=github" alt="View Changelog" />
+          <br/>
+          <b>Release History</b>
+        </a>
+      </td>
+      <td align="center">
+        <a href="https://github.com/christliebdela/Comment-Cleaner-VsCode-Ext/blob/main/CONTRIBUTING.md">
+          <img src="https://img.shields.io/badge/Become_a-Contributor-orange?style=for-the-badge&logo=github" alt="Become a Contributor" />
+          <br/>
+          <b>Contributing</b>
+        </a>
+      </td>
+      <td align="center">
+        <a href="https://github.com/christliebdela/Comment-Cleaner-VsCode-Ext/blob/main/LICENSE">
+          <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge&logo=opensourceinitiative" alt="MIT License" />
+          <br/>
+          <b>License</b>
+        </a>
+      </td>
+    </tr>
+  </table>
+</div>
 
 ## Author
 
-
-Created and maintained by <a href="https://github.com/christliebdela">Christlieb Dela</a>.
+<div align="center">
+  <a href="https://github.com/christliebdela">
+    <img src="https://img.shields.io/badge/Created_by-Christlieb_Dela-222222?style=for-the-badge&logo=github" alt="Created by Christlieb Dela" />
+  </a>
+  <p>Thank you for using Comment Cleaner Pro!</p>
+</div>
