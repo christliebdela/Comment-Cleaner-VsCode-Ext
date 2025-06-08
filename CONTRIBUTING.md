@@ -32,3 +32,13 @@ Thank you for your interest in contributing to Comment Cleaner Pro! This documen
 ## Testing
 
 Run tests with: `npm test`
+
+## Licensing Notice
+
+By contributing to Comment Cleaner Pro, you agree that your contributions will be licensed under the project's GPL-3.0 license. All contributions must:
+
+1. Maintain the original copyright and license notices
+2. Clearly attribute Comment Cleaner Pro and its original author (Christlieb Dela)
+3. Remain open source under the same GPL-3.0 license
+
+This ensures that the project and all derivatives remain free and open source while properly crediting the original work.

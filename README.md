@@ -9,7 +9,7 @@
   <a href="https://marketplace.visualstudio.com/items?itemName=ChristliebDela.comment-cleaner-pro"><img src="https://img.shields.io/visual-studio-marketplace/d/ChristliebDela.comment-cleaner-pro?style=flat-square&color=000000&labelColor=222222" alt="Downloads"></a>
   <a href="https://github.com/christliebdela/Comment-Cleaner-VsCode-Ext/issues"><img src="https://img.shields.io/github/issues/christliebdela/Comment-Cleaner-VsCode-Ext?style=flat-square&color=000000&labelColor=222222" alt="Issues"></a>
   <a href="https://github.com/christliebdela/Comment-Cleaner-VsCode-Ext/pulls"><img src="https://img.shields.io/github/issues-pr/christliebdela/Comment-Cleaner-VsCode-Ext?style=flat-square&color=000000&labelColor=222222" alt="Pull Requests"></a>
-  <a href="https://github.com/christliebdela/Comment-Cleaner-VsCode-Ext/blob/main/LICENSE"><img src="https://img.shields.io/github/license/christliebdela/Comment-Cleaner-VsCode-Ext?style=flat-square&color=000000&labelColor=222222" alt="License"></a>
+  <a href="https://github.com/christliebdela/Comment-Cleaner-VsCode-Ext/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-GPL%20v3-000000?style=flat-square&labelColor=222222&logo=gnu" alt="License"></a>
   <img src="https://hits.sh/github.com/christliebdela/Comment-Cleaner-VsCode-Ext.svg?style=flat-square&color=000000&labelColor=222222&label=visits" alt="Repository Visits">
 </p>
 
@@ -201,7 +201,7 @@ Comment Cleaner Pro:
       </td>
       <td align="left">
         <a href="https://github.com/christliebdela/Comment-Cleaner-VsCode-Ext/blob/main/LICENSE">
-          <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge&logo=opensourceinitiative" alt="MIT License" />
+          <img src="https://img.shields.io/badge/License-GPL%20v3-000000?style=flat-square&labelColor=222222&logo=gnu" alt="License">
           <br/>
           <b>License</b>
         </a>
@@ -218,3 +218,17 @@ Comment Cleaner Pro:
   </a>
   <p>Thank you for using Comment Cleaner Pro!</p>
 </div>
+
+## License
+
+This project is licensed under the **GNU General Public License v3.0** - a copyleft license that ensures derivative works remain open source.
+
+Key points:
+- You are free to use, modify, and distribute this software
+- If you distribute modified versions, you must:
+  - Make your changes open source under GPL v3
+  - Clearly mark what changes you've made
+  - Keep all copyright notices intact
+  - Include the original license
+
+This ensures that Comment Cleaner Pro and all derivatives remain open source, benefiting the entire community. See the [LICENSE](LICENSE) file for full details.
