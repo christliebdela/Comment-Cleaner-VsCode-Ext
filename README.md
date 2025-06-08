@@ -210,17 +210,6 @@ Comment Cleaner Pro:
   </table>
 </div>
 
-## Author
-
-<div align="left">
-  <a href="https://github.com/christliebdela">
-    <img src="https://img.shields.io/badge/Created_by-Christlieb_Dela-222222?style=for-the-badge&logo=github" alt="Created by Christlieb Dela" />
-  </a>
-  <p>Thank you for using Comment Cleaner Pro!</p>
-</div>
-
-## License
-
 This project is licensed under the **GNU General Public License v3.0** - a copyleft license that ensures derivative works remain open source.
 
 Key points:
@@ -232,3 +221,14 @@ Key points:
   - Include the original license
 
 This ensures that Comment Cleaner Pro and all derivatives remain open source, benefiting the entire community. See the [LICENSE](LICENSE) file for full details.
+
+## Author
+
+<div align="left">
+  <a href="https://github.com/christliebdela">
+    <img src="https://img.shields.io/badge/Created_by-Christlieb_Dela-222222?style=for-the-badge&logo=github" alt="Created by Christlieb Dela" />
+  </a>
+  <p>Thank you for using Comment Cleaner Pro!</p>
+</div>
+
+
