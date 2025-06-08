@@ -15,12 +15,8 @@
 
 ## Video Demo
 
-<p align="center">
-  <a href="https://youtu.be/AUhye5rzwtQ" target="_blank">
-    <img src="https://img.youtube.com/vi/AUhye5rzwtQ/0.jpg" alt="Comment Cleaner Pro Demo" width="600" />
-  </a>
-  <br/>
-  <em>Click to watch the demo video</em>
+<p 
+  <em>Coming Soon</em>
 </p>
 
 ## Overview
