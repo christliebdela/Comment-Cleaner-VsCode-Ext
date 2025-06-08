@@ -80,8 +80,36 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
           body {
             padding: 10px;
             color: var(--vscode-foreground);
-            overflow-y: hidden;
+            overflow-y: visible;
             height: auto;
+          }
+          
+          
+          ::-webkit-scrollbar {
+            width: 6px; 
+            height: 6px;
+          }
+          
+          ::-webkit-scrollbar-thumb {
+            background-color: transparent;
+            border-radius: 3px;
+            transition: background-color 0.3s;
+          }
+          
+          *:hover > ::-webkit-scrollbar-thumb,
+          *:hover::-webkit-scrollbar-thumb {
+            background-color: var(--vscode-scrollbarSlider-background);
+          }
+          
+          ::-webkit-scrollbar-thumb:hover {
+            background-color: var(--vscode-scrollbarSlider-hoverBackground);
+          }
+          
+          .actions-container {
+            display: flex;
+            flex-direction: column;
+            height: auto;
+            overflow-y: visible;
           }
 
           .actions-panel {
@@ -154,13 +182,16 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
             font-weight: 600;
           }
 
-          .actions-container {
+          .stats-container {
             display: flex;
             flex-direction: column;
             height: auto;
+            overflow-x: auto;
+            overflow-y: auto; 
+            white-space: nowrap;
           }
 
-          /* Checkbox styles */
+          
           .option-checkbox {
             display: flex;
             align-items: flex-start;
@@ -371,7 +402,8 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
 
           // Set the view height to match content height to avoid scrolling
           window.addEventListener('load', () => {
-            const contentHeight = document.querySelector('.actions-container').scrollHeight;
+            // Remove this or modify to ensure proper scrolling
+            const contentHeight = document.querySelector('.stats-container').scrollHeight;
             vscode.postMessage({
               command: 'setHeight',
               height: contentHeight

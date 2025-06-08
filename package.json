@@ -2,7 +2,7 @@
   "name": "comment-cleaner-pro",
   "displayName": "Comment Cleaner Pro",
   "description": "Streamline your code by effortlessly removing comments across 20+ programming languages. Improve readability, reduce file size, and prepare code for production with powerful cleaning options and detailed statistics.",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "publisher": "ChristliebDela",
   "icon": "media/icon.png",
   "engines": {
@@ -43,6 +43,10 @@
         "command": "ccp.clearHistory",
         "title": "Clear History",
         "icon": "$(clear-all)"
+      },
+      {
+        "command": "ccp.focusActionsView",
+        "title": "Comment Cleaner Pro: Focus on Actions View"
       }
     ],
     "menus": {

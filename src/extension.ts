@@ -60,12 +60,58 @@ export function activate(context: vscode.ExtensionContext) {
         await document.save();
 
         try {
+            // If options were passed directly (from UI panel), use them
+            // Otherwise, show the configuration dialog
+            if (!options) {
+                // Get saved options to use as defaults
+                const savedOptions = context.globalState.get<CCPOptions>('ccpOptions') || {
+                    createBackup: true,
+                    preserveTodo: false,
+                    keepDocComments: false,
+                    forceProcess: false
+                };
 
-            const savedOptions = context.globalState.get<CCPOptions>('ccpOptions');
-            const noBackup = savedOptions?.createBackup === false;
-            const preserveTodo = savedOptions?.preserveTodo === true;
-            const keepDocComments = savedOptions?.keepDocComments === true;
-            const forceProcess = savedOptions?.forceProcess === true;
+                // Show configuration dialog
+                const backup = await vscode.window.showQuickPick(['Yes', 'No'], {
+                    placeHolder: 'Create backup files?',
+                    ignoreFocusOut: true
+                });
+                if (!backup) return;
+
+                const force = await vscode.window.showQuickPick(['Yes', 'No'], {
+                    placeHolder: 'Force processing of unknown file types?',
+                    ignoreFocusOut: true
+                });
+                if (!force) return;
+
+                const todo = await vscode.window.showQuickPick(['Yes', 'No'], {
+                    placeHolder: 'Preserve TODO and FIXME comments?',
+                    ignoreFocusOut: true
+                });
+                if (!todo) return;
+
+                const docs = await vscode.window.showQuickPick(['Yes', 'No'], {
+                    placeHolder: 'Preserve documentation comments?',
+                    ignoreFocusOut: true
+                });
+                if (!docs) return;
+
+                // Update saved options with new selections
+                options = {
+                    createBackup: backup === 'Yes',
+                    preserveTodo: todo === 'Yes',
+                    keepDocComments: docs === 'Yes',
+                    forceProcess: force === 'Yes'
+                };
+
+                // Save these options for next time
+                await context.globalState.update('ccpOptions', options);
+            }
+
+            const noBackup = options?.createBackup === false;
+            const preserveTodo = options?.preserveTodo === true;
+            const keepDocComments = options?.keepDocComments === true;
+            const forceProcess = options?.forceProcess === true;
 
             const config = vscode.workspace.getConfiguration('commentCleanerPro');
             const preservePatterns = config.get('preservePatterns', []);
@@ -82,14 +128,22 @@ export function activate(context: vscode.ExtensionContext) {
             if (result) {
                 statsManager.updateStats([result]);
                 statsViewProvider.updateView();
+                
+                // Check if any comments were actually removed
+                if (result.commentCount > 0) {
+                    vscode.window.showInformationMessage('Comments removed successfully!');
+                    updateStatusBar('Comments removed successfully!');
+                } else {
+                    vscode.window.showInformationMessage('No comments found in file.');
+                    updateStatusBar('No comments found in file.');
+                }
+            } else {
+                vscode.window.showErrorMessage('Failed to process file.');
+                updateStatusBar('Failed to process file.');
             }
 
             await vscode.commands.executeCommand('workbench.action.files.revert');
-
             historyViewProvider.addToHistory(document.fileName);
-
-            vscode.window.showInformationMessage('Comments removed successfully!');
-            updateStatusBar('Comments removed successfully!');
         } catch (error) {
             vscode.window.showErrorMessage(`Error: ${error}`);
         }
@@ -165,6 +219,12 @@ export function activate(context: vscode.ExtensionContext) {
     statusBarItem.tooltip = "Clean comments from current file";
     statusBarItem.show();
 
+    let focusActionsView = vscode.commands.registerCommand('ccp.focusActionsView', async () => {
+        // This will focus the Actions view in the Comment Cleaner Pro sidebar
+        await vscode.commands.executeCommand('workbench.view.extension.comment-cleaner-pro');
+        await vscode.commands.executeCommand('ccpButtons.focus');
+    });
+
     context.subscriptions.push(
         cleanCurrentFile,
         cleanMultipleFiles,
@@ -173,6 +233,7 @@ export function activate(context: vscode.ExtensionContext) {
         removeFromHistory,
         setLanguageFilter,
         clearHistory,
+        focusActionsView,
         statusBarItem
     );
 

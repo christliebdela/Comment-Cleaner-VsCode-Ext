@@ -72,24 +72,26 @@ async function processFilesWithSettings(
     preserveTodo: boolean,
     keepDocComments: boolean
 ): Promise<void> {
-
     const config = vscode.workspace.getConfiguration('commentCleanerPro');
     const preservePatterns = config.get('preservePatterns', []);
-
+    
+    // Define results outside the withProgress callback
+    const allResults: any[] = [];
+    
     const progress = await vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
         title: `Removing comments from ${files.length} files`,
         cancellable: true
     }, async (progress, token) => {
         let processed = 0;
-
+        
         for (const file of files) {
             if (token.isCancellationRequested) {
                 break;
             }
 
             try {
-                await executeCcp(
+                const result = await executeCcp(
                     file.fsPath,
                     noBackup,
                     forceProcess,
@@ -97,6 +99,8 @@ async function processFilesWithSettings(
                     preservePatterns,
                     keepDocComments
                 );
+
+                allResults.push(result); // Store in our outer scope array
 
                 if (historyProvider) {
                     historyProvider.addToHistory(file.fsPath);
@@ -115,7 +119,17 @@ async function processFilesWithSettings(
         return processed;
     });
 
-    vscode.window.showInformationMessage(
-        `Successfully processed ${progress} of ${files.length} files`
-    );
+    // Calculate total comments removed using our allResults array
+    const totalComments = allResults.reduce((sum: number, result: any) => sum + (result?.commentCount || 0), 0);
+
+    // Show success message
+    if (totalComments > 0) {
+        vscode.window.showInformationMessage(
+            `Successfully processed ${progress} files and removed ${totalComments} comments`
+        );
+    } else {
+        vscode.window.showInformationMessage(
+            `Processed ${progress} files but no comments were found`
+        );
+    }
 }

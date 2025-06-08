@@ -2,6 +2,31 @@
 
 All notable changes to the "Comment Cleaner Pro" extension are documented in this file.
 
+## [1.0.8] - 2025-06-09
+
+### Fixed
+- **UI Scrollbar Improvements**
+  - Standardized thin scrollbar style throughout the extension
+  - Fixed issue with persistent scrollbars when content fits in view
+  - Improved overall UI appearance with subtle interactions
+
+- **Command Palette Integration**
+  - Fixed "Focus on Actions View" command functionality
+  - Ensured proper command registration with sidebar view focusing
+  - Improved navigation between extension panels
+
+- **Empty File Handling**
+  - Added proper detection for files with no comments
+  - Now displays appropriate message when no comments found
+  - Added separate counter for files without comments in batch processing
+  - Improved accuracy of statistics by tracking no-comment files separately
+
+### Technical
+- Fixed TypeScript compilation errors in file processing code
+- Optimized scrollbar CSS to reduce code duplication
+- Enhanced error handling for file operations
+- Improved type safety in various components
+
 ## [1.0.7] - 2025-06-04
 
 ### Added
