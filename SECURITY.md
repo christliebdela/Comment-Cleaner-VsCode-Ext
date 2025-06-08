@@ -9,7 +9,7 @@ To report a security vulnerability, please follow these steps:
 
 1. **Do not** disclose the vulnerability publicly.
 2. **Open an issue** marked "[SECURITY]" with a brief description (no details), or
-3. **Send an email** to [INSERT YOUR EMAIL ADDRESS] with details of the vulnerability.
+3. **Send an email** to [christliebdela@gmail.com] with details of the vulnerability.
 
 Please include the following information in your report:
 
