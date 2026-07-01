@@ -1610,6 +1610,12 @@ def main():
     else:
         file_pattern = args.file_pattern
     
+    # Escape glob special characters (e.g. [ and ] in folder names like [id], [slug])
+    # Only escape if the pattern looks like a literal path (no wildcards intended)
+    is_glob_pattern = any(c in file_pattern for c in ['*', '?'])
+    if not is_glob_pattern:
+        file_pattern = glob.escape(file_pattern)
+    
     # Find matching files
     files = glob.glob(file_pattern, recursive=args.recursive)
     

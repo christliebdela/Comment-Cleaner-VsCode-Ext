@@ -2,6 +2,14 @@
 
 All notable changes to the "Comment Cleaner Pro" extension are documented in this file.
 
+## [1.0.9] - 2026-07-01
+
+### Fixed
+- **Bracket Folder Names (e.g. `[id]`, `[slug]`, `[reset-password]`)**
+  - Files inside folders with square brackets in their names (common in Next.js, SvelteKit, and similar frameworks) were silently skipped and never cleaned
+  - Root cause: `glob.glob()` interpreted brackets as regex character classes instead of literal path characters
+  - Fixed by applying `glob.escape()` to literal file paths before passing them to `glob.glob()`
+
 ## [1.0.8] - 2025-06-09
 
 ### Fixed
