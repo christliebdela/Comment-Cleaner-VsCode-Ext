@@ -10,7 +10,7 @@
   <a href="https://github.com/christliebdela/Comment-Cleaner-VsCode-Ext/issues"><img src="https://img.shields.io/github/issues/christliebdela/Comment-Cleaner-VsCode-Ext?style=flat-square&color=000000&labelColor=222222" alt="Issues"></a>
   <a href="https://github.com/christliebdela/Comment-Cleaner-VsCode-Ext/pulls"><img src="https://img.shields.io/github/issues-pr/christliebdela/Comment-Cleaner-VsCode-Ext?style=flat-square&color=000000&labelColor=222222" alt="Pull Requests"></a>
   <a href="https://github.com/christliebdela/Comment-Cleaner-VsCode-Ext/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-GPL%20v3-000000?style=flat-square&labelColor=222222&logo=gnu" alt="License"></a>
-  <img src="https://hits.sh/github.com/christliebdela/Comment-Cleaner-VsCode-Ext.svg?style=flat-square&color=000000&labelColor=222222&label=visits" alt="Repository Visits">
+  <img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.visitorbadge.io%2Fapi%2Fvisitors%3Fpath%3Dhttps%3A%2F%2Fgithub.com%2Fchristliebdela%2FComment-Cleaner-VsCode-Ext%26countColor%3D%23000000&query=%24.visitors&style=flat-square&color=000000&labelColor=222222&label=visits" alt="Repository Visits">
 </p>
 
 ## Video Demo
