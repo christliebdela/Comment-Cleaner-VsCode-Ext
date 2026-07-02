@@ -5,12 +5,13 @@
 </p>
 
 <p align="left">
-  <a href="https://marketplace.visualstudio.com/items?itemName=ChristliebDela.comment-cleaner-pro"><img src="https://img.shields.io/visual-studio-marketplace/v/ChristliebDela.comment-cleaner-pro?style=flat-square&color=000000&labelColor=222222" alt="Version"></a>
-  <a href="https://marketplace.visualstudio.com/items?itemName=ChristliebDela.comment-cleaner-pro"><img src="https://img.shields.io/visual-studio-marketplace/d/ChristliebDela.comment-cleaner-pro?style=flat-square&color=000000&labelColor=222222" alt="Downloads"></a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=ChristliebDela.comment-cleaner-pro"><img src="https://vsmarketplacebadges.dev/version/ChristliebDela.comment-cleaner-pro.svg?style=flat-square&color=000000&labelColor=222222&logo=visual-studio-code" alt="VS Marketplace Version"></a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=ChristliebDela.comment-cleaner-pro"><img src="https://vsmarketplacebadges.dev/downloads/ChristliebDela.comment-cleaner-pro.svg?style=flat-square&color=000000&labelColor=222222" alt="VS Marketplace Downloads"></a>
+  <a href="https://open-vsx.org/extension/ChristliebDela/comment-cleaner-pro"><img src="https://img.shields.io/open-vsx/v/ChristliebDela/comment-cleaner-pro?style=flat-square&color=000000&labelColor=222222" alt="Open VSX Version"></a>
+  <a href="https://open-vsx.org/extension/ChristliebDela/comment-cleaner-pro"><img src="https://img.shields.io/open-vsx/dt/ChristliebDela/comment-cleaner-pro?style=flat-square&color=000000&labelColor=222222" alt="Open VSX Downloads"></a>
   <a href="https://github.com/christliebdela/Comment-Cleaner-VsCode-Ext/issues"><img src="https://img.shields.io/github/issues/christliebdela/Comment-Cleaner-VsCode-Ext?style=flat-square&color=000000&labelColor=222222" alt="Issues"></a>
   <a href="https://github.com/christliebdela/Comment-Cleaner-VsCode-Ext/pulls"><img src="https://img.shields.io/github/issues-pr/christliebdela/Comment-Cleaner-VsCode-Ext?style=flat-square&color=000000&labelColor=222222" alt="Pull Requests"></a>
   <a href="https://github.com/christliebdela/Comment-Cleaner-VsCode-Ext/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-GPL%20v3-000000?style=flat-square&labelColor=222222&logo=gnu" alt="License"></a>
-  <img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.visitorbadge.io%2Fapi%2Fvisitors%3Fpath%3Dhttps%3A%2F%2Fgithub.com%2Fchristliebdela%2FComment-Cleaner-VsCode-Ext%26countColor%3D%23000000&query=%24.visitors&style=flat-square&color=000000&labelColor=222222&label=visits" alt="Repository Visits">
 </p>
 
 ## Video Demo
@@ -21,34 +22,31 @@
 
 ## Overview
 
-Comment Cleaner Pro is a powerful VS Code extension for removing comments from source code files. It helps you streamline your code by efficiently removing all types of comments (line, block, and documentation) across 25+ programming languages while preserving the core functionality of your code.
+Comment Cleaner Pro is a powerful extension for removing comments from source code files. Built for VS Code, Antigravity, VSCodium, and other compatible IDEs, it helps you streamline your code by efficiently removing all types of comments (line, block, and documentation) across 33 supported programming languages while preserving the core functionality of your code.
 
 ## Features
 
 - ✅ **Removes all comment types** (line, block, documentation, TODO/FIXME, and AI-generated) while preserving code functionality
-- ✅ **Preserves meaningful comments** for better readability
-- ✅ **One-click cleanup** with an easy-to-use command
-- ✅ **Supports multiple programming languages**
-- ✅ **Automatic backups** create safety files before removing comments
-- ✅ **Detailed statistics** track the number of comments and lines removed
+- ✅ **Dry-run Confirmation Modal** to review exact stats (affected files, comments, lines, bytes) before cleaning folders or batches
+- ✅ **Persistent History** preserves your cleaned files list across workspace sessions
+- ✅ **Workspace-Local Backups** safely stored in `.ccp-backups/` under the workspace root
+- ✅ **.ccpignore Support** to skip files matching custom rules or defaults (like `node_modules`, `.git`)
+- ✅ **High-Performance Python Core** runs batch operations in a single invocation with parallel worker threads
+- ✅ **Detailed statistics** track comments, line reduction, and size impact
 - ✅ **Undo/Redo support** to easily revert or restore changes
-- ✅ **Configuration consistency** across all entry points
 
 ## Key Features
 
 ### Comprehensive Language Support
-- **20+ Programming Languages** - Supports all major languages including Python, JavaScript (including JSX), TypeScript (including TSX), HTML, CSS, C/C++, Java, Ruby, Go, PHP, SQL, Swift, Rust, Kotlin, and more
-- **Intelligent Comment Detection** - Accurately identifies and removes all comment types specific to each language
-- **Preservation of Code Structure** - Maintains code indentation and formatting while removing comments
+- **30+ Programming Languages** - Supports all major languages including Python, JavaScript/JSX, TypeScript/TSX, Vue SFC, Svelte, HTML, CSS, SCSS, C/C++, Java, Ruby, Go, PHP, SQL, Swift, Rust, Kotlin, Dockerfile, TOML, GraphQL, HCL/Terraform, MDX, and more
+- **Intelligent Comment Detection** - Accurately identifies and removes all comment types specific to each language (including JSX/HTML comments in Vue, Svelte, MDX, and script/style block comments)
 
 ### Flexible Processing Options
-- **Single File Processing** - Clean comments from the current file with a single click
-- **Batch Processing** - Process multiple files simultaneously using glob patterns
-- **Automatic Backups** - Create safety backups before removing comments
-- **Customizable Rules** - Configure how unknown file types and special comments are handled
-- **Configuration Persistence** - Settings in the UI panel now properly apply to all operations
-- **Clear Configuration Dialogs** - Intuitive options when using context menu commands
-- **Undo/Redo Support** - Easily revert or reapply changes with dedicated undo/redo buttons
+- **Single File Processing** - Clean comments from the current active editor file
+- **Batch Processing** - Search and select multiple files visually using a checkbox Quick Pick checklist
+- **Automatic Backups** - Create safety backups inside the `.ccp-backups/` directory before processing
+- **Customizable Options** - Adjust TODO, documentation, and unknown file processing preferences in a unified dialog
+- **Undo/Redo Support** - Fully supports standard VS Code Undo/Redo operations in the active editor
 
 ### Enhanced User Experience
 - **Modern UI Controls** - Circular checkboxes with green indicators for selected options
@@ -64,64 +62,59 @@ Comment Cleaner Pro is a powerful VS Code extension for removing comments from s
 
 ## Currently Supports
 
-<div align="left">
-
 | Category | Languages |
-|:--------|-----------|
-| **Web Development** | <img src="https://img.shields.io/badge/-JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=black" alt="JavaScript"> <img src="https://img.shields.io/badge/-TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript"> <img src="https://img.shields.io/badge/-HTML5-E34F26?style=flat-square&logo=html5&logoColor=white" alt="HTML5"> <img src="https://img.shields.io/badge/-CSS3-1572B6?style=flat-square&logo=css3&logoColor=white" alt="CSS3"> <img src="https://img.shields.io/badge/-PHP-777BB4?style=flat-square&logo=php&logoColor=white" alt="PHP"> |
-| **Systems Programming** | <img src="https://img.shields.io/badge/-C-A8B9CC?style=flat-square&logo=c&logoColor=black" alt="C"> <img src="https://img.shields.io/badge/-C++-00599C?style=flat-square&logo=cplusplus&logoColor=white" alt="C++"> <img src="https://img.shields.io/badge/-Rust-000000?style=flat-square&logo=rust&logoColor=white" alt="Rust"> <img src="https://img.shields.io/badge/-Go-00ADD8?style=flat-square&logo=go&logoColor=white" alt="Go"> |
-| **Enterprise** | <img src="https://img.shields.io/badge/-Java-007396?style=flat-square&logo=java&logoColor=white" alt="Java"> <img src="https://img.shields.io/badge/-C%23-239120?style=flat-square&logo=csharp&logoColor=white" alt="C#"> <img src="https://img.shields.io/badge/-Kotlin-7F52FF?style=flat-square&logo=kotlin&logoColor=white" alt="Kotlin"> |
+| :--- | :--- |
+| **Web Development** | <img src="https://img.shields.io/badge/-JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=black" alt="JavaScript"> <img src="https://img.shields.io/badge/-TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript"> <img src="https://img.shields.io/badge/-Vue-4FC08D?style=flat-square&logo=vuedotjs&logoColor=white" alt="Vue"> <img src="https://img.shields.io/badge/-Svelte-FF3E00?style=flat-square&logo=svelte&logoColor=white" alt="Svelte"> <img src="https://img.shields.io/badge/-HTML5-E34F26?style=flat-square&logo=html5&logoColor=white" alt="HTML5"> <img src="https://img.shields.io/badge/-CSS3-1572B6?style=flat-square&logo=css3&logoColor=white" alt="CSS3"> <img src="https://img.shields.io/badge/-SCSS-CC6699?style=flat-square&logo=sass&logoColor=white" alt="SCSS"> <img src="https://img.shields.io/badge/-PHP-777BB4?style=flat-square&logo=php&logoColor=white" alt="PHP"> |
+| **Systems & General** | <img src="https://img.shields.io/badge/-C-A8B9CC?style=flat-square&logo=c&logoColor=black" alt="C"> <img src="https://img.shields.io/badge/-C++-00599C?style=flat-square&logo=cplusplus&logoColor=white" alt="C++"> <img src="https://img.shields.io/badge/-Rust-000000?style=flat-square&logo=rust&logoColor=white" alt="Rust"> <img src="https://img.shields.io/badge/-Go-00ADD8?style=flat-square&logo=go&logoColor=white" alt="Go"> <img src="https://img.shields.io/badge/-Java-007396?style=flat-square&logo=java&logoColor=white" alt="Java"> <img src="https://img.shields.io/badge/-C%23-239120?style=flat-square&logo=csharp&logoColor=white" alt="C#"> <img src="https://img.shields.io/badge/-Kotlin-7F52FF?style=flat-square&logo=kotlin&logoColor=white" alt="Kotlin"> <img src="https://img.shields.io/badge/-Swift-FA7343?style=flat-square&logo=swift&logoColor=white" alt="Swift"> <img src="https://img.shields.io/badge/-Dart-0175C2?style=flat-square&logo=dart&logoColor=white" alt="Dart"> <img src="https://img.shields.io/badge/-Haskell-5D4F85?style=flat-square&logo=haskell&logoColor=white" alt="Haskell"> |
+| **DevOps & Configs** | <img src="https://img.shields.io/badge/-Dockerfile-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Dockerfile"> <img src="https://img.shields.io/badge/-Terraform%20%2F%20HCL-844FBA?style=flat-square&logo=terraform&logoColor=white" alt="Terraform"> <img src="https://img.shields.io/badge/-YAML-CB171E?style=flat-square&logo=yaml&logoColor=white" alt="YAML"> <img src="https://img.shields.io/badge/-TOML-9C3835?style=flat-square&logo=toml&logoColor=white" alt="TOML"> |
 | **Scripting** | <img src="https://img.shields.io/badge/-Python-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python"> <img src="https://img.shields.io/badge/-Ruby-CC342D?style=flat-square&logo=ruby&logoColor=white" alt="Ruby"> <img src="https://img.shields.io/badge/-Perl-39457E?style=flat-square&logo=perl&logoColor=white" alt="Perl"> <img src="https://img.shields.io/badge/-Bash-4EAA25?style=flat-square&logo=gnu-bash&logoColor=white" alt="Bash"> <img src="https://img.shields.io/badge/-Lua-2C2D72?style=flat-square&logo=lua&logoColor=white" alt="Lua"> <img src="https://img.shields.io/badge/-PowerShell-5391FE?style=flat-square&logo=powershell&logoColor=white" alt="PowerShell"> |
-| **Data & Analysis** | <img src="https://img.shields.io/badge/-SQL-4479A1?style=flat-square&logo=mysql&logoColor=white" alt="SQL"> <img src="https://img.shields.io/badge/-YAML-CB171E?style=flat-square&logo=yaml&logoColor=white" alt="YAML"> <img src="https://img.shields.io/badge/-R-276DC3?style=flat-square&logo=r&logoColor=white" alt="R"> <img src="https://img.shields.io/badge/-MATLAB-0076A8?style=flat-square&logo=mathworks&logoColor=white" alt="MATLAB"> |
-| **Mobile Development** | <img src="https://img.shields.io/badge/-Swift-FA7343?style=flat-square&logo=swift&logoColor=white" alt="Swift"> <img src="https://img.shields.io/badge/-Dart-0175C2?style=flat-square&logo=dart&logoColor=white" alt="Dart"> |
-| **Functional** | <img src="https://img.shields.io/badge/-Haskell-5D4F85?style=flat-square&logo=haskell&logoColor=white" alt="Haskell"> |
+| **Data & Queries** | <img src="https://img.shields.io/badge/-SQL-4479A1?style=flat-square&logo=mysql&logoColor=white" alt="SQL"> <img src="https://img.shields.io/badge/-GraphQL-E10098?style=flat-square&logo=graphql&logoColor=white" alt="GraphQL"> <img src="https://img.shields.io/badge/-R-276DC3?style=flat-square&logo=r&logoColor=white" alt="R"> <img src="https://img.shields.io/badge/-MATLAB-0076A8?style=flat-square&logo=mathworks&logoColor=white" alt="MATLAB"> <img src="https://img.shields.io/badge/-MDX-090909?style=flat-square&logo=mdx&logoColor=white" alt="MDX"> |
 
-</div>
-
-<p align="left"><i>Support for other languages is coming soon. Stay tuned!</i></p>
+<p align="left"><i>Support for other languages is continuously expanding!</i></p>
 
 ## Installation
 
-1. Open VS Code
-2. Go to Extensions view (Ctrl+Shift+X)
-3. Search for "Comment Cleaner Pro"
-4. Click Install
+Comment Cleaner Pro is published on both the **official VS Code Marketplace** and the **Open VSX Registry**, making it fully compatible with VS Code, Antigravity, VSCodium, Gitpod, Eclipse Theia, and any other IDE supporting VS Code extensions.
+
+1. Open your IDE's Extensions view (`Ctrl+Shift+X` or `Cmd+Shift+X`)
+2. Search for `"Comment Cleaner Pro"`
+3. Click **Install**
 
 **Requirements:**
-- Visual Studio Code 1.50.0 or higher
-- Python 3.6 or higher
+- VS Code compatible IDE (v1.50.0 or higher)
+- Python 3.6 or higher (available in system PATH)
 
 ## Usage Guide
 
-### Method 1: Clean Current File
-1. Open a source code file in the editor
-2. Right-click anywhere in the editor
-3. Select "Comment Cleaner Pro: Clean Current File"
-4. Configure your cleaning options:
-   - Choose whether to create a backup
-   - Select if TODO & FIXME comments should be preserved
-   - Decide whether to keep documentation comments
-   - Determine if unknown file types should be processed
-5. The editor will refresh automatically with comments removed according to your settings
+### Method 1: Context Menus (Right-Click)
+
+- **Clean Current File**: Right-click anywhere inside an active editor file (or right-click the file in the Explorer tree) and choose **`CCP - Clean Current File`**.
+- **Clean Folder**: Right-click any folder inside the Explorer tree and select **`CCP - Clean Folder`** to process all matching files under that directory.
+- **Clean Entire Workspace**: Right-click your workspace root directory in the Explorer tree and select **`CCP - Clean Entire Workspace`**.
 
 ### Method 2: Command Palette
+
 1. Press `Ctrl+Shift+P` (Windows/Linux) or `Cmd+Shift+P` (Mac)
-2. Type "Comment Cleaner Pro" 
-3. Select "Comment Cleaner Pro: Clean Current File" or "Comment Cleaner Pro: Clean Multiple Files"
-4. Follow the prompts to configure options
+2. Type `"Comment Cleaner Pro"` or `"CCP"`
+3. Select any of the cleaning actions:
+   - **`Comment Cleaner Pro: Clean Current File`**
+   - **`Comment Cleaner Pro: Clean Multiple Files`**
+   - **`Comment Cleaner Pro: Clean Entire Workspace`**
+4. Configure options in the checklist dropdown and press `Enter` to run.
 
 ### Method 3: Activity Bar Integration
-1. Click the Comment Cleaner Pro icon in the Activity Bar
-2. Choose "Clean Current File" or "Clean Multiple Files"
-3. View your recently cleaned files in the "Cleaned Files" section
-4. Use Undo/Redo buttons to revert or restore changes as needed
+1. Click the Comment Cleaner Pro icon in the Activity Bar to open the Side Bar
+2. Choose "Clean Current File", "Clean Multiple Files", or "Clean Workspace"
+3. View your recently cleaned files in the "Cleaned Files" history section
+4. Revert or restore changes using VS Code's standard Undo/Redo commands (`Ctrl+Z` / `Ctrl+Y`)
 
 ### Batch Processing Options
 When cleaning multiple files:
-1. Enter a glob pattern to match files (e.g., `*.js`, `src/**/*.py`)
-2. Choose whether to create backups
-3. Decide if unknown file types should be processed
-4. Monitor progress in the notification area
+1. Search and select files using the multi-select checklist dialog
+2. Check/uncheck files in the list; selected items will float to the top
+3. Press `Enter` to confirm file selection
+4. Configure your cleaning options in the Quick Pick checkbox dialog
+5. Review the changes in the Proceed / Cancel warning modal
 
 ## Command-Line Usage
 
@@ -169,13 +162,15 @@ Comment Cleaner Pro uses a sophisticated object-oriented architecture with dedic
 Yes, but you can enable backups which create .bak files before processing.
 
 ### Can I undo the comment removal?
-Yes, you can use the dedicated Undo button in the sidebar, use standard VS Code undo operations, or restore from the .bak backup files if you enabled backups.
+Yes. You can use standard editor undo/redo operations (`Ctrl+Z` / `Ctrl+Y` or `Cmd+Z` / `Cmd+Y`) directly in your active editor tabs, or restore files from the `.ccp-backups/` backup directory if you enabled backups during execution.
 
 ### Does it work with all programming languages?
-It supports 20+ major languages. For unlisted languages, you can try the "force" option, but results may vary.
+It supports 30+ major languages. For unlisted languages, you can try the "process unknown files" configuration option, but results may vary.
 
 ### Does it work with embedded code like JavaScript in HTML files?
-No, the current version only processes comments based on the file extension. JavaScript or CSS comments within HTML files will not be removed. We're actively working on adding support for embedded languages in a future release.
+Yes, for Single File Components (SFC) like **Vue (`.vue`)** and **Svelte (`.svelte`)**. The engine uses a block-aware parser to clean HTML comments in `<template>`, JavaScript/TypeScript comments in `<script>`, and CSS/SCSS comments in `<style>`.
+
+For standard **HTML files (`.html`, `.htm`)**, only HTML comments (`<!-- -->`) are stripped in this version, and embedded `<script>` or `<style>` blocks are not parsed. Full support for raw HTML embedded tags is planned for a future release.
 
 ## Privacy & Security
 

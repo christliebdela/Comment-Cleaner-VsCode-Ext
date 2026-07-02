@@ -9,6 +9,7 @@ export class StatisticsViewProvider implements vscode.WebviewViewProvider {
     private _viewMode: 'global' | 'file' = 'global';
     private _currentFilePath?: string;
     private _disposables: vscode.Disposable[] = [];
+    private _version: string = '2.0.0';
 
     constructor(
         private readonly extensionUri: vscode.Uri,
@@ -24,6 +25,9 @@ export class StatisticsViewProvider implements vscode.WebviewViewProvider {
         if (vscode.window.activeTextEditor) {
             this._currentFilePath = vscode.window.activeTextEditor.document.uri.fsPath;
         }
+
+        const ext = vscode.extensions.getExtension('ChristliebDela.comment-cleaner-pro');
+        this._version = ext ? ext.packageJSON.version : '2.0.0';
     }
 
     private _onActiveEditorChanged(editor?: vscode.TextEditor): void {
@@ -98,11 +102,12 @@ export class StatisticsViewProvider implements vscode.WebviewViewProvider {
               body {
                 padding: 10px;
                 color: var(--vscode-foreground);
-                overflow-y: visible;
+                overflow-x: hidden;
+                overflow-y: auto;
                 height: auto;
+                min-width: 220px;
               }
 
-              
               ::-webkit-scrollbar {
                 width: 6px; 
                 height: 6px;
@@ -127,9 +132,8 @@ export class StatisticsViewProvider implements vscode.WebviewViewProvider {
                 display: flex;
                 flex-direction: column;
                 height: auto;
-                overflow-x: auto; 
+                overflow-x: hidden; 
                 overflow-y: visible;
-                white-space: nowrap;
               }
 
               .toggle-container {
@@ -178,7 +182,8 @@ export class StatisticsViewProvider implements vscode.WebviewViewProvider {
                 padding: 12px;
                 margin-bottom: 12px;
                 border: 1px solid var(--vscode-panel-border);
-                min-width: 200px;
+                min-width: 0;
+                box-sizing: border-box;
               }
 
               .stats-item {
@@ -204,22 +209,6 @@ export class StatisticsViewProvider implements vscode.WebviewViewProvider {
                 width: 100%;
                 margin: 8px 0 12px 0;
                 border-radius: 2px;
-              }
-
-              .last-updated {
-                font-size: 11px;
-                color: var(--vscode-descriptionForeground);
-                margin-top: 10px;
-                text-align: center;
-              }
-
-              .stats-container {
-                display: flex;
-                flex-direction: column;
-                height: auto;
-                overflow-x: auto;
-                overflow-y: auto;
-                white-space: nowrap;
               }
 
               .file-header {
@@ -249,19 +238,43 @@ export class StatisticsViewProvider implements vscode.WebviewViewProvider {
                 font-size: 12px;
                 display: block;
                 width: 100%;
-                min-width: 200px;
+                min-width: 0;
+                box-sizing: border-box;
               }
 
               .reset-button:hover {
                 background-color: var(--vscode-button-hoverBackground);
               }
 
-              .author-credit {
-                font-size: 10px;
-                color: var(--vscode-descriptionForeground);
-                margin-top: 4px; 
+              .about-section {
+                margin-top: 24px;
+                padding-top: 16px;
+                border-top: 1px solid var(--vscode-panel-border);
                 text-align: center;
                 user-select: none;
+              }
+              
+              .about-version {
+                font-size: 12px;
+                font-weight: 600;
+                color: var(--vscode-foreground);
+                margin-bottom: 6px;
+              }
+              
+              .about-meta {
+                font-size: 10px;
+                color: var(--vscode-descriptionForeground);
+                margin-bottom: 3px;
+                line-height: 1.3;
+              }
+              
+              .about-meta a {
+                color: var(--vscode-textLink-foreground);
+                text-decoration: none;
+              }
+              
+              .about-meta a:hover {
+                text-decoration: underline;
               }
             </style>
           </head>
@@ -331,11 +344,10 @@ export class StatisticsViewProvider implements vscode.WebviewViewProvider {
 
           <button class="reset-button" id="resetStats">Reset Statistics</button>
 
-          <div class="last-updated">
-            Last updated: ${lastUpdated}
-          </div>
-          <div class="author-credit">
-            Created by Christlieb Dela
+          <div class="about-section">
+            <div class="about-version">v${this._version}</div>
+            <div class="about-meta">Created by <a href="https://github.com/christliebdela" target="_blank">Christlieb Dela</a></div>
+            <div class="about-meta">Last updated: ${lastUpdated}</div>
           </div>`;
 
         const scriptContent = `
@@ -422,11 +434,10 @@ export class StatisticsViewProvider implements vscode.WebviewViewProvider {
                 <div class="progress-bar" style="background-color: ${efficiencyColor};"></div>
               </div>
 
-              <div class="last-updated">
-                Last processed: ${lastUpdated}
-              </div>
-              <div class="author-credit">
-                Created by Christlieb Dela
+              <div class="about-section">
+                <div class="about-version">v${this._version}</div>
+                <div class="about-meta">Created by <a href="https://github.com/christliebdela" target="_blank">Christlieb Dela</a></div>
+                <div class="about-meta">Last processed: ${lastUpdated}</div>
               </div>`;
         }
 

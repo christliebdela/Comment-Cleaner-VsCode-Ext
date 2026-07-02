@@ -1,22 +1,16 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { executeCcp } from './ccpRunner';
-import { selectAndProcessFiles } from './fileSelector';
+import { selectAndProcessFiles, cleanFolder, cleanWorkspace } from './fileSelector';
 import { FilesViewProvider, HistoryViewProvider } from './ccpViewProvider';
 import { ButtonsViewProvider } from './ccpWebviewProvider';
 import { StatisticsManager } from './statsManager';
 import { StatisticsViewProvider } from './statsViewProvider';
-import * as path from 'path';
-import * as os from 'os';
 
-interface CCPOptions {
-    createBackup: boolean;
-    preserveTodo: boolean;
-    keepDocComments: boolean;
-    forceProcess: boolean;
-}
+import { CCPOptions } from './ccpRunner';
+import { promptCCPOptions, getSavedOptions } from './ccpOptions';
 
 export function activate(context: vscode.ExtensionContext) {
-    console.log('Extension activated with context:', context.extension.id);
 
     if (!context.globalState.get('ccpOptions')) {
         context.globalState.update('ccpOptions', {
@@ -29,7 +23,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     const statsManager = StatisticsManager.getInstance(context);
 
-    const historyViewProvider = new HistoryViewProvider();
+    const historyViewProvider = new HistoryViewProvider(context);
     const buttonsProvider = new ButtonsViewProvider(context.extensionUri, context);
     const statsViewProvider = new StatisticsViewProvider(context.extensionUri, statsManager);
 
@@ -60,52 +54,9 @@ export function activate(context: vscode.ExtensionContext) {
         await document.save();
 
         try {
-            // If options were passed directly (from UI panel), use them
-            // Otherwise, show the configuration dialog
             if (!options) {
-                // Get saved options to use as defaults
-                const savedOptions = context.globalState.get<CCPOptions>('ccpOptions') || {
-                    createBackup: true,
-                    preserveTodo: false,
-                    keepDocComments: false,
-                    forceProcess: false
-                };
-
-                // Show configuration dialog
-                const backup = await vscode.window.showQuickPick(['Yes', 'No'], {
-                    placeHolder: 'Create backup files?',
-                    ignoreFocusOut: true
-                });
-                if (!backup) return;
-
-                const force = await vscode.window.showQuickPick(['Yes', 'No'], {
-                    placeHolder: 'Force processing of unknown file types?',
-                    ignoreFocusOut: true
-                });
-                if (!force) return;
-
-                const todo = await vscode.window.showQuickPick(['Yes', 'No'], {
-                    placeHolder: 'Preserve TODO and FIXME comments?',
-                    ignoreFocusOut: true
-                });
-                if (!todo) return;
-
-                const docs = await vscode.window.showQuickPick(['Yes', 'No'], {
-                    placeHolder: 'Preserve documentation comments?',
-                    ignoreFocusOut: true
-                });
-                if (!docs) return;
-
-                // Update saved options with new selections
-                options = {
-                    createBackup: backup === 'Yes',
-                    preserveTodo: todo === 'Yes',
-                    keepDocComments: docs === 'Yes',
-                    forceProcess: force === 'Yes'
-                };
-
-                // Save these options for next time
-                await context.globalState.update('ccpOptions', options);
+                options = await promptCCPOptions(context);
+                if (!options) { return; }
             }
 
             const noBackup = options?.createBackup === false;
@@ -128,14 +79,15 @@ export function activate(context: vscode.ExtensionContext) {
             if (result) {
                 statsManager.updateStats([result]);
                 statsViewProvider.updateView();
-                
-                // Check if any comments were actually removed
+
                 if (result.commentCount > 0) {
-                    vscode.window.showInformationMessage('Comments removed successfully!');
-                    updateStatusBar('Comments removed successfully!');
+                    vscode.window.showInformationMessage(
+                        `✅ Removed ${result.commentCount} comments (${result.linesRemoved} lines)`
+                    );
+                    updateStatusBar('Comments removed!');
                 } else {
-                    vscode.window.showInformationMessage('No comments found in file.');
-                    updateStatusBar('No comments found in file.');
+                    vscode.window.showInformationMessage('ℹ No comments found in file.');
+                    updateStatusBar('No comments found.');
                 }
             } else {
                 vscode.window.showErrorMessage('Failed to process file.');
@@ -150,12 +102,33 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     let cleanMultipleFiles = vscode.commands.registerCommand('ccp.cleanMultipleFiles', async () => {
-        await selectAndProcessFiles(historyViewProvider, context);
+        await selectAndProcessFiles(historyViewProvider, context, (result) => {
+            statsManager.updateStats(result.files);
+            statsViewProvider.updateView();
+        });
+    });
+
+    let cleanFolderCmd = vscode.commands.registerCommand('ccp.cleanFolder', async (folderUri?: vscode.Uri) => {
+        if (!folderUri) {
+            vscode.window.showWarningMessage('Right-click a folder in the Explorer to use this command.');
+            return;
+        }
+        await cleanFolder(folderUri, context, historyViewProvider, (result) => {
+            statsManager.updateStats(result.files);
+            statsViewProvider.updateView();
+        });
+    });
+
+    let cleanWorkspaceCmd = vscode.commands.registerCommand('ccp.cleanWorkspace', async () => {
+        await cleanWorkspace(context, historyViewProvider, (result) => {
+            statsManager.updateStats(result.files);
+            statsViewProvider.updateView();
+        });
     });
 
     let compareWithBackup = vscode.commands.registerCommand('ccp.compareWithBackup', async (filePath) => {
-        const backupPath = filePath + '.bak';
-        if (await fileExists(backupPath)) {
+        const backupPath = await findBackupPath(filePath);
+        if (backupPath) {
             const uri1 = vscode.Uri.file(filePath);
             const uri2 = vscode.Uri.file(backupPath);
             vscode.commands.executeCommand('vscode.diff', uri2, uri1, 'Backup ↔ Current');
@@ -165,8 +138,8 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     let restoreFromBackup = vscode.commands.registerCommand('ccp.restoreFromBackup', async (filePath) => {
-        const backupPath = filePath + '.bak';
-        if (await fileExists(backupPath)) {
+        const backupPath = await findBackupPath(filePath);
+        if (backupPath) {
             await vscode.workspace.fs.copy(
                 vscode.Uri.file(backupPath),
                 vscode.Uri.file(filePath),
@@ -178,6 +151,23 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
+    async function findBackupPath(targetFilePath: string): Promise<string | undefined> {
+        const ws = vscode.workspace.workspaceFolders;
+        if (ws) {
+            const root = ws[0].uri.fsPath;
+            const relPath = path.relative(root, targetFilePath);
+            const backupPath = path.join(root, '.ccp-backups', relPath + '.bak');
+            if (await fileExists(backupPath)) {
+                return backupPath;
+            }
+        }
+        const legacyPath = targetFilePath + '.bak';
+        if (await fileExists(legacyPath)) {
+            return legacyPath;
+        }
+        return undefined;
+    }
+
     let removeFromHistory = vscode.commands.registerCommand('ccp.removeFromHistory', (item) => {
         if (item && item.filePath) {
             historyViewProvider.removeFromHistory(item.filePath);
@@ -187,9 +177,13 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     let setLanguageFilter = vscode.commands.registerCommand('ccp.setLanguageFilter', async () => {
-        const languages = ['javascript', 'typescript', 'python', 'html', 'css', 'c', 'cpp', 'java', 'ruby', 'go',
-                          'php', 'sql', 'swift', 'rust', 'kotlin', 'bash', 'powershell', 'lua', 'perl',
-                          'yaml', 'haskell', 'dart', 'matlab', 'r', 'csharp', 'all'];
+        const languages = [
+            'javascript', 'typescript', 'python', 'html', 'css', 'scss',
+            'c', 'cpp', 'java', 'ruby', 'go', 'php', 'sql', 'swift',
+            'rust', 'kotlin', 'dart', 'csharp', 'bash', 'powershell',
+            'lua', 'perl', 'yaml', 'haskell', 'matlab', 'r',
+            'vue', 'svelte', 'hcl', 'toml', 'graphql', 'mdx', 'all'
+        ];
 
         const selected = await vscode.window.showQuickPick(languages, {
             placeHolder: 'Select language to filter by (or "all" to show all)'
@@ -220,7 +214,6 @@ export function activate(context: vscode.ExtensionContext) {
     statusBarItem.show();
 
     let focusActionsView = vscode.commands.registerCommand('ccp.focusActionsView', async () => {
-        // This will focus the Actions view in the Comment Cleaner Pro sidebar
         await vscode.commands.executeCommand('workbench.view.extension.comment-cleaner-pro');
         await vscode.commands.executeCommand('ccpButtons.focus');
     });
@@ -228,6 +221,8 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         cleanCurrentFile,
         cleanMultipleFiles,
+        cleanFolderCmd,
+        cleanWorkspaceCmd,
         compareWithBackup,
         restoreFromBackup,
         removeFromHistory,

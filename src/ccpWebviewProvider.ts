@@ -7,9 +7,7 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
   constructor(
     private readonly extensionUri: vscode.Uri,
     private readonly context: vscode.ExtensionContext
-  ) {
-    console.log('ButtonsViewProvider initialized with context:', this.context.extension.id);
-  }
+  ) {}
 
   resolveWebviewView(webviewView: vscode.WebviewView): void {
     webviewView.webview.options = {
@@ -26,10 +24,13 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
     webviewView.webview.onDidReceiveMessage(async message => {
       switch (message.command) {
         case 'cleanCurrentFile':
-          vscode.commands.executeCommand('ccp.cleanComments', message.options);
+          vscode.commands.executeCommand('ccp.cleanComments');
+          break;
+        case 'cleanWorkspace':
+          vscode.commands.executeCommand('ccp.cleanWorkspace');
           break;
         case 'cleanMultipleFiles':
-          vscode.commands.executeCommand('ccp.cleanMultipleFiles', message.options);
+          vscode.commands.executeCommand('ccp.cleanMultipleFiles');
           break;
         case 'undo':
           if (vscode.window.activeTextEditor) {
@@ -55,16 +56,6 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
             vscode.window.showInformationMessage('No active editor to perform redo');
           }
           break;
-        case 'dryRun':
-          vscode.commands.executeCommand('ccp.dryRun');
-          break;
-        case 'filterByLanguage':
-          vscode.commands.executeCommand('ccp.setLanguageFilter');
-          break;
-        case 'saveOptions':
-          console.log('Saving options to global state:', message.options);
-          await this.context.globalState.update('ccpOptions', message.options);
-          break;
       }
     });
   }
@@ -83,7 +74,6 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
             overflow-y: visible;
             height: auto;
           }
-          
           
           ::-webkit-scrollbar {
             width: 6px; 
@@ -124,13 +114,13 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
             background-color: var(--vscode-button-background);
             color: var(--vscode-button-foreground);
             border: none;
-            padding: 8px 12px;
+            padding: 8px 16px;
             border-radius: 3px;
             cursor: pointer;
             font-size: 12px;
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             width: 100%;
             margin: 6px 0;
           }
@@ -147,12 +137,16 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
             display: inline-block;
           }
 
-          .trash-icon {
-            background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg' fill='white'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M10 3h3v1h-1v9l-1 1H4l-1-1V4H2V3h3V2a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1zM9 2H6v1h3V2zM4 13h7V4H4v9zm2-8H5v7h1V5zm1 0h1v7H7V5zm2 0h1v7H9V5z'/%3E%3C/svg%3E") no-repeat center;
+          .file-icon {
+            background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z'/%3E%3Cpolyline points='14 2 14 8 20 8'/%3E%3Cline x1='16' y1='13' x2='8' y2='13'/%3E%3Cline x1='16' y1='17' x2='8' y2='17'/%3E%3Cline x1='10' y1='9' x2='8' y2='9'/%3E%3C/svg%3E") no-repeat center;
           }
 
           .files-icon {
-            background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg' fill='white'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M13.71 4.29l-3-3L10 1H4L3 2v12l1 1h9l1-1V5l-.29-.71zM13 14H4V2h5v3h4v9zm-7-7h5v1H6V7zm0 2h5v1H6V9zm0 2h5v1H6v-1z'/%3E%3C/svg%3E") no-repeat center;
+            background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 12h6m-6-4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V13a2 2 0 0 1-2 2z'/%3E%3Cpath d='M5 8H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-1'/%3E%3C/svg%3E") no-repeat center;
+          }
+
+          .workspace-icon {
+            background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z'/%3E%3C/svg%3E") no-repeat center;
           }
 
           .undo-icon {
@@ -191,75 +185,6 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
             white-space: nowrap;
           }
 
-          
-          .option-checkbox {
-            display: flex;
-            align-items: flex-start;
-            margin: 6px 0;
-            font-size: 12px;
-            position: relative;
-          }
-
-          .option-checkbox input[type="checkbox"] {
-            position: absolute;
-            opacity: 0;
-            cursor: pointer;
-            height: 0;
-            width: 0;
-          }
-
-          .checkmark {
-            position: relative;
-            display: inline-block;
-            height: 12px;
-            width: 12px;
-            min-width: 12px;
-            flex-shrink: 0;
-            background-color: var(--vscode-editor-background);
-            border: 1.5px solid var(--vscode-editor-foreground);
-            border-radius: 50%;
-            margin-right: 8px;
-            margin-top: 2px;
-            transition: all 0.2s ease;
-            cursor: pointer;
-          }
-
-          .option-checkbox:hover input ~ .checkmark {
-            background-color: var(--vscode-editor-selectionHighlightBackground);
-          }
-
-          .option-checkbox input:checked ~ .checkmark {
-            background-color: #2ea043;
-            border-color: #2ea043;
-          }
-
-          .checkmark:after {
-            content: "";
-            position: absolute;
-            display: none;
-          }
-
-          .option-checkbox input:checked ~ .checkmark:after {
-            display: block;
-          }
-
-          .option-checkbox .checkmark:after {
-            left: 3.5px;
-            top: 0.5px;
-            width: 3px;
-            height: 6px;
-            border: solid white;
-            border-width: 0 1.5px 1.5px 0;
-            transform: rotate(45deg);
-          }
-
-          .option-checkbox label {
-            cursor: pointer;
-            user-select: none;
-            line-height: 1.4;
-            padding-left: 24px;
-            margin-left: -24px;
-          }
         </style>
       </head>
       <body>
@@ -267,7 +192,7 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
           <div class="section-label">CLEAN CODE</div>
           <div class="actions-panel">
             <button class="action-button" id="cleanCurrentFile">
-              <span class="button-icon trash-icon"></span>
+              <span class="button-icon file-icon"></span>
               Clean Current File
             </button>
 
@@ -276,6 +201,12 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
               Clean Multiple Files
             </button>
 
+            <button class="action-button" id="cleanWorkspace">
+              <span class="button-icon workspace-icon"></span>
+              Clean Workspace
+            </button>
+
+            <!--
             <div class="button-group" style="margin-top: 8px">
               <button class="action-button" id="undoButton">
                 <span class="button-icon undo-icon"></span>
@@ -287,111 +218,26 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
                 Redo
               </button>
             </div>
+            -->
           </div>
-
-          <div class="section-label">CONFIGURATIONS</div>
-          <div class="actions-panel">
-            <div class="option-checkbox">
-              <input type="checkbox" id="createBackup" checked />
-              <span class="checkmark"></span>
-              <label for="createBackup">Create backup files</label>
-            </div>
-
-            <div class="option-checkbox">
-              <input type="checkbox" id="preserveTodo" />
-              <span class="checkmark"></span>
-              <label for="preserveTodo">Preserve TODO & FIXME</label>
-            </div>
-
-            <div class="option-checkbox">
-              <input type="checkbox" id="keepDocComments" />
-              <span class="checkmark"></span>
-              <label for="keepDocComments">Keep documentation</label>
-            </div>
-
-            <div class="option-checkbox">
-              <input type="checkbox" id="forceProcess" />
-              <span class="checkmark"></span>
-              <label for="forceProcess">Process unknown types</label>
-            </div>
-          </div>
-        </div>
 
         <script>
           const vscode = acquireVsCodeApi();
 
-          // Load saved options from state
-          const savedOptions = vscode.getState()?.options || {
-            createBackup: true,
-            preserveTodo: false,
-            keepDocComments: false,
-            forceProcess: false
-          };
-
-          // Initialize checkbox states
-          document.getElementById('createBackup').checked = savedOptions.createBackup;
-          document.getElementById('preserveTodo').checked = savedOptions.preserveTodo;
-          document.getElementById('keepDocComments').checked = savedOptions.keepDocComments;
-          document.getElementById('forceProcess').checked = savedOptions.forceProcess;
-
-          // Update state when checkboxes change
-          document.querySelectorAll('.option-checkbox input').forEach(checkbox => {
-            checkbox.addEventListener('change', () => {
-              const options = {
-                createBackup: document.getElementById('createBackup').checked,
-                preserveTodo: document.getElementById('preserveTodo').checked,
-                keepDocComments: document.getElementById('keepDocComments').checked,
-                forceProcess: document.getElementById('forceProcess').checked
-              };
-
-              vscode.setState({ options });
-              vscode.postMessage({
-                command: 'saveOptions',
-                options
-              });
-            });
-          });
-
-          // Checkbox circle click handler
-          document.querySelectorAll('.checkmark').forEach(circle => {
-            circle.addEventListener('click', () => {
-              const checkbox = circle.previousElementSibling;
-              checkbox.checked = !checkbox.checked;
-
-              const event = new Event('change');
-              checkbox.dispatchEvent(event);
-            });
-          });
-
           // Button click handlers
           document.getElementById('cleanCurrentFile').addEventListener('click', () => {
-            const options = {
-              createBackup: document.getElementById('createBackup').checked,
-              preserveTodo: document.getElementById('preserveTodo').checked,
-              keepDocComments: document.getElementById('keepDocComments').checked,
-              forceProcess: document.getElementById('forceProcess').checked
-            };
+            vscode.postMessage({ command: 'cleanCurrentFile' });
+          });
 
-            vscode.postMessage({
-              command: 'cleanCurrentFile',
-              options
-            });
+          document.getElementById('cleanWorkspace').addEventListener('click', () => {
+            vscode.postMessage({ command: 'cleanWorkspace' });
           });
 
           document.getElementById('cleanMultipleFiles').addEventListener('click', () => {
-            const options = {
-              createBackup: document.getElementById('createBackup').checked,
-              preserveTodo: document.getElementById('preserveTodo').checked,
-              keepDocComments: document.getElementById('keepDocComments').checked,
-              forceProcess: document.getElementById('forceProcess').checked
-            };
-
-            vscode.postMessage({
-              command: 'cleanMultipleFiles',
-              options
-            });
+            vscode.postMessage({ command: 'cleanMultipleFiles' });
           });
 
+          /*
           document.getElementById('undoButton').addEventListener('click', () => {
             vscode.postMessage({ command: 'undo' });
           });
@@ -399,16 +245,7 @@ export class ButtonsViewProvider implements vscode.WebviewViewProvider {
           document.getElementById('redoButton').addEventListener('click', () => {
             vscode.postMessage({ command: 'redo' });
           });
-
-          // Set the view height to match content height to avoid scrolling
-          window.addEventListener('load', () => {
-            // Remove this or modify to ensure proper scrolling
-            const contentHeight = document.querySelector('.stats-container').scrollHeight;
-            vscode.postMessage({
-              command: 'setHeight',
-              height: contentHeight
-            });
-          });
+          */
         </script>
       </body>
     </html>`;

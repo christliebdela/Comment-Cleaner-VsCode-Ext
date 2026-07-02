@@ -2,6 +2,39 @@
 
 All notable changes to the "Comment Cleaner Pro" extension are documented in this file.
 
+## [2.0.0] - 2026-07-02
+
+### Added
+- **Searchable Quick Pick Checklist**: Added a searchable multi-select Quick Pick dialog for "Clean Multiple Files" to select workspace files interactively, automatically floating checked items to the top of the list.
+- **Unified Configurations Flow**: Converted the extension to trigger a single, unified configurations selector Quick Pick checklist for all entry points, removing the redundant configurations checkboxes from the sidebar.
+- **Dynamic About Metadata Section**: Added a version-first About panel in the statistics sidebar, featuring authorship credits and a clickable link to the author's GitHub profile.
+- **Dry-run Confirmation Modal**: Running clean on a folder or multiple files now generates a confirmation dialog showing exactly how many files, comments, lines, and bytes will be affected before modifying any code.
+- **8 New Programming Languages**:
+  - SCSS/Sass (`.scss`, `.sass`)
+  - Vue SFC (`.vue`)
+  - Svelte (`.svelte`)
+  - Dockerfile (`dockerfile`)
+  - TOML (`.toml`)
+  - HCL/Terraform (`.tf`, `.hcl`)
+  - GraphQL (`.graphql`, `.gql`)
+  - MDX (`.mdx`) with fenced code-block ignoring and JSX/HTML stripping
+- **Workspace-Local Backups**: Backups for folder operations are now safely stored inside a `.ccp-backups/` directory within the workspace root.
+- **Directory & Multi-File Inputs**: The Python engine now accepts multiple file/directory paths and glob targets in a single invocation, significantly improving batch performance.
+- **.ccpignore Support**: Automatically ignores directories like `node_modules`, `.git`, `dist`, `build`, etc., plus custom ignore rules defined in `.ccpignore`.
+
+### Fixed
+- **Python Docstring vs String Literal parser**: Resolved a database SQL deletion corruption bug by rebuilding the Python tokenizer with a state machine that tracks block colons, accurately differentiating true docstrings from regular string literals (like SQL query strings, multiline statements).
+- **Python Tokenizer indentation & line breaks**: Fixed duplication of carriage returns, loss of indentation, and string prefix encoding headers during Python token reconstruction.
+- **Workspace/Folder Clean Statistics Desync**: Resolved an issue where folder and workspace cleans failed to update the sidebar statistics view.
+- **Simplified Warning Dialog**: Streamlined the native warning dialog to a clean "Proceed" and "Cancel" layout, removing the redundant affected files list, hiding the backup notice if backups are not selected, and formatting the project name in bold mathematical Unicode.
+- **Aesthetic Icon & Sidebar Ordering**: Reordered sidebar actions progressively (Current -> Multiple -> Workspace) with aligned Lucide SVG outline icons.
+- **Windows CMD Compilation Precedence**: Converted cmd chaining inside package.json build script to a cross-platform inline Node.js copy script, fixing a build-phase condition trap on Windows systems.
+- **PHP URL Corruption**: Fixed bug where PHP string context was ignored, leading to corruption of string literals containing `//` or `#` (e.g. `https://` URLs).
+- **JS/TS Template Literal Nesting**: Fixed bug where comments inside nested template literal expressions (`${...}`) were not properly resolved.
+- **Correct Comment Counting**: Comment counts are now accurately derived using line-by-line diff tracking rather than regex pattern estimation.
+- **Redundant Processing Code**: Streamlined all language handlers in the Python core, reducing duplicate parser code by over 700 lines.
+- **Console log spam**: Removed unnecessary debug logging.
+
 ## [1.0.9] - 2026-07-01
 
 ### Fixed

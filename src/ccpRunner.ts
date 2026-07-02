@@ -2,145 +2,154 @@ import * as cp from 'child_process';
 import * as path from 'path';
 import * as vscode from 'vscode';
 
-export function runCcpScript(
-    filePath: string,
-    noBackup: boolean,
-    force: boolean,
-    preserveTodo: boolean = false,
-    preservePatterns: any[] = [],
-    keepDocComments: boolean = false
-): Promise<string> {
+export interface CCPOptions {
+    createBackup: boolean;
+    preserveTodo: boolean;
+    keepDocComments: boolean;
+    forceProcess: boolean;
+}
+
+export interface CCPFileResult {
+    path: string;
+    language: string;
+    commentsFound: number;
+    linesAffected: number;
+    sizeBytes: number;
+    sizePercent: number;
+    modified: boolean;
+    // Legacy keys for backward compat
+    filePath: string;
+    fileName: string;
+    commentCount: number;
+    linesRemoved: number;
+    sizeReduction: number;
+    sizePercentage: number;
+}
+
+export interface CCPResult {
+    files: CCPFileResult[];
+    totals: {
+        filesScanned: number;
+        filesModified: number;
+        commentsFound: number;
+        linesAffected: number;
+        bytesReduced: number;
+    };
+}
+
+const PYTHON_SCRIPT = path.join(__dirname, 'python', 'ccp.py');
+
+function buildArgs(
+    targets: string[],
+    options: CCPOptions,
+    extra: string[] = []
+): string[] {
+    const fs = require('fs');
+    if (!fs.existsSync(PYTHON_SCRIPT)) {
+        throw new Error(`Python script not found: ${PYTHON_SCRIPT}`);
+    }
+
+    const config = vscode.workspace.getConfiguration('commentCleanerPro');
+    const preservePatterns: string[] = config.get('preservePatterns', []);
+
+    const args: string[] = [PYTHON_SCRIPT, ...targets, '--json', '--quiet'];
+
+    if (!options.createBackup) { args.push('--no-backup'); }
+    if (options.forceProcess)  { args.push('--force'); }
+    if (options.preserveTodo)  { args.push('--preserve-todo'); }
+    if (options.keepDocComments) { args.push('--keep-doc-comments'); }
+    if (preservePatterns.length > 0) {
+        args.push('--preserve-patterns', JSON.stringify(preservePatterns));
+    }
+
+    return [...args, ...extra];
+}
+
+function spawnPython(args: string[]): Promise<CCPResult> {
     return new Promise((resolve, reject) => {
-        const pythonScriptPath = path.join(__dirname, 'python', 'ccp.py');
-
-        const fs = require('fs');
-        if (!fs.existsSync(pythonScriptPath)) {
-            reject(`Python script not found: ${pythonScriptPath}`);
-            return;
-        }
-
-        const pythonArgs = [
-            pythonScriptPath,
-            filePath,
-        ];
-
-        if (noBackup) {
-            pythonArgs.push('--no-backup');
-        }
-
-        if (force) {
-            pythonArgs.push('--force');
-        }
-
-        if (preserveTodo) {
-            pythonArgs.push('--preserve-todo');
-        }
-
-        if (keepDocComments) {
-            pythonArgs.push('--keep-doc-comments');
-        }
-
-        if (preservePatterns && preservePatterns.length > 0) {
-            pythonArgs.push('--preserve-patterns', JSON.stringify(preservePatterns));
-        }
-
-        console.log(`Executing: python ${pythonArgs.join(' ')}`);
-        vscode.window.showInformationMessage(`Running: python with ${pythonScriptPath}`);
-
-        const pythonProcess = cp.spawn('python', pythonArgs);
-
+        const proc = cp.spawn('python', args);
         let stdout = '';
         let stderr = '';
 
-        pythonProcess.stdout.on('data', (data) => {
-            stdout += data.toString();
-            console.log(`Python stdout: ${data}`);
-        });
+        proc.stdout.on('data', (data: Buffer) => { stdout += data.toString(); });
+        proc.stderr.on('data', (data: Buffer) => { stderr += data.toString(); });
 
-        pythonProcess.stderr.on('data', (data) => {
-            stderr += data.toString();
-            console.log(`Python stderr: ${data}`);
-        });
-
-        pythonProcess.on('close', (code) => {
-            console.log(`Python process exited with code ${code}`);
-
+        proc.on('close', (code: number) => {
             if (code !== 0) {
-                reject(`Python script failed with code ${code}: ${stderr}`);
-            } else {
-                if (!stdout.trim() && !stderr.trim()) {
-                    console.log("Warning: Python script produced no output");
-                }
-                resolve(stdout + '\n' + stderr);
+                reject(new Error(`CCP failed (exit ${code}): ${stderr.trim()}`));
+                return;
+            }
+            try {
+                const result: CCPResult = JSON.parse(stdout.trim());
+                resolve(result);
+            } catch {
+                reject(new Error(`CCP produced invalid JSON output: ${stdout.slice(0, 200)}`));
             }
         });
 
-        pythonProcess.on('error', (err) => {
-            reject(`Failed to execute Python: ${err.message}`);
+        proc.on('error', (err: Error) => {
+            reject(new Error(`Failed to launch Python: ${err.message}`));
         });
     });
 }
 
+/**
+ * Clean a single file. Returns the file result or null on failure.
+ */
 export async function executeCcp(
     filePath: string,
     noBackup: boolean,
     force: boolean,
     preserveTodo: boolean = false,
-    preservePatterns: any[] = [],
+    preservePatterns: string[] = [],
     keepDocComments: boolean = false
-): Promise<any> {
-    try {
-        const output = await runCcpScript(
-            filePath,
-            noBackup,
-            force,
-            preserveTodo,
-            preservePatterns,
-            keepDocComments
-        );
-        console.log("Python script output:", output);
+): Promise<CCPFileResult | null> {
+    const options: CCPOptions = {
+        createBackup: !noBackup,
+        preserveTodo,
+        keepDocComments,
+        forceProcess: force,
+    };
 
-        const results = parseCleanResults(output, filePath);
-        return results;
+    try {
+        const args = buildArgs([filePath], options);
+        const ws = vscode.workspace.workspaceFolders;
+        if (ws && !noBackup) {
+            const backupDir = path.join(ws[0].uri.fsPath, '.ccp-backups');
+            args.push('--backup-dir', backupDir);
+        }
+        const result = await spawnPython(args);
+        return result.files[0] ?? null;
     } catch (error) {
-        vscode.window.showErrorMessage(`Failed to run CCP: ${error}`);
-        throw error;
+        vscode.window.showErrorMessage(`CCP error: ${error}`);
+        return null;
     }
 }
 
-function parseCleanResults(output: string, filePath: string): any {
-    const results: any = {
-        fileName: path.basename(filePath),
-        filePath: filePath,
-        commentCount: 0,
-        linesRemoved: 0,
-        sizeReduction: 0,
-        sizePercentage: 0
-    };
-
-    console.log("Raw Python output to parse:", output);
-
-    const commentMatch = output.match(/Removed\s+approximately\s+(\d+)\s+comments?\s*\((\d+)\s+lines?\)/i) ||
-                       output.match(/Removed.*?(\d+).*?comment.*?\((\d+).*?line/i);
-
-    const sizeMatch = output.match(/File\s+size\s+reduced\s+by\s+(\d+)\s+bytes\s+\(([0-9.]+)%\)/i) ||
-                    output.match(/reduced.*?by\s+(\d+)\s+bytes.*?\(([0-9.]+)%\)/i);
-
-    if (commentMatch) {
-        results.commentCount = parseInt(commentMatch[1]);
-        results.linesRemoved = parseInt(commentMatch[2]);
-        console.log("Matched comments:", results.commentCount, "lines:", results.linesRemoved);
-    } else {
-        console.log("Failed to match comment pattern in output");
+/**
+ * Clean multiple files or a directory in a single Python invocation.
+ * Returns the full structured result.
+ */
+export async function executeClean(
+    targets: string[],
+    options: CCPOptions,
+    backupDir?: string
+): Promise<CCPResult> {
+    const args = buildArgs(targets, options);
+    if (backupDir) {
+        args.push('--backup-dir', backupDir);
     }
+    return spawnPython(args);
+}
 
-    if (sizeMatch) {
-        results.sizeReduction = parseInt(sizeMatch[1]);
-        results.sizePercentage = parseFloat(sizeMatch[2]);
-        console.log("Matched size:", results.sizeReduction, "percentage:", results.sizePercentage);
-    } else {
-        console.log("Failed to match size pattern in output");
-    }
-
-    return results;
+/**
+ * Dry-run a directory or list of files.
+ * Returns stats WITHOUT modifying any files.
+ */
+export async function runDryRun(
+    targets: string[],
+    options: CCPOptions
+): Promise<CCPResult> {
+    const args = buildArgs(targets, options, ['--dry-run']);
+    return spawnPython(args);
 }

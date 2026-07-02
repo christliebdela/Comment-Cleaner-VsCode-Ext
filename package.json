@@ -2,7 +2,7 @@
   "name": "comment-cleaner-pro",
   "displayName": "Comment Cleaner Pro",
   "description": "Streamline your code by effortlessly removing comments across 20+ programming languages. Improve readability, reduce file size, and prepare code for production with powerful cleaning options and detailed statistics.",
-  "version": "1.0.9",
+  "version": "2.0.0",
   "publisher": "ChristliebDela",
   "icon": "media/icon.png",
   "engines": {
@@ -10,43 +10,53 @@
   },
   "activationEvents": [
     "onCommand:ccp.cleanComments",
-    "onCommand:ccp.cleanMultipleFiles"
+    "onCommand:ccp.cleanMultipleFiles",
+    "onCommand:ccp.cleanFolder",
+    "onCommand:ccp.cleanWorkspace"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
         "command": "ccp.cleanComments",
-        "title": "Comment Cleaner Pro: Clean Current File"
+        "title": "CCP - Clean Current File"
       },
       {
         "command": "ccp.cleanMultipleFiles",
-        "title": "Comment Cleaner Pro: Clean Multiple Files"
+        "title": "CCP - Clean Multiple Files (Pattern)"
+      },
+      {
+        "command": "ccp.cleanFolder",
+        "title": "CCP - Clean Folder"
+      },
+      {
+        "command": "ccp.cleanWorkspace",
+        "title": "CCP - Clean Entire Workspace"
       },
       {
         "command": "ccp.compareWithBackup",
-        "title": "Compare with Backup"
+        "title": "CCP - Compare with Backup"
       },
       {
         "command": "ccp.restoreFromBackup",
-        "title": "Restore from Backup"
+        "title": "CCP - Restore from Backup"
       },
       {
         "command": "ccp.removeFromHistory",
-        "title": "Remove from History"
+        "title": "CCP - Remove from History"
       },
       {
         "command": "ccp.previewCleanComments",
-        "title": "Preview Comment Removal"
+        "title": "CCP - Preview Comment Removal"
       },
       {
         "command": "ccp.clearHistory",
-        "title": "Clear History",
+        "title": "CCP - Clear History",
         "icon": "$(clear-all)"
       },
       {
         "command": "ccp.focusActionsView",
-        "title": "Comment Cleaner Pro: Focus on Actions View"
+        "title": "CCP - Focus on Actions View"
       }
     ],
     "menus": {
@@ -64,8 +74,13 @@
           "group": "7_modification"
         },
         {
-          "command": "ccp.cleanMultipleFiles",
-          "when": "explorerResourceIsFolder",
+          "command": "ccp.cleanFolder",
+          "when": "explorerResourceIsFolder && !explorerResourceIsRoot",
+          "group": "7_modification"
+        },
+        {
+          "command": "ccp.cleanWorkspace",
+          "when": "explorerResourceIsRoot",
           "group": "7_modification"
         }
       ],
@@ -172,7 +187,7 @@
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./ && npm run copy-python",
     "watch": "tsc -watch -p ./",
-    "copy-python": "if not exist out\\python mkdir out\\python && copy src\\python\\ccp.py out\\python\\",
+    "copy-python": "node -e \"const fs = require('fs'); if (!fs.existsSync('out/python')) fs.mkdirSync('out/python', { recursive: true }); fs.copyFileSync('src/python/ccp.py', 'out/python/ccp.py');\"",
     "lint": "eslint src --ext ts"
   },
   "devDependencies": {
