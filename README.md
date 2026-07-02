@@ -1,10 +1,6 @@
 # Comment Cleaner Pro
 
 <p align="left">
-  <img src="media/ccp-banner.png" width="auto" height="auto" alt="Comment Cleaner Pro Logo">
-</p>
-
-<p align="left">
   <a href="https://marketplace.visualstudio.com/items?itemName=ChristliebDela.comment-cleaner-pro"><img src="https://vsmarketplacebadges.dev/version/ChristliebDela.comment-cleaner-pro.svg?style=flat-square&color=000000&labelColor=222222&logo=visual-studio-code" alt="VS Marketplace Version"></a>
   <a href="https://marketplace.visualstudio.com/items?itemName=ChristliebDela.comment-cleaner-pro"><img src="https://vsmarketplacebadges.dev/downloads/ChristliebDela.comment-cleaner-pro.svg?style=flat-square&color=000000&labelColor=222222" alt="VS Marketplace Downloads"></a>
   <a href="https://open-vsx.org/extension/ChristliebDela/comment-cleaner-pro"><img src="https://img.shields.io/open-vsx/v/ChristliebDela/comment-cleaner-pro?style=flat-square&color=000000&labelColor=222222" alt="Open VSX Version"></a>
