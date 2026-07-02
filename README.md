@@ -1,6 +1,10 @@
 # Comment Cleaner Pro
 
 <p align="left">
+  <img src="media/ccp-banner.png" width="auto" height="auto" alt="Comment Cleaner Pro Logo">
+</p>
+
+<p align="left">
   <a href="https://marketplace.visualstudio.com/items?itemName=ChristliebDela.comment-cleaner-pro"><img src="https://vsmarketplacebadges.dev/version/ChristliebDela.comment-cleaner-pro.svg?style=flat-square&color=000000&labelColor=222222&logo=visual-studio-code" alt="VS Marketplace Version"></a>
   <a href="https://marketplace.visualstudio.com/items?itemName=ChristliebDela.comment-cleaner-pro"><img src="https://vsmarketplacebadges.dev/downloads/ChristliebDela.comment-cleaner-pro.svg?style=flat-square&color=000000&labelColor=222222" alt="VS Marketplace Downloads"></a>
   <a href="https://open-vsx.org/extension/ChristliebDela/comment-cleaner-pro"><img src="https://img.shields.io/open-vsx/v/ChristliebDela/comment-cleaner-pro?style=flat-square&color=000000&labelColor=222222" alt="Open VSX Version"></a>
@@ -12,7 +16,7 @@
 
 ## Video Demo
 
-<p 
+<p align="left">
   <em>Coming Soon</em>
 </p>
 
@@ -120,8 +124,11 @@ The extension includes a standalone Python script that can be used directly:
 # Basic usage
 python path/to/ccp.py "*.js"
 
-# Process files recursively
-python path/to/ccp.py "src/**/*.py" --recursive
+# Process directory recursively (searches for all supported languages)
+python path/to/ccp.py src/
+
+# Process files recursively using a glob pattern
+python path/to/ccp.py "src/**/*.py"
 
 # Preserve documentation comments
 python path/to/ccp.py "*.java" --keep-doc-comments
@@ -161,7 +168,7 @@ Yes, but you can enable backups which create .bak files before processing.
 Yes. You can use standard editor undo/redo operations (`Ctrl+Z` / `Ctrl+Y` or `Cmd+Z` / `Cmd+Y`) directly in your active editor tabs, or restore files from the `.ccp-backups/` backup directory if you enabled backups during execution.
 
 ### Does it work with all programming languages?
-It supports 30+ major languages. For unlisted languages, you can try the "process unknown files" configuration option, but results may vary.
+It supports 33 major languages. For unlisted languages, you can try the "process unknown files" configuration option, but results may vary.
 
 ### Does it work with embedded code like JavaScript in HTML files?
 Yes, for Single File Components (SFC) like **Vue (`.vue`)** and **Svelte (`.svelte`)**. The engine uses a block-aware parser to clean HTML comments in `<template>`, JavaScript/TypeScript comments in `<script>`, and CSS/SCSS comments in `<style>`.
