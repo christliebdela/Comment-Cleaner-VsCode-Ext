@@ -2,6 +2,11 @@
 
 All notable changes to the "Comment Cleaner Pro" extension are documented in this file.
 
+## [2.0.2] - 2026-07-02
+
+### Fixed
+- **Python Tokenizer Reconstruction**: Switched the Python comment/docstring parser to use reverse-ordered string slicing based on character offsets instead of reconstructing code from tokens. This prevents the silent deletion of line-continuation backslashes (`\`), resolving syntax corruption when cleaning Python code.
+
 ## [2.0.1] - 2026-07-02
 
 ### Added

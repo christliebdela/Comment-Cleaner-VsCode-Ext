@@ -263,7 +263,7 @@ class CommentHandler(ABC):
 # ---------------------------------------------------------------------------
 
 class PythonCommentHandler(CommentHandler):
-    """Tokenize for line comments; regex for docstrings. Does NOT strip encodings."""
+    """Tokenize to locate comments/docstrings, then slice-replace string in reverse order to preserve original formatting."""
 
     def __init__(self):
         super().__init__('python')
@@ -274,68 +274,77 @@ class PythonCommentHandler(CommentHandler):
         try:
             source_bytes = content.encode('utf-8')
             tokens = list(tokenize.tokenize(BytesIO(source_bytes).readline))
-            result = []
-            last_end = (1, 0)
             
+            # State machine for docstrings
             allow_docstring = True
             expecting_colon = False
             
+            # Spans to replace/remove: (start_idx, end_idx, replacement_str)
+            spans_to_replace = []
+            
+            # Map of character indices for each line start
+            lines = content.splitlines(keepends=True)
+            line_starts = [0]
+            current = 0
+            for l in lines:
+                current += len(l)
+                line_starts.append(current)
+                
+            def get_char_idx(line: int, col: int) -> int:
+                if line - 1 < len(line_starts):
+                    return line_starts[line - 1] + col
+                return line_starts[-1]
+
             for tok in tokens:
-                # Handle comments (including shebang on line 1)
                 if tok.type == tokenize.COMMENT:
                     if tok.start[0] == 1 and tok.string.startswith('#!'):
-                        pass
-                    elif self.should_preserve_comment(tok.string, preserve_todo, preserve_patterns):
-                        pass
-                    else:
                         continue
-                        
+                    if self.should_preserve_comment(tok.string, preserve_todo, preserve_patterns):
+                        continue
+                    
+                    start_idx = get_char_idx(tok.start[0], tok.start[1])
+                    end_idx = get_char_idx(tok.end[0], tok.end[1])
+                    spans_to_replace.append((start_idx, end_idx, ""))
+                    continue
+
                 if tok.type == tokenize.ENCODING:
                     continue
-                    
-                # State machine for docstrings
+
                 is_colon_for_block = False
                 if tok.type == tokenize.NAME and tok.string in ('class', 'def'):
                     expecting_colon = True
-                    
+
                 if tok.type == tokenize.OP and tok.string == ':':
                     if expecting_colon:
                         allow_docstring = True
                         expecting_colon = False
                         is_colon_for_block = True
-                        
+
                 if tok.type == tokenize.STRING:
                     if allow_docstring:
                         allow_docstring = False
                         if keep_doc_comments or self.should_preserve_comment(tok.string, preserve_todo, preserve_patterns):
                             pass
                         else:
-                            # Skip doc comment, but preserve line numbers to prevent breaking diagnostics
+                            # Replace docstring with same number of newlines to keep line numbering intact
+                            start_idx = get_char_idx(tok.start[0], tok.start[1])
+                            end_idx = get_char_idx(tok.end[0], tok.end[1])
                             newlines_count = tok.end[0] - tok.start[0]
-                            if tok.start[0] > last_end[0]:
-                                result.append('\n' * (tok.start[0] - last_end[0]))
-                                last_end = (tok.start[0], 0)
-                            result.append('\n' * newlines_count)
-                            last_end = tok.end
-                            continue
+                            spans_to_replace.append((start_idx, end_idx, "\n" * newlines_count))
                     else:
                         allow_docstring = False
                 elif tok.type not in (tokenize.NL, tokenize.NEWLINE, tokenize.INDENT, tokenize.DEDENT) and not is_colon_for_block:
                     allow_docstring = False
-                    
-                # Reproduce token spacing
-                if tok.start[0] > last_end[0]:
-                    result.append('\n' * (tok.start[0] - last_end[0]))
-                    last_end = (tok.start[0], 0)
-                if tok.start[1] > last_end[1]:
-                    result.append(' ' * (tok.start[1] - last_end[1]))
-                    
-                if tok.type not in (tokenize.NEWLINE, tokenize.NL, tokenize.ENDMARKER):
-                    result.append(tok.string)
-                last_end = tok.end
-                
-            return ''.join(result)
             
+            # Sort replacements in reverse order to apply from end to start without index shifting
+            spans_to_replace.sort(key=lambda x: x[0], reverse=True)
+            
+            modified_content = content
+            for start_idx, end_idx, replacement in spans_to_replace:
+                modified_content = modified_content[:start_idx] + replacement + modified_content[end_idx:]
+                
+            return modified_content
+
         except Exception as e:
             logger.warning(f"Tokenizer failed ({e}). Using regex fallback.")
             return self._remove_line_comments(
