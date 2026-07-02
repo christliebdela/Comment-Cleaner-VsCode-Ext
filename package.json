@@ -228,10 +228,6 @@
     "Programming Languages",
     "Other"
   ],
-  "galleryBanner": {
-    "color": "#C80000",
-    "theme": "dark"
-  },
   "bugs": {
     "url": "https://github.com/christliebdela/Comment-Cleaner-VsCode-Ext/issues"
   },
