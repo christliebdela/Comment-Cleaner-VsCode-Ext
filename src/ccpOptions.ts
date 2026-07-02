@@ -46,27 +46,49 @@ export async function promptCCPOptions(
         }
     ];
 
-    const selection = await vscode.window.showQuickPick(items, {
-        canPickMany: true,
-        placeHolder: 'Select cleaning options (Press Enter to confirm)',
-        ignoreFocusOut: true
+    return new Promise<CCPOptions | undefined>((resolve) => {
+        const quickPick = vscode.window.createQuickPick<OptionItem>();
+        quickPick.items = items;
+        quickPick.selectedItems = items.filter(item => item.picked);
+        quickPick.canSelectMany = true;
+        quickPick.placeholder = 'Select cleaning options (Press Enter or click OK to confirm)';
+        quickPick.title = 'Comment Cleaner Pro Options';
+        quickPick.ignoreFocusOut = true;
+
+        const cancelButton: vscode.QuickInputButton = {
+            iconPath: new vscode.ThemeIcon('close'),
+            tooltip: 'Cancel'
+        };
+
+        quickPick.buttons = [cancelButton];
+
+        quickPick.onDidTriggerButton(async (button) => {
+            if (button === cancelButton) {
+                quickPick.hide();
+                resolve(undefined);
+            }
+        });
+
+        quickPick.onDidAccept(async () => {
+            const selectedIds = new Set(quickPick.selectedItems.map(item => item.id));
+            const options: CCPOptions = {
+                createBackup:    selectedIds.has('createBackup'),
+                preserveTodo:    selectedIds.has('preserveTodo'),
+                keepDocComments: selectedIds.has('keepDocComments'),
+                forceProcess:    selectedIds.has('forceProcess'),
+            };
+            await context.globalState.update('ccpOptions', options);
+            quickPick.hide();
+            resolve(options);
+        });
+
+        quickPick.onDidHide(() => {
+            resolve(undefined);
+            quickPick.dispose();
+        });
+
+        quickPick.show();
     });
-
-    if (!selection) {
-        return undefined; // user cancelled
-    }
-
-    const selectedIds = new Set(selection.map(item => item.id));
-
-    const options: CCPOptions = {
-        createBackup:    selectedIds.has('createBackup'),
-        preserveTodo:    selectedIds.has('preserveTodo'),
-        keepDocComments: selectedIds.has('keepDocComments'),
-        forceProcess:    selectedIds.has('forceProcess'),
-    };
-
-    await context.globalState.update('ccpOptions', options);
-    return options;
 }
 
 /**

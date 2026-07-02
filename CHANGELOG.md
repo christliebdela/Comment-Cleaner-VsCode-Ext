@@ -2,6 +2,15 @@
 
 All notable changes to the "Comment Cleaner Pro" extension are documented in this file.
 
+## [2.0.1] - 2026-07-02
+
+### Added
+- **QuickPick Cancel Button**: Added explicit close/Cancel buttons to the title bar of options and file selection dialogs.
+- **Improved Workspace Scanning Exclusions**: Configured the file scanner to ignore dependency, build, and backup folders (like `.next`, `out`, `node_modules`, `dist`, `.ccp-backups`).
+
+### Fixed
+- **Neutral Marketplace Theme**: Removed `galleryBanner` from `package.json` to revert VS Code Marketplace and Open VSX details page header backgrounds back to the default neutral theme.
+
 ## [2.0.0] - 2026-07-02
 
 ### Added

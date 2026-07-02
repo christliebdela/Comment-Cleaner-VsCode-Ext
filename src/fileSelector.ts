@@ -42,7 +42,10 @@ export async function selectAndProcessFiles(
             cancellable: false
         },
         async () => {
-            return vscode.workspace.findFiles('**/*', '**/node_modules/**');
+            return vscode.workspace.findFiles(
+                '**/*',
+                '{**/node_modules/**,**/.git/**,**/dist/**,**/out/**,**/build/**,**/.next/**,**/.ccp-backups/**,**/.svelte-kit/**,**/vendor/**,**/.venv/**,**/venv/**}'
+            );
         }
     );
 
@@ -73,7 +76,22 @@ export async function selectAndProcessFiles(
         quickPick.items = items;
         quickPick.canSelectMany = true;
         quickPick.placeholder = 'Search and select files to clean comments from';
+        quickPick.title = 'Select Files to Clean';
         quickPick.ignoreFocusOut = true;
+
+        const cancelButton: vscode.QuickInputButton = {
+            iconPath: new vscode.ThemeIcon('close'),
+            tooltip: 'Cancel'
+        };
+
+        quickPick.buttons = [cancelButton];
+
+        quickPick.onDidTriggerButton(button => {
+            if (button === cancelButton) {
+                resolve([]);
+                quickPick.dispose();
+            }
+        });
 
         let isUpdating = false;
 
